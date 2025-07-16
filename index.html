@@ -786,6 +786,42 @@
             justify-content: center;
         }
 
+        .bottom-left {
+            flex: 1;
+        }
+
+        .bottom-right {
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        /* Scale Bar in Bottom Band */
+        .scale-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scale-bar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .scale-line {
+            height: 2px;
+            background: #333;
+            border-left: 2px solid #333;
+            border-right: 2px solid #333;
+            min-width: 50px;
+        }
+
+        .scale-text {
+            font-size: 11px;
+            color: #333;
+            font-weight: 500;
+        }
+
         .sidebar-header {
             background: #dc143c;
             color: white;
@@ -2901,6 +2937,7 @@
                 updateScaleBar();
                 updateNorthArrow();
                 updateCenterCoordinates();
+                updateBottomBand();
             });
             
             // Add camera move events for more responsive updates
@@ -5709,8 +5746,9 @@
         }
 
         function toggleMeasurementTool() {
-            const measurementSection = document.getElementById('measurementSection');
+            const measurementSection = document.getElementById('measurementTools');
             const measurementTool = document.getElementById('measurementTool');
+            const measurementControls = document.getElementById('measurementControls');
             
             if (measurementSection) {
                 measurementSection.classList.toggle('collapsed');
@@ -5722,6 +5760,11 @@
                 // Toggle tool activation state
                 if (measurementTool) {
                     measurementTool.classList.toggle('active', !measurementSection.classList.contains('collapsed'));
+                }
+                
+                // Show/hide measurement controls
+                if (measurementControls) {
+                    measurementControls.style.display = measurementSection.classList.contains('collapsed') ? 'none' : 'block';
                 }
                 
                 console.log('Measurement panel', measurementSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
@@ -5994,6 +6037,9 @@
                     }
                 }
                 
+                // Update scale bar
+                updateScaleBar();
+                
                 // Update active layers
                 const activeLayersList = [];
                 const selector = document.getElementById('baseMapSelector');
@@ -6018,6 +6064,64 @@
                 if (currentAttribution && attributionInfo) {
                     attributionInfo.textContent = currentAttribution.textContent;
                 }
+            }
+        }
+
+        // Update scale bar in bottom band
+        function updateScaleBar() {
+            if (!viewer || !viewer.scene) return;
+            
+            const scaleLine = document.getElementById('scaleLine');
+            const scaleText = document.getElementById('scaleText');
+            
+            if (!scaleLine || !scaleText) return;
+            
+            try {
+                const canvas = viewer.canvas;
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+                
+                // Calculate scale using two points at the bottom of the screen
+                const left = new Cesium.Cartesian2(width * 0.1, height * 0.9);
+                const right = new Cesium.Cartesian2(width * 0.3, height * 0.9);
+                
+                const leftRay = viewer.camera.getPickRay(left);
+                const rightRay = viewer.camera.getPickRay(right);
+                
+                const leftIntersection = viewer.scene.globe.pick(leftRay, viewer.scene);
+                const rightIntersection = viewer.scene.globe.pick(rightRay, viewer.scene);
+                
+                if (leftIntersection && rightIntersection) {
+                    const leftCartographic = Cesium.Cartographic.fromCartesian(leftIntersection);
+                    const rightCartographic = Cesium.Cartographic.fromCartesian(rightIntersection);
+                    
+                    const distance = Cesium.Cartesian3.distance(leftIntersection, rightIntersection);
+                    
+                    // Scale the visual line proportionally
+                    const pixelDistance = width * 0.2; // 20% of screen width
+                    const metersPerPixel = distance / pixelDistance;
+                    
+                    // Calculate appropriate scale for 100px line
+                    const scaleLinePixels = 100;
+                    const scaleDistance = metersPerPixel * scaleLinePixels;
+                    
+                    // Format scale text
+                    let scaleLabel;
+                    if (scaleDistance >= 1000) {
+                        scaleLabel = `${(scaleDistance / 1000).toFixed(0)} km`;
+                    } else if (scaleDistance >= 1) {
+                        scaleLabel = `${scaleDistance.toFixed(0)} m`;
+                    } else {
+                        scaleLabel = `${(scaleDistance * 100).toFixed(0)} cm`;
+                    }
+                    
+                    scaleLine.style.width = `${scaleLinePixels}px`;
+                    scaleText.textContent = scaleLabel;
+                } else {
+                    scaleText.textContent = 'Scale: N/A';
+                }
+            } catch (error) {
+                scaleText.textContent = 'Scale: N/A';
             }
         }
 
