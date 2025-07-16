@@ -177,6 +177,56 @@
             font-size: 12px;
         }
 
+        /* Live coordinates display */
+        .coordinates-display {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+            background-color: rgba(42, 42, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 12px 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-family: 'Courier New', monospace;
+            min-width: 180px;
+        }
+
+        .coordinates-title {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .coordinate-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .coordinate-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .coordinate-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 11px;
+            font-weight: 500;
+            min-width: 50px;
+        }
+
+        .coordinate-value {
+            color: #00ff88;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: right;
+            flex: 1;
+        }
+
         .search-button {
             width: 35px;
             height: 35px;
@@ -263,6 +313,23 @@
             .suggestion-details {
                 font-size: 11px;
             }
+
+            .coordinates-display {
+                bottom: 5px;
+                left: 5px;
+                padding: 8px 10px;
+                min-width: 150px;
+            }
+
+            .coordinates-title {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .coordinate-label,
+            .coordinate-value {
+                font-size: 10px;
+            }
         }
     </style>
 </head>
@@ -285,6 +352,23 @@
             <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
         </div>
         <div class="suggestions-dropdown" id="suggestionsDropdown" style="display: none;"></div>
+    </div>
+
+    <!-- Live coordinates display -->
+    <div class="coordinates-display" id="coordinatesDisplay">
+        <div class="coordinates-title">Mouse Position</div>
+        <div class="coordinate-row">
+            <span class="coordinate-label">Lat:</span>
+            <span class="coordinate-value" id="latValue">--</span>
+        </div>
+        <div class="coordinate-row">
+            <span class="coordinate-label">Lon:</span>
+            <span class="coordinate-value" id="lonValue">--</span>
+        </div>
+        <div class="coordinate-row">
+            <span class="coordinate-label">Height:</span>
+            <span class="coordinate-value" id="heightValue">--</span>
+        </div>
     </div>
 
     <!-- CesiumJS JavaScript -->
@@ -347,6 +431,12 @@
         const searchButton = document.getElementById('searchButton');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const suggestionsDropdown = document.getElementById('suggestionsDropdown');
+        
+        // Add coordinate display elements
+        const coordinatesDisplay = document.getElementById('coordinatesDisplay');
+        const latValue = document.getElementById('latValue');
+        const lonValue = document.getElementById('lonValue');
+        const heightValue = document.getElementById('heightValue');
         
         // Autocomplete state
         let searchTimeout;
@@ -662,6 +752,106 @@
                 hideSuggestions();
             }
         });
+
+        /**
+         * Live Coordinates Tracking System
+         * 
+         * Implements real-time coordinate display that shows latitude, longitude,
+         * and height of terrain under the mouse cursor. Uses Cesium's camera ray
+         * casting to determine precise geographic coordinates.
+         */
+
+        // Coordinate tracking handler with throttling for performance
+        let coordinateUpdateThrottle = null;
+        const COORDINATE_UPDATE_INTERVAL = 50; // Update every 50ms for smooth tracking
+
+        /**
+         * Updates coordinate display with formatted values
+         * @param {number} latitude - Latitude in degrees
+         * @param {number} longitude - Longitude in degrees  
+         * @param {number} height - Height above terrain in meters
+         */
+        function updateCoordinateDisplay(latitude, longitude, height) {
+            latValue.textContent = latitude.toFixed(6) + '°';
+            lonValue.textContent = longitude.toFixed(6) + '°';
+            heightValue.textContent = height > 0 ? height.toFixed(0) + 'm' : 'Sea Level';
+        }
+
+        /**
+         * Clears coordinate display when mouse is not over terrain
+         */
+        function clearCoordinateDisplay() {
+            latValue.textContent = '--';
+            lonValue.textContent = '--';
+            heightValue.textContent = '--';
+        }
+
+        /**
+         * Handles mouse movement over the Cesium viewer canvas
+         * Uses camera ray casting to determine world coordinates
+         * @param {MouseEvent} event - Mouse move event
+         */
+        function handleMouseMove(event) {
+            // Throttle updates for performance optimization
+            if (coordinateUpdateThrottle) {
+                return;
+            }
+
+            coordinateUpdateThrottle = setTimeout(() => {
+                coordinateUpdateThrottle = null;
+
+                try {
+                    // Get mouse position relative to canvas
+                    const canvas = viewer.canvas;
+                    const rect = canvas.getBoundingClientRect();
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
+                    
+                    // Convert screen coordinates to Cesium coordinates
+                    const pick = new Cesium.Cartesian2(x, y);
+                    
+                    // Cast ray from camera through mouse position to find intersection with globe
+                    const ray = viewer.camera.getPickRay(pick);
+                    const intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                    
+                    if (intersection) {
+                        // Convert Cartesian coordinates to geographic coordinates
+                        const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                        const height = cartographic.height;
+                        
+                        updateCoordinateDisplay(latitude, longitude, height);
+                    } else {
+                        // Mouse is not over terrain (e.g., over space)
+                        clearCoordinateDisplay();
+                    }
+                } catch (error) {
+                    // Handle any coordinate calculation errors gracefully
+                    console.warn('Coordinate tracking error:', error);
+                    clearCoordinateDisplay();
+                }
+            }, COORDINATE_UPDATE_INTERVAL);
+        }
+
+        /**
+         * Initialize coordinate tracking system
+         * Attaches mouse move listener to the Cesium canvas
+         */
+        function initializeCoordinateTracking() {
+            const canvas = viewer.canvas;
+            
+            // Add mouse move listener for coordinate tracking
+            canvas.addEventListener('mousemove', handleMouseMove);
+            
+            // Clear coordinates when mouse leaves canvas
+            canvas.addEventListener('mouseleave', clearCoordinateDisplay);
+            
+            console.log('Live coordinate tracking initialized');
+        }
+
+        // Initialize coordinate tracking after viewer is ready
+        initializeCoordinateTracking();
 
         console.log('CesiumJS Globe Viewer initialized successfully');
     </script>

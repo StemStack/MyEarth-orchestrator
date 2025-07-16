@@ -108,3 +108,6 @@ The CesiumJS globe viewer is now fully functional with:
 - Autocomplete dropdown with formatted location details and keyboard navigation
 - Click-to-fly functionality and arrow key selection support
 - Camera positioning set to vertical nadir view (90° straight down) at 2km altitude
+- Live coordinates display showing latitude, longitude, and height under mouse cursor
+- Throttled coordinate updates (50ms intervals) for optimal performance
+- Ray-casting implementation for precise terrain intersection detection
