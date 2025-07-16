@@ -996,54 +996,37 @@
         }
 
         /**
-         * Initialize marker placement system with pixel-perfect positioning
-         * Uses multiple coordinate detection methods for maximum accuracy
+         * Initialize marker placement system with accurate coordinate detection
+         * Uses Cesium's built-in screen space event handler for precise positioning
          */
         function initializeMarkerPlacement() {
-            // Add click handler directly to the canvas for most accurate positioning
-            const canvas = viewer.canvas;
+            // Remove any existing click handlers
+            viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
             
-            canvas.addEventListener('click', function(event) {
-                // Get exact pixel coordinates relative to canvas
-                const rect = canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const y = event.clientY - rect.top;
+            // Set up precise click handling using Cesium's screen space event system
+            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function(event) {
+                // Get the exact click position from the event
+                const position = event.position;
                 
-                // Create Cesium screen coordinate
-                const clickPosition = new Cesium.Cartesian2(x, y);
-                
-                // Method 1: Try scene position picking first (most accurate for terrain)
-                let cartesian = viewer.scene.pickPosition(clickPosition);
-                
-                if (!cartesian) {
-                    // Method 2: Fallback to ellipsoid picking
-                    const ellipsoid = viewer.scene.globe.ellipsoid;
-                    cartesian = viewer.camera.pickEllipsoid(clickPosition, ellipsoid);
-                }
-                
-                if (!cartesian) {
-                    // Method 3: Ray casting as final fallback
-                    const ray = viewer.camera.getPickRay(clickPosition);
-                    cartesian = viewer.scene.globe.pick(ray, viewer.scene);
-                }
+                // Use Cesium's ellipsoid picking for most accurate surface coordinates
+                const ellipsoid = viewer.scene.globe.ellipsoid;
+                const cartesian = viewer.camera.pickEllipsoid(position, ellipsoid);
                 
                 if (cartesian) {
-                    // Convert to geographic coordinates
-                    const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+                    // Convert Cartesian to geographic coordinates
+                    const cartographic = ellipsoid.cartesianToCartographic(cartesian);
                     const longitude = Cesium.Math.toDegrees(cartographic.longitude);
                     const latitude = Cesium.Math.toDegrees(cartographic.latitude);
 
-                    // Create marker at exact position
+                    // Create marker at the exact clicked position
                     const label = `Point ${markerCounter + 1}`;
-                    const marker = createMarker(longitude, latitude, label);
+                    createMarker(longitude, latitude, label);
 
-                    console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label}) - Method: ${cartesian ? 'scene/ellipsoid/ray' : 'unknown'}`);
-                } else {
-                    console.log('Could not determine click position on globe');
+                    console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
                 }
-            });
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-            console.log('Marker placement system initialized with pixel-perfect positioning - click anywhere on the globe to place markers');
+            console.log('Precise marker placement system initialized');
         }
 
         // Initialize marker placement system
