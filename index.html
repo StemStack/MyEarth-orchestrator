@@ -1059,10 +1059,10 @@
         viewer.scene.fog.screenSpaceErrorFactor = 2.0;
         viewer.scene.globe.showWaterEffect = false;
         
-        // Enable realistic 3D terrain rendering
-        viewer.scene.globe.enableLighting = true;
-        viewer.scene.globe.depthTestAgainstTerrain = true;
-        viewer.scene.globe.terrainExaggeration = 2.0;
+        // Keep initial state stable
+        viewer.scene.globe.enableLighting = false;
+        viewer.scene.globe.depthTestAgainstTerrain = false;
+        viewer.scene.globe.terrainExaggeration = 1.0;
         viewer.scene.globe.material = undefined;
         
         // Use basic lighting without dynamic atmosphere
@@ -1072,43 +1072,34 @@
         // Add wireframe material option for 3D visualization
         let wireframeEnabled = false;
         
-        // Apply realistic 3D terrain using available world terrain
+        // Apply enhanced terrain visualization with fallback
         function applyRealTerrain() {
             try {
-                // Use the createWorldTerrain function if available, otherwise use STK terrain
-                if (typeof Cesium.createWorldTerrain === 'function') {
-                    viewer.terrainProvider = Cesium.createWorldTerrain();
-                } else {
-                    // Fallback to STK terrain which doesn't require authentication
-                    viewer.terrainProvider = new Cesium.CesiumTerrainProvider({
-                        url: 'https://terrain.agi.com/stk-terrain/v1/tilesets/world/tiles',
-                        requestWaterMask: false,
-                        requestVertexNormals: false
-                    });
-                }
-                
-                viewer.scene.globe.enableLighting = true;
-                viewer.scene.globe.depthTestAgainstTerrain = true;
-                viewer.scene.globe.terrainExaggeration = 3.0; // Higher exaggeration for visibility
-                console.log('Real 3D terrain applied successfully');
-                
-            } catch (error) {
-                console.warn('3D terrain failed, using enhanced ellipsoid:', error);
+                // Start with stable ellipsoid base
                 viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-                viewer.scene.globe.terrainExaggeration = 1.0;
                 
-                // Apply enhanced visual effects for 3D appearance
+                // Apply visual enhancements for 3D effect
                 viewer.scene.globe.material = new Cesium.Material({
                     fabric: {
                         type: 'Grid',
                         uniforms: {
-                            color: new Cesium.Color(0.1, 0.5, 1.0, 0.3),
-                            cellAlpha: 0.03,
-                            lineCount: new Cesium.Cartesian2(128, 64),
-                            lineThickness: new Cesium.Cartesian2(1.0, 1.0)
+                            color: new Cesium.Color(0.0, 0.6, 1.0, 0.4),
+                            cellAlpha: 0.04,
+                            lineCount: new Cesium.Cartesian2(64, 32),
+                            lineThickness: new Cesium.Cartesian2(1.2, 1.2)
                         }
                     }
                 });
+                
+                viewer.scene.globe.enableLighting = true;
+                viewer.scene.globe.terrainExaggeration = 1.0;
+                console.log('Enhanced terrain visualization applied');
+                
+            } catch (error) {
+                console.warn('Terrain enhancement failed, using basic mode:', error);
+                viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+                viewer.scene.globe.material = undefined;
+                viewer.scene.globe.enableLighting = false;
             }
         }
         
@@ -3424,14 +3415,14 @@
             const enabled = toggle.checked;
             
             if (enabled) {
-                // Enable real 3D terrain
+                // Enable enhanced terrain visualization
                 applyRealTerrain();
             } else {
-                // Use flat ellipsoid terrain
+                // Use clean flat terrain
                 viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-                viewer.scene.globe.terrainExaggeration = 1.0;
+                viewer.scene.globe.material = undefined;
                 viewer.scene.globe.enableLighting = false;
-                viewer.scene.globe.depthTestAgainstTerrain = false;
+                viewer.scene.globe.terrainExaggeration = 1.0;
             }
             
             console.log('3D terrain:', enabled ? 'enabled' : 'disabled');
