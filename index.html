@@ -1262,9 +1262,14 @@
                         <label for="labelsWms" style="font-size: 11px;">Place Labels Overlay</label>
                     </div>
                     
-                    <div class="control-item" style="margin-bottom: 8px;">
+                    <div class="control-item" style="margin-bottom: 4px;">
                         <input type="checkbox" id="terrainWms" onchange="togglePredefinedLayer('terrain', this.checked)">
                         <label for="terrainWms" style="font-size: 11px;">Terrain Lines Overlay</label>
+                    </div>
+                    
+                    <div class="control-item" style="margin-bottom: 8px;">
+                        <input type="checkbox" id="protected_areasWms" onchange="togglePredefinedLayer('protected_areas', this.checked)">
+                        <label for="protected_areasWms" style="font-size: 11px;">🌳 World Database of Protected Areas</label>
                     </div>
                 </div>
                 
@@ -5016,6 +5021,14 @@
                 url: 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-lines/{z}/{x}/{y}.png',
                 name: 'Terrain Lines Overlay',
                 type: 'tile'
+            },
+            protected_areas: {
+                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer',
+                name: 'World Database of Protected Areas',
+                type: 'wms',
+                layers: '0,1,2,3,4,5,6',
+                format: 'image/png',
+                transparent: true
             }
         };
         
@@ -5031,12 +5044,28 @@
             
             if (enabled) {
                 try {
-                    // Create reliable tile imagery provider
-                    const imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: service.url,
-                        credit: service.name,
-                        subdomains: ['a', 'b', 'c']
-                    });
+                    let imageryProvider;
+                    
+                    if (service.type === 'wms') {
+                        // Create WMS imagery provider for proper WMS services
+                        imageryProvider = new Cesium.WebMapServiceImageryProvider({
+                            url: service.url + '/WMSServer',
+                            layers: service.layers || '0',
+                            parameters: {
+                                format: service.format || 'image/png',
+                                transparent: service.transparent || true,
+                                version: '1.3.0'
+                            },
+                            credit: service.name
+                        });
+                    } else {
+                        // Create reliable tile imagery provider for tile services
+                        imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                            url: service.url,
+                            credit: service.name,
+                            subdomains: ['a', 'b', 'c']
+                        });
+                    }
                     
                     const imageryLayer = viewer.imageryLayers.addImageryProvider(imageryProvider);
                     imageryLayer.alpha = 0.7;
