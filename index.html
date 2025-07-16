@@ -65,14 +65,21 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* Cesium container takes full viewport */
+        /* Cesium container takes full viewport with adjusted margins */
         #cesiumContainer {
             width: 100%;
             height: 100%;
             margin: 0;
+            margin-right: 60px;
+            margin-bottom: 40px;
             padding: 0;
             overflow: hidden;
             background-color: #000;
+            transition: margin 0.3s ease;
+        }
+
+        #cesiumContainer.with-left-panel {
+            margin-left: 280px;
         }
 
         /* Move Cesium's credits to bottom center */
@@ -595,7 +602,7 @@
             border: 1px solid rgba(0, 0, 0, 0.5);
         }
 
-        /* Swiss-style sidebar navigation */
+        /* Left Panel Styles */
         .sidebar {
             position: absolute;
             top: 0;
@@ -610,6 +617,74 @@
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
+        }
+
+        /* Right Panel Styles */
+        #rightPanel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 100vh;
+            background: rgba(255,255,255,0.95);
+            border-left: 1px solid #ddd;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        /* Right Panel Tool Icons */
+        .tool-icon {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+            position: relative;
+            background: rgba(255,255,255,0.9);
+        }
+
+        .tool-icon:hover {
+            background: rgba(200,16,46,0.1);
+            color: #c8102e;
+        }
+
+        .tool-icon.active {
+            background: #c8102e;
+            color: white;
+        }
+
+        /* Bottom Information Band */
+        #bottomBand {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 60px;
+            height: 40px;
+            background: rgba(255,255,255,0.95);
+            border-top: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            font-size: 12px;
+        }
+
+        .bottom-left, .bottom-center, .bottom-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bottom-center {
+            flex: 1;
+            justify-content: center;
         }
 
         .sidebar-header {
@@ -1454,9 +1529,9 @@
         <div class="crosshair-vertical"></div>
     </div>
 
-    <!-- Swiss-style Sidebar Navigation -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+    <!-- Left Panel -->
+    <div class="sidebar" id="leftPanel">
+        <div class="sidebar-toggle" onclick="toggleLeftPanel()">☰</div>
         <div class="sidebar-header">
             🌍 Project 0
         </div>
@@ -1774,8 +1849,32 @@
         </div>
     </div>
 
+    <!-- Right Panel with Tool Icons -->
+    <div id="rightPanel">
+        <div class="tool-icon" id="northArrowTool" title="North Arrow">🧭</div>
+        <div class="tool-icon" id="baseMapTool" title="Base Maps" onclick="toggleBaseMapPanel()">🗺️</div>
+        <div class="tool-icon" id="measurementTool" title="Measurement Tools" onclick="toggleMeasurementTool()">📏</div>
+        <div class="tool-icon" id="markerTool" title="Point Markers" onclick="toggleMarkerMode()">📍</div>
+        <div class="tool-icon" id="layerTool" title="Data Layers" onclick="toggleLayerPanel()">📊</div>
+        <div class="tool-icon" id="modelTool" title="3D Models" onclick="toggleModelPanel()">🏗️</div>
+    </div>
+
+    <!-- Bottom Information Band -->
+    <div id="bottomBand">
+        <div class="bottom-left">
+            <div id="scaleInfo">Scale: 1:1,000,000</div>
+            <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
+        </div>
+        <div class="bottom-center">
+            <div id="activeLayersInfo">Active Layers: OSM Standard, Protected Areas</div>
+        </div>
+        <div class="bottom-right">
+            <div id="attributionInfo">© OpenStreetMap contributors</div>
+        </div>
+    </div>
+
     <!-- Floating menu button (appears when sidebar is collapsed) -->
-    <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleSidebar()">☰</button>
+    <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()">☰</button>
 
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
@@ -5388,23 +5487,172 @@
             }
         }
         
-        // Initialize sidebar and floating menu button on page load
+        // Initialize UI panels and bottom band on page load
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
+            const leftPanel = document.getElementById('leftPanel');
             const floatingButton = document.getElementById('floatingMenuButton');
+            const cesiumContainer = document.getElementById('cesiumContainer');
             
-            // Always start with sidebar visible and floating button hidden
-            if (sidebar) {
-                sidebar.classList.remove('collapsed');
-                sidebar.style.transform = 'translateX(0)';
+            // Always start with left panel visible and floating button hidden
+            if (leftPanel) {
+                leftPanel.classList.remove('collapsed');
+                leftPanel.style.transform = 'translateX(0)';
+                cesiumContainer.classList.add('with-left-panel');
             }
             
             if (floatingButton) {
                 floatingButton.style.display = 'none';
             }
             
-            console.log('✓ Menu system initialized - sidebar visible, floating button hidden');
+            // Initialize bottom band updates
+            setInterval(updateBottomBand, 1000);
+            
+            console.log('✓ Menu system initialized - left panel visible, floating button hidden');
         });
+
+        // Update bottom band information
+        function updateBottomBand() {
+            const scaleInfo = document.getElementById('scaleInfo');
+            const coordinatesInfo = document.getElementById('coordinatesInfo');
+            const activeLayersInfo = document.getElementById('activeLayersInfo');
+            const attributionInfo = document.getElementById('attributionInfo');
+            
+            if (viewer && viewer.scene) {
+                // Update coordinates from existing display
+                const coordsText = document.getElementById('coordinatesText');
+                if (coordsText) {
+                    const coordsMatch = coordsText.textContent.match(/(-?\d+\.\d+).*?(-?\d+\.\d+)/);
+                    if (coordsMatch) {
+                        coordinatesInfo.textContent = `Lat: ${coordsMatch[1]}° Lon: ${coordsMatch[2]}°`;
+                    }
+                }
+                
+                // Update scale from existing display
+                const scaleText = document.getElementById('scaleText');
+                if (scaleText) {
+                    scaleInfo.textContent = `Scale: ${scaleText.textContent}`;
+                }
+                
+                // Update active layers
+                const activeLayersList = [];
+                const selector = document.getElementById('baseMapSelector');
+                if (selector) {
+                    const selectedOption = selector.options[selector.selectedIndex];
+                    if (selectedOption) {
+                        activeLayersList.push(selectedOption.text);
+                    }
+                }
+                if (document.getElementById('protected_areasWms')?.checked) {
+                    activeLayersList.push('Protected Areas');
+                }
+                if (document.getElementById('landDegradationWms')?.checked) {
+                    activeLayersList.push('Land Degradation');
+                }
+                activeLayersInfo.textContent = `Active Layers: ${activeLayersList.join(', ')}`;
+                
+                // Update attribution
+                const currentAttribution = document.querySelector('.cesium-credit-textContainer');
+                if (currentAttribution) {
+                    attributionInfo.textContent = currentAttribution.textContent;
+                }
+            }
+        }
+
+        // Updated toggle function for left panel
+        function toggleLeftPanel() {
+            const leftPanel = document.getElementById('leftPanel');
+            const cesiumContainer = document.getElementById('cesiumContainer');
+            const floatingButton = document.getElementById('floatingMenuButton');
+            
+            if (leftPanel.classList.contains('collapsed')) {
+                // Expand left panel
+                leftPanel.classList.remove('collapsed');
+                leftPanel.style.transform = 'translateX(0)';
+                cesiumContainer.classList.add('with-left-panel');
+                if (floatingButton) {
+                    floatingButton.style.display = 'none';
+                }
+                console.log('Left panel expanded');
+            } else {
+                // Collapse left panel
+                leftPanel.classList.add('collapsed');
+                leftPanel.style.transform = 'translateX(-100%)';
+                cesiumContainer.classList.remove('with-left-panel');
+                setTimeout(() => {
+                    if (floatingButton) {
+                        floatingButton.style.display = 'flex';
+                    }
+                }, 300);
+                console.log('Left panel collapsed');
+            }
+            
+            // Update toggle button text
+            const toggleBtn = leftPanel.querySelector('.sidebar-toggle');
+            if (toggleBtn) {
+                toggleBtn.textContent = leftPanel.classList.contains('collapsed') ? '☰' : '✕';
+            }
+        }
+
+        // Tool panel functions
+        function toggleBaseMapPanel() {
+            const tool = document.getElementById('baseMapTool');
+            const section = document.getElementById('mapsDisplayed');
+            
+            tool.classList.toggle('active');
+            
+            if (tool.classList.contains('active')) {
+                // Ensure section is visible
+                if (section.classList.contains('collapsed')) {
+                    toggleSection('mapsDisplayed');
+                }
+                console.log('Base map panel activated');
+            } else {
+                console.log('Base map panel deactivated');
+            }
+        }
+
+        function toggleLayerPanel() {
+            const tool = document.getElementById('layerTool');
+            const section = document.getElementById('dataServices');
+            
+            tool.classList.toggle('active');
+            
+            if (tool.classList.contains('active')) {
+                if (section.classList.contains('collapsed')) {
+                    toggleSection('dataServices');
+                }
+                console.log('Layer panel activated');
+            } else {
+                console.log('Layer panel deactivated');
+            }
+        }
+
+        function toggleModelPanel() {
+            const tool = document.getElementById('modelTool');
+            const section = document.getElementById('models3d');
+            
+            tool.classList.toggle('active');
+            
+            if (tool.classList.contains('active')) {
+                if (section.classList.contains('collapsed')) {
+                    toggleSection('models3d');
+                }
+                console.log('Model panel activated');
+            } else {
+                console.log('Model panel deactivated');
+            }
+        }
+
+        function toggleMarkerMode() {
+            const tool = document.getElementById('markerTool');
+            tool.classList.toggle('active');
+            
+            if (tool.classList.contains('active')) {
+                console.log('Marker mode activated - click on globe to place markers');
+            } else {
+                console.log('Marker mode deactivated');
+            }
+        }
         
         console.log('✓ Swiss-style sidebar initialized');
         

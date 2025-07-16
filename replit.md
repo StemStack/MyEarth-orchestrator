@@ -96,116 +96,21 @@ The CesiumJS globe viewer is now fully functional with:
 
 ## Recent Changes (July 16, 2025)
 
-- Removed all Cesium Ion dependencies and access tokens
-- Implemented OpenStreetMap imagery provider for authentication-free operation
-- Configured ellipsoid terrain provider to avoid external terrain services
-- Disabled sky box and atmosphere features that require Ion services
-- Simplified viewer configuration for reliable operation without third-party authentication
-- Added custom zoom controls (+/- buttons) in top-left corner
-- Implemented universal search bar with Nominatim geocoding API integration
-- Search supports place names, addresses, and coordinate input formats
-- Added loading spinner and error handling for search functionality
-- Enhanced search with live autocomplete suggestions (300ms debounced)
-- Autocomplete dropdown with formatted location details and keyboard navigation
-- Click-to-fly functionality and arrow key selection support
-- Camera positioning set to vertical nadir view (90° straight down) at 2km altitude
-- Live coordinates display showing latitude and longitude of camera center view
-- Center crosshair indicator for precise location reference
-- Real-time coordinate updates on camera movement and position changes
-- Interactive marker placement system with click-to-place functionality
-- Custom red pin graphics with white labels and sequential numbering
-- Marker persistence with coordinate tracking and timestamp logging
-- Dynamic metric scale bar with automatic scaling (meters/kilometers)
-- Professional bottom-left panel with coordinates in WGS84 degrees format
-- Real-time scale bar updates based on camera zoom level and position
-- Interactive north arrow compass pointing to geographic north (larger size, positioned above scale)
-- Visual compass needle with faster response time (0.1s transitions) that always points north regardless of camera rotation
-- Basic layer toggle control for OpenStreetMap base layer visibility
-- Checkbox interface in top-left panel for dynamic layer management without viewer reload
-- Drag-and-drop support for 3D models (GLTF/GLB format)
-- Automatic model placement at camera center (crosshair location) with proper ground positioning
-- Visual drag overlay with file format validation and error handling
-- Robust error handling for incompatible 3D models with automatic fallback markers
-- Intelligent CesiumJS compatibility detection and user-friendly error messaging
-- Automatic scene cleanup and recovery from model loading failures
-- Advanced GLB/GLTF file format validation before loading attempts
-- Comprehensive error detection for CesiumJS rendering issues
-- Detailed compatibility guidance for users with problematic 3D models
-- Enhanced model loading with optimized CesiumJS settings for better compatibility
-- Alternative solution guidance with free converter recommendations and export tips
-- Sample model source recommendations for testing CesiumJS compatibility
-- Progressive model loading monitoring system with better state detection
-- Completely eliminated Cesium Ion authentication errors with enhanced service disabling
-- Extended 3D file format recognition to support OBJ, FBX, DAE, STL, PLY, LAS, DXF, USDZ formats
-- Smart format validation with specific conversion guidance for unsupported formats
-- Enhanced drag-and-drop UI with comprehensive format support indicators
-- Professional format-specific warning dialogs with converter recommendations
-- Smart GLB model validation with client-side checks for format and file size
-- Enhanced error handling with consistent modal dialogs and user-friendly messages
-- Modular validation functions for format, size, and file integrity checking
-- Comprehensive compatibility error guidance with Blender export tips
-- Responsive modal system with proper styling and keyboard navigation
-- Integrated comprehensive 3D measurement tool with line, area, and vertical distance modes
-- Professional measurement panel with orange styling and multiple measurement types
-- Smart unit conversion system supporting both metric (m/km) and imperial (ft/mi) units
-- Interactive measurement workflow with visual point markers and real-time calculations
-- Advanced distance calculations including direct 3D, horizontal, vertical, slope, and azimuth
-- Area measurement functionality with polygon visualization and perimeter calculations
-- Live measurement labels displayed directly on the 3D globe with proper styling
-- Comprehensive results display showing all measurement parameters with formatted units
-- Smart measurement entity management with proper cleanup and visual feedback
-- Professional measurement controls integrated seamlessly into existing UI layout
-- Comprehensive base map switcher supporting multiple open-source providers
-- Dynamic base map switching with five different map styles and terrain options
-- Professional base map selector UI with attribution display in bottom-right corner
-- Open-source map providers: OpenStreetMap, OpenTopoMap, Stamen Terrain, CartoDB Positron, ESRI World Imagery
-- Real-time map provider switching without viewer reload using UrlTemplateImageryProvider
-- Proper attribution handling and display for all map providers with legal compliance
-- Error handling and fallback to OpenStreetMap for failed provider connections
-- Clean integration with existing UI maintaining consistent styling and positioning
-- Home view centered on Europe and North Africa (15°E, 45°N) at 4,000 km altitude with vertical perspective
-- Vertical (90-degree straight down) camera angle matching user's screenshot reference
-- Default base map set to OpenTopoMap for enhanced topographic terrain visualization
-- Realistic 3D terrain using Cesium.createWorldTerrain() with authentic elevation data
-- Proper terrain lighting with enableLighting and depthTestAgainstTerrain for realistic shadows
-- 2x terrain exaggeration for enhanced visibility of mountains and valleys
-- Optimized camera angles (35-degree tilt) for best 3D terrain visualization
-- Toggle controls for switching between realistic 3D terrain and flat ellipsoid modes
-- WebGL performance optimization notice with new tab option for full GPU acceleration
-- Complete Ion service blocking with override functions to prevent any paid service attempts
-- Explicit logging confirms only free, open-source providers are used (OpenTopoMap, OpenStreetMap, etc.)
-- Zero authentication errors or paid service attempts
-- Predefined WMS layer integration with three major geospatial data providers
-- Direct checkbox controls for OpenLandMap, GBIF, and GFM WMS services in Data Services section
-- Enhanced WMS layer visibility with optimized opacity (70%), brightness, and contrast settings
-- Proper WMS layer management with toggle functionality and error handling
-- Removed unreliable "Find WMS Data" random navigation in favor of fixed layer controls
-- Comprehensive layer management system with drag-and-drop reordering capability
-- Active layers list showing all loaded WMS overlays with individual opacity controls
-- Layer reordering functionality allowing users to control stacking order (top/bottom)
-- Individual layer removal buttons with X controls for easy management
-- Enhanced WMS loading using UrlTemplateImageryProvider for better compatibility
-- Real-time opacity sliders for each layer with instant visual feedback
-- CartoDB Positron set as default base map for clean, professional appearance
-- UNEP-WCMC World Database of Protected Areas WMS integrated as default enabled layer
-- Proper WMS 1.3.0 protocol implementation for reliable geospatial data loading
-- Auto-loading of protected areas overlay on application startup
-- Dynamic legend system displaying below active layers when World Database of Protected Areas is visible
-- Color-coded legend showing six IUCN protection categories with visual indicators
-- Automatic legend show/hide functionality based on layer visibility status
-- Global Land Degradation layer integration from UNEP-GRID GeoServer (Bare Ground Change 1982-2016)
-- Worldwide land degradation coverage showing 34-year trend analysis of bare ground change
-- Multi-layer legend system supporting both protected areas and land degradation legends simultaneously
-- Color-coded land degradation legend showing vegetation recovery, improvement, stable areas, and degradation patterns
-- Complete night mode (dark theme) implementation with CSS variables system
-- Theme toggle switch in sidebar with localStorage persistence for user preferences
-- Smooth theme transitions applied to all UI components (sidebar, panels, inputs, legends)
-- Comprehensive point marker management UI integrated into measurement panel
-- Interactive point editing with name changes, color customization, and coordinate display
-- 18-color palette for marker customization with visual color picker dropdown
-- Individual point deletion and bulk clear functionality with confirmation dialogs
-- Real-time UI updates showing marker count, coordinates, and timestamp information
-- Enhanced marker creation system supporting custom colors and labels
+- **UI Reorganization**: Complete interface redesign based on maps.geo.admin.ch style
+- **Left Panel**: Collapsible sidebar with organized sections for Search & Navigation, Data Services, and 3D Models
+- **Right Panel**: Vertical tool bar with icon-based access to key functions (North Arrow, Base Maps, Measurements, Point Markers, Data Layers, 3D Models)
+- **Bottom Information Band**: Professional status bar showing scale, coordinates, active layers, and attribution
+- **Enhanced Base Map System**: Simplified to 6 reliable providers (OSM Standard, OpenTopoMap, Monochrome, Dark Mode, CartoDB Positron, ESRI World Imagery)
+- **Improved Error Handling**: Automatic fallback to OpenStreetMap for failed map providers
+- **Real-time Updates**: Dynamic bottom band information updating coordinates, scale, and active layers
+- **Professional Layout**: Swiss GIS-inspired design with proper spacing, shadows, and backdrop blur effects
+- **Theme Integration**: Updated sun/moon toggle positioned in top-right corner
+- **Responsive Design**: Proper margin adjustments for Cesium container with panel states
+- **Tool Integration**: Right panel icons activate corresponding left panel sections
+- **Status Monitoring**: Continuous updates of map state, coordinates, and layer information
+- **Clean Attribution**: Centered bottom credits with improved styling and transparency
+- **Panel Management**: Smooth transitions for collapsible panels with proper state management
+- **Icon-based Navigation**: Professional tool icons for intuitive interface interaction
 
 ## Service Loader System
 
