@@ -107,3 +107,4 @@ The CesiumJS globe viewer is now fully functional with:
 - Enhanced search with live autocomplete suggestions (300ms debounced)
 - Autocomplete dropdown with formatted location details and keyboard navigation
 - Click-to-fly functionality and arrow key selection support
+- Camera positioning set to vertical nadir view (90° straight down) at 2km altitude

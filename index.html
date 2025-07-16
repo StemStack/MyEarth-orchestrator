@@ -450,16 +450,16 @@
             }
         }
 
-        // Function to fly to coordinates
-        function flyToLocation(lat, lon) {
+        // Function to fly to coordinates with vertical nadir view
+        function flyToLocation(lat, lon, altitude = 2000) {
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 3000), // 3km altitude
+                destination: Cesium.Cartesian3.fromDegrees(lon, lat, altitude), // Default 2km altitude
                 orientation: {
-                    heading: Cesium.Math.toRadians(0.0),
-                    pitch: Cesium.Math.toRadians(-45.0), // Look down at 45 degrees
-                    roll: 0.0
+                    heading: 0.0, // North direction
+                    pitch: Cesium.Math.toRadians(-90.0), // Looking straight down (nadir view)
+                    roll: 0.0 // No rotation
                 },
-                duration: 3.0 // 3 second flight animation
+                duration: 2.0 // 2 second flight animation
             });
         }
 
