@@ -1267,9 +1267,14 @@
                         <label for="terrainWms" style="font-size: 11px;">Terrain Lines Overlay</label>
                     </div>
                     
-                    <div class="control-item" style="margin-bottom: 8px;">
+                    <div class="control-item" style="margin-bottom: 4px;">
                         <input type="checkbox" id="protected_areasWms" onchange="togglePredefinedLayer('protected_areas', this.checked)" checked>
                         <label for="protected_areasWms" style="font-size: 11px;">🌳 World Database of Protected Areas</label>
+                    </div>
+                    
+                    <div class="control-item" style="margin-bottom: 8px;">
+                        <input type="checkbox" id="land_degradationWms" onchange="togglePredefinedLayer('land_degradation', this.checked)">
+                        <label for="land_degradationWms" style="font-size: 11px;">🏜️ Global Land Degradation (Congo Basin)</label>
                     </div>
                 </div>
                 
@@ -5056,6 +5061,14 @@
                 type: 'tile',
                 format: 'image/png',
                 transparent: true
+            },
+            land_degradation: {
+                url: 'https://datacore.unepgrid.ch/geoserver/ows',
+                name: 'Global Land Degradation (Congo Basin)',
+                type: 'wms',
+                layers: 'peatlands:CAFI_change_map_2015_2020_sinu_wgs84_opt',
+                format: 'image/png',
+                transparent: true
             }
         };
         
@@ -5253,12 +5266,24 @@
             
             if (!legendSection || !legendContainer) return;
             
-            // Check if protected areas layer is active
+            // Check which layers are active
             const hasProtectedAreas = predefinedWmsLayers.has('protected_areas');
+            const hasLandDegradation = predefinedWmsLayers.has('land_degradation');
             
-            if (hasProtectedAreas) {
+            if (hasProtectedAreas || hasLandDegradation) {
                 legendSection.style.display = 'block';
-                legendContainer.innerHTML = createProtectedAreasLegend();
+                let legendContent = '';
+                
+                if (hasProtectedAreas) {
+                    legendContent += createProtectedAreasLegend();
+                }
+                
+                if (hasLandDegradation) {
+                    if (legendContent) legendContent += '<hr style="margin: 12px 0; border: 0.5px solid #ddd;">';
+                    legendContent += createLandDegradationLegend();
+                }
+                
+                legendContainer.innerHTML = legendContent;
             } else {
                 legendSection.style.display = 'none';
             }
@@ -5298,6 +5323,40 @@
                 </div>
                 <div style="margin-top: 6px; font-size: 9px; color: #666; font-style: italic;">
                     Source: UNEP-WCMC World Database on Protected Areas
+                </div>
+            `;
+        }
+        
+        /**
+         * Create legend HTML for Land Degradation layer
+         */
+        function createLandDegradationLegend() {
+            return `
+                <div style="font-weight: 600; margin-bottom: 6px; color: #8B4513;">🏜️ Global Land Degradation (Congo Basin)</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #228B22; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Stable Forest Areas</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #FFA500; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Forest Degradation</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #FF4500; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Deforested Areas</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #8B4513; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Cleared Land / Bare Soil</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #32CD32; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>New Growth / Regeneration</span>
+                    </div>
+                </div>
+                <div style="margin-top: 6px; font-size: 9px; color: #666; font-style: italic;">
+                    Period: 2015-2020 | Source: UNEP-GRID Congo Basin Forest Change
                 </div>
             `;
         }
