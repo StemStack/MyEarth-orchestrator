@@ -5023,9 +5023,9 @@
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer',
+                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/export?dpi=96&transparent=true&format=png8&layers=show:0&bbox={westProjected},{southProjected},{eastProjected},{northProjected}&bboxSR=3857&imageSR=3857&size=256,256&f=image',
                 name: 'World Database of Protected Areas',
-                type: 'arcgis',
+                type: 'tile',
                 format: 'image/png',
                 transparent: true
             }
@@ -5057,18 +5057,11 @@
                             },
                             credit: service.name
                         });
-                    } else if (service.type === 'arcgis') {
-                        // Create ArcGIS MapServer imagery provider for ESRI REST services
-                        imageryProvider = new Cesium.ArcGisMapServerImageryProvider({
-                            url: service.url,
-                            credit: service.name
-                        });
                     } else {
                         // Create reliable tile imagery provider for tile services
                         imageryProvider = new Cesium.UrlTemplateImageryProvider({
                             url: service.url,
-                            credit: service.name,
-                            subdomains: ['a', 'b', 'c']
+                            credit: service.name
                         });
                     }
                     
