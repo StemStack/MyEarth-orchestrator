@@ -115,5 +115,7 @@ The CesiumJS globe viewer is now fully functional with:
 - Custom red pin graphics with white labels and sequential numbering
 - Marker persistence with coordinate tracking and timestamp logging
 - Dynamic metric scale bar with automatic scaling (meters/kilometers)
-- Professional bottom-left panel with coordinates in metric format
+- Professional bottom-left panel with coordinates in WGS84 degrees format
 - Real-time scale bar updates based on camera zoom level and position
+- Interactive north arrow compass that rotates with camera heading
+- Visual compass needle pointing to geographic north at all times

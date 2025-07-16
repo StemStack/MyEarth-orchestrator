@@ -252,6 +252,64 @@
             font-weight: 400;
         }
 
+        /* North arrow compass styling */
+        .north-arrow-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            padding: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .north-arrow {
+            position: relative;
+            width: 24px;
+            height: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .arrow-needle {
+            position: absolute;
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-bottom: 16px solid #d32f2f;
+            z-index: 2;
+        }
+
+        .arrow-needle::after {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: -4px;
+            width: 0;
+            height: 0;
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 6px solid #666;
+        }
+
+        .arrow-label {
+            position: absolute;
+            top: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            color: #000;
+            z-index: 3;
+        }
+
         .search-button {
             width: 35px;
             height: 35px;
@@ -358,6 +416,27 @@
             .scale-line {
                 min-width: 50px;
             }
+
+            .north-arrow-container {
+                width: 32px;
+                height: 32px;
+                padding: 6px;
+            }
+
+            .north-arrow {
+                width: 20px;
+                height: 20px;
+            }
+
+            .arrow-needle {
+                border-left-width: 3px;
+                border-right-width: 3px;
+                border-bottom-width: 14px;
+            }
+
+            .arrow-label {
+                font-size: 9px;
+            }
         }
     </style>
 </head>
@@ -395,6 +474,14 @@
         <!-- Coordinates display -->
         <div class="coordinates-info" id="coordinatesInfo">
             <span class="coordinates-text" id="coordinatesText">Coordinates (°) ---.------, ---.------</span>
+        </div>
+        
+        <!-- North arrow compass -->
+        <div class="north-arrow-container" id="northArrowContainer">
+            <div class="north-arrow" id="northArrow">
+                <div class="arrow-needle"></div>
+                <div class="arrow-label">N</div>
+            </div>
         </div>
     </div>
 
@@ -465,6 +552,7 @@
         const scaleLine = document.getElementById('scaleLine');
         const scaleText = document.getElementById('scaleText');
         const coordinatesText = document.getElementById('coordinatesText');
+        const northArrow = document.getElementById('northArrow');
         
         // Autocomplete state
         let searchTimeout;
@@ -879,6 +967,32 @@
         }
 
         /**
+         * Updates the north arrow rotation based on camera heading
+         * Rotates the arrow to always point to geographic north
+         */
+        function updateNorthArrow() {
+            try {
+                // Get the camera's current heading (rotation around the up axis)
+                const heading = viewer.camera.heading;
+                
+                // Convert heading from radians to degrees
+                const headingDegrees = Cesium.Math.toDegrees(heading);
+                
+                // Rotate the north arrow to compensate for camera rotation
+                // Negative rotation because we want the arrow to point north regardless of camera heading
+                const rotation = -headingDegrees;
+                
+                // Apply rotation transform to the north arrow
+                northArrow.style.transform = `rotate(${rotation}deg)`;
+                
+            } catch (error) {
+                console.warn('North arrow update failed:', error);
+                // Reset to default orientation on error
+                northArrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        /**
          * Handles mouse movement over the Cesium viewer canvas
          * Uses camera ray casting to determine world coordinates
          * @param {MouseEvent} event - Mouse move event
@@ -926,7 +1040,7 @@
         }
 
         /**
-         * Initialize coordinate tracking and scale bar systems
+         * Initialize coordinate tracking, scale bar, and north arrow systems
          * Attaches mouse move listener and camera change handlers
          */
         function initializeCoordinateTracking() {
@@ -938,14 +1052,21 @@
             // Clear coordinates when mouse leaves canvas
             canvas.addEventListener('mouseleave', clearCoordinateDisplay);
             
-            // Add camera change listener for scale bar updates
-            viewer.camera.changed.addEventListener(updateScaleBar);
-            viewer.scene.morphComplete.addEventListener(updateScaleBar);
+            // Add camera change listeners for scale bar and north arrow updates
+            viewer.camera.changed.addEventListener(function() {
+                updateScaleBar();
+                updateNorthArrow();
+            });
+            viewer.scene.morphComplete.addEventListener(function() {
+                updateScaleBar();
+                updateNorthArrow();
+            });
             
-            // Initial scale bar update
+            // Initial updates
             updateScaleBar();
+            updateNorthArrow();
             
-            console.log('Live coordinate tracking and scale bar initialized');
+            console.log('Live coordinate tracking, scale bar, and north arrow initialized');
         }
 
         // Initialize coordinate tracking after viewer is ready
