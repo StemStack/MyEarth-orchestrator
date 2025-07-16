@@ -581,14 +581,10 @@
             transform: translateX(-100%);
         }
         
-        /* Start with menu collapsed on mobile */
+        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .floating-menu-button {
-                display: flex;
+                width: 300px;
             }
         }
 
@@ -4873,26 +4869,38 @@
             const sidebar = document.getElementById('sidebar');
             const floatingButton = document.getElementById('floatingMenuButton');
             
-            sidebar.classList.toggle('collapsed');
+            if (!sidebar) {
+                console.error('Sidebar element not found');
+                return;
+            }
             
-            // Update toggle button
-            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
-            toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+            const isCollapsed = sidebar.classList.contains('collapsed');
             
-            // Update floating button visibility with delay for smooth transition
-            if (sidebar.classList.contains('collapsed')) {
+            if (isCollapsed) {
+                // Expand sidebar
+                sidebar.classList.remove('collapsed');
+                sidebar.style.transform = 'translateX(0)';
+                if (floatingButton) {
+                    floatingButton.style.display = 'none';
+                }
+                console.log('Sidebar expanded');
+            } else {
+                // Collapse sidebar
+                sidebar.classList.add('collapsed');
+                sidebar.style.transform = 'translateX(-100%)';
                 setTimeout(() => {
                     if (floatingButton) {
                         floatingButton.style.display = 'flex';
                     }
-                }, 150);
-            } else {
-                if (floatingButton) {
-                    floatingButton.style.display = 'none';
-                }
+                }, 300);
+                console.log('Sidebar collapsed');
             }
             
-            console.log('Sidebar toggled:', sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+            // Update toggle button text
+            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+            if (toggleBtn) {
+                toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+            }
         }
         
         // Toggle section collapse/expand
@@ -4972,22 +4980,23 @@
             console.log(`✓ Switched to ${selectedProvider} base map provider`);
         }
         
-        // Initialize floating menu button state
-        const sidebar = document.getElementById('sidebar');
-        const floatingButton = document.getElementById('floatingMenuButton');
-        
-        // Ensure sidebar starts visible on desktop, collapsed on mobile
-        if (window.innerWidth <= 768) {
-            sidebar.classList.add('collapsed');
-            if (floatingButton) {
-                floatingButton.style.display = 'flex';
+        // Initialize sidebar and floating menu button on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const floatingButton = document.getElementById('floatingMenuButton');
+            
+            // Always start with sidebar visible and floating button hidden
+            if (sidebar) {
+                sidebar.classList.remove('collapsed');
+                sidebar.style.transform = 'translateX(0)';
             }
-        } else {
-            sidebar.classList.remove('collapsed');
+            
             if (floatingButton) {
                 floatingButton.style.display = 'none';
             }
-        }
+            
+            console.log('✓ Menu system initialized - sidebar visible, floating button hidden');
+        });
         
         console.log('✓ Swiss-style sidebar initialized');
         
