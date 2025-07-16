@@ -640,8 +640,8 @@
             grid-template-columns: 1fr;
         }
 
-        /* Panel collapse button */
-        .panel-collapse-btn {
+        /* Panel toggle button - consistent with left panel */
+        .panel-toggle-btn {
             position: absolute;
             top: -5px;
             right: -5px;
@@ -660,7 +660,7 @@
             transition: all 0.2s ease;
         }
 
-        .panel-collapse-btn:hover {
+        .panel-toggle-btn:hover {
             background: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -1617,10 +1617,7 @@
         <button class="zoom-button" id="zoomOut" title="Zoom Out">−</button>
     </div>
 
-    <!-- Theme toggle button (top right) -->
-    <div class="theme-toggle-button" id="themeToggleButton" onclick="toggleTheme()" title="Toggle dark/light mode">
-        <span id="themeIcon">☀️</span>
-    </div>
+
 
     <!-- Center crosshair -->
     <div class="center-crosshair" id="centerCrosshair">
@@ -1950,7 +1947,7 @@
 
     <!-- Right Panel with Tool Icons - MapX Style -->
     <div id="rightPanel">
-        <div class="panel-collapse-btn" onclick="toggleRightPanel()" title="Collapse Panel">⌐</div>
+        <div class="panel-toggle-btn" onclick="toggleRightPanel()" title="Collapse Panel">✕</div>
         
         <!-- North Arrow Tool - Integrated -->
         <div class="tool-icon" id="northArrowTool" title="North Arrow - Click to Reset" onclick="resetViewToNorth()">
@@ -1978,7 +1975,7 @@
                 <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
-        <div class="tool-icon" id="themeToggleTool" title="Toggle Theme" onclick="toggleTheme()">☾</div>
+
         <!-- Base Map Icons -->
         <div class="tool-icon" id="osmStandardTool" title="OSM Standard" onclick="switchBaseMap('osm')">
             <svg width="16" height="16" viewBox="0 0 24 24">
@@ -2082,21 +2079,7 @@
         </div>
     </div>
 
-    <!-- Scale bar and coordinates display -->
-    <div class="bottom-left-panel" id="bottomLeftPanel">
-        <!-- Scale bar -->
-        <div class="scale-bar-container" id="scaleBarContainer">
-            <div class="scale-bar" id="scaleBar">
-                <div class="scale-line" id="scaleLine"></div>
-                <div class="scale-text" id="scaleText">1 km</div>
-            </div>
-        </div>
-        
-        <!-- Coordinates display -->
-        <div class="coordinates-info" id="coordinatesInfo">
-            <span class="coordinates-text" id="coordinatesText">Coordinates (°) ---.------, ---.------</span>
-        </div>
-    </div>
+
 
     <!-- Floating menu button (appears when sidebar is collapsed) -->
     <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()">☰</button>
@@ -5593,7 +5576,15 @@
             const panel = document.getElementById('rightPanel');
             if (panel) {
                 panel.classList.toggle('collapsed');
-                console.log('Right panel', panel.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                const isCollapsed = panel.classList.contains('collapsed');
+                
+                // Update toggle button text to match left panel style
+                const toggleBtn = panel.querySelector('.panel-toggle-btn');
+                if (toggleBtn) {
+                    toggleBtn.textContent = isCollapsed ? '☰' : '✕';
+                }
+                
+                console.log('✓ Right panel', isCollapsed ? 'collapsed' : 'expanded');
             }
         }
 
