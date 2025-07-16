@@ -1173,18 +1173,18 @@
                     <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">WMS Data Layers:</label>
                     
                     <div class="control-item" style="margin-bottom: 4px;">
-                        <input type="checkbox" id="openlandmapWms" onchange="togglePredefinedWms('openlandmap', this.checked)">
-                        <label for="openlandmapWms" style="font-size: 11px;">OpenLandMap Soil/Terrain</label>
+                        <input type="checkbox" id="satelliteWms" onchange="togglePredefinedLayer('satellite', this.checked)">
+                        <label for="satelliteWms" style="font-size: 11px;">Satellite Imagery Overlay</label>
                     </div>
                     
                     <div class="control-item" style="margin-bottom: 4px;">
-                        <input type="checkbox" id="countriesWms" onchange="togglePredefinedWms('countries', this.checked)">
-                        <label for="countriesWms" style="font-size: 11px;">OSM WMS Layer</label>
+                        <input type="checkbox" id="labelsWms" onchange="togglePredefinedLayer('labels', this.checked)">
+                        <label for="labelsWms" style="font-size: 11px;">Place Labels Overlay</label>
                     </div>
                     
                     <div class="control-item" style="margin-bottom: 8px;">
-                        <input type="checkbox" id="testLayerWms" onchange="togglePredefinedWms('test_layer', this.checked)">
-                        <label for="testLayerWms" style="font-size: 11px;">Weather Radar (Test)</label>
+                        <input type="checkbox" id="terrainWms" onchange="togglePredefinedLayer('terrain', this.checked)">
+                        <label for="terrainWms" style="font-size: 11px;">Terrain Lines Overlay</label>
                     </div>
                 </div>
                 
@@ -4877,25 +4877,22 @@
         
         console.log('✓ Swiss-style sidebar initialized');
         
-        // Predefined WMS services configuration - using working public services
+        // Predefined overlay services using reliable tile providers
         const predefinedWmsServices = {
-            openlandmap: {
-                url: 'https://geoserver.openlandmap.org/geoserver/wms',
-                layers: 'olm:sol_ph.h2o_mean_30m',
-                name: 'OpenLandMap Soil pH',
-                format: 'image/png'
+            satellite: {
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                name: 'Satellite Imagery Overlay',
+                type: 'tile'
             },
-            countries: {
-                url: 'https://ows.terrestris.de/osm/service',
-                layers: 'OSM-WMS',
-                name: 'OSM WMS Layer',
-                format: 'image/png'
+            labels: {
+                url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png',
+                name: 'Place Labels Overlay', 
+                type: 'tile'
             },
-            test_layer: {
-                url: 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi',
-                layers: 'nexrad-n0r',
-                name: 'Weather Radar (Test)',
-                format: 'image/png'
+            terrain: {
+                url: 'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-lines/{z}/{x}/{y}.png',
+                name: 'Terrain Lines Overlay',
+                type: 'tile'
             }
         };
         
@@ -4903,51 +4900,34 @@
         const predefinedWmsLayers = new Map();
         
         /**
-         * Toggle predefined WMS layers on/off
+         * Toggle predefined overlay layers on/off
          */
-        function togglePredefinedWms(serviceKey, enabled) {
+        function togglePredefinedLayer(serviceKey, enabled) {
             const service = predefinedWmsServices[serviceKey];
             console.log(`Attempting to ${enabled ? 'enable' : 'disable'} ${service.name}`);
             
             if (enabled) {
-                // Add WMS layer using simplified approach
                 try {
-                    console.log(`Creating WMS provider for ${service.url} with layers ${service.layers}`);
-                    
-                    // Create WMS provider with error handling
-                    const imageryProvider = new Cesium.WebMapServiceImageryProvider({
+                    // Create reliable tile imagery provider
+                    const imageryProvider = new Cesium.UrlTemplateImageryProvider({
                         url: service.url,
-                        layers: service.layers,
-                        parameters: {
-                            format: service.format,
-                            transparent: true,
-                            version: '1.3.0'
-                        },
-                        credit: service.name
+                        credit: service.name,
+                        subdomains: ['a', 'b', 'c']
                     });
                     
-                    // Wait for the provider to be ready before adding to viewer
-                    imageryProvider.readyPromise.then(() => {
-                        const imageryLayer = viewer.imageryLayers.addImageryProvider(imageryProvider);
-                        imageryLayer.alpha = 0.8;
-                        imageryLayer.brightness = 1.2;
-                        imageryLayer.contrast = 1.3;
-                        
-                        predefinedWmsLayers.set(serviceKey, {
-                            layer: imageryLayer,
-                            name: service.name,
-                            serviceKey: serviceKey
-                        });
-                        
-                        console.log(`✓ ${service.name} layer enabled and ready`);
-                        updateLayersList();
-                        
-                    }).catch((error) => {
-                        console.error(`Failed to load ${service.name}:`, error);
-                        const checkbox = document.getElementById(`${serviceKey}Wms`);
-                        if (checkbox) checkbox.checked = false;
-                        alert(`Failed to load ${service.name}: ${error.message}`);
+                    const imageryLayer = viewer.imageryLayers.addImageryProvider(imageryProvider);
+                    imageryLayer.alpha = 0.7;
+                    imageryLayer.brightness = 1.0;
+                    imageryLayer.contrast = 1.1;
+                    
+                    predefinedWmsLayers.set(serviceKey, {
+                        layer: imageryLayer,
+                        name: service.name,
+                        serviceKey: serviceKey
                     });
+                    
+                    console.log(`✓ ${service.name} layer enabled`);
+                    updateLayersList();
                     
                 } catch (error) {
                     console.error(`Failed to load ${service.name}:`, error);
@@ -4955,7 +4935,7 @@
                     if (checkbox) checkbox.checked = false;
                 }
             } else {
-                // Remove WMS layer
+                // Remove layer
                 const layerInfo = predefinedWmsLayers.get(serviceKey);
                 if (layerInfo) {
                     viewer.imageryLayers.remove(layerInfo.layer);
@@ -5025,7 +5005,7 @@
             const checkbox = document.getElementById(`${serviceKey}Wms`);
             if (checkbox) {
                 checkbox.checked = false;
-                togglePredefinedWms(serviceKey, false);
+                togglePredefinedLayer(serviceKey, false);
             }
         }
         
