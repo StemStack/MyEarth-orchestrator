@@ -154,3 +154,11 @@ The CesiumJS globe viewer is now fully functional with:
 - Comprehensive results display showing all measurement parameters with formatted units
 - Smart measurement entity management with proper cleanup and visual feedback
 - Professional measurement controls integrated seamlessly into existing UI layout
+- Comprehensive base map switcher supporting multiple open-source providers
+- Dynamic base map switching with five different map styles and terrain options
+- Professional base map selector UI with attribution display in bottom-right corner
+- Open-source map providers: OpenStreetMap, OpenTopoMap, Stamen Terrain, CartoDB Positron, ESRI World Imagery
+- Real-time map provider switching without viewer reload using UrlTemplateImageryProvider
+- Proper attribution handling and display for all map providers with legal compliance
+- Error handling and fallback to OpenStreetMap for failed provider connections
+- Clean integration with existing UI maintaining consistent styling and positioning
