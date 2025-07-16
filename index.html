@@ -1180,12 +1180,12 @@
         
         console.log('✓ Using OpenTopoMap - free, open-source base map provider');
 
-        // Define Alps home view coordinates with proper 3D viewing angle
+        // Define Europe and North Africa overview with vertical perspective
         const europeHomeView = {
-            destination: Cesium.Cartesian3.fromDegrees(8.0, 46.5, 50000.0), // Swiss Alps
+            destination: Cesium.Cartesian3.fromDegrees(15.0, 45.0, 4000000.0), // Center on Europe/North Africa
             orientation: {
                 heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-35), // 35 degree tilt for 3D terrain visibility
+                pitch: Cesium.Math.toRadians(-90), // Vertical (straight down) view
                 roll: 0.0
             }
         };
@@ -1364,15 +1364,15 @@
             }
         }
 
-        // Function to fly to coordinates with 3D terrain viewing angle
-        function flyToLocation(lat, lon, altitude = 5000) {
+        // Function to fly to coordinates with vertical view
+        function flyToLocation(lat, lon, altitude = 2000) {
             const destination = Cesium.Cartesian3.fromDegrees(lon, lat, altitude);
             
             viewer.camera.flyTo({
                 destination: destination,
                 orientation: {
                     heading: Cesium.Math.toRadians(0), // North direction
-                    pitch: Cesium.Math.toRadians(-35), // 35 degree tilt for terrain visibility
+                    pitch: Cesium.Math.toRadians(-90), // Vertical (straight down) view
                     roll: 0.0
                 },
                 duration: 2.0
