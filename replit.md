@@ -121,3 +121,6 @@ The CesiumJS globe viewer is now fully functional with:
 - Visual compass needle with faster response time (0.1s transitions) that always points north regardless of camera rotation
 - Basic layer toggle control for OpenStreetMap base layer visibility
 - Checkbox interface in top-left panel for dynamic layer management without viewer reload
+- Drag-and-drop support for 3D models (GLTF/GLB format)
+- Automatic model placement at camera center (crosshair location) with proper ground positioning
+- Visual drag overlay with file format validation and error handling
