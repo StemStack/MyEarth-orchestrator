@@ -963,16 +963,34 @@
          * @param {number} longitude - Longitude in degrees  
          */
         function updateCoordinateDisplay(latitude, longitude) {
-            const latText = latitude.toFixed(6);
-            const lonText = longitude.toFixed(6);
-            coordinatesText.textContent = `Coordinates (°) ${latText}, ${lonText}`;
+            try {
+                if (!coordinatesText) {
+                    console.warn('Coordinates text element not found');
+                    return;
+                }
+                
+                const latText = latitude.toFixed(6);
+                const lonText = longitude.toFixed(6);
+                coordinatesText.textContent = `Coordinates (°) ${latText}, ${lonText}`;
+                
+            } catch (error) {
+                console.warn('Error updating coordinate display:', error);
+            }
         }
 
         /**
          * Clears coordinate display when mouse is not over terrain
          */
         function clearCoordinateDisplay() {
-            coordinatesText.textContent = 'Coordinates (°) ---.------, ---.------';
+            try {
+                if (!coordinatesText) {
+                    console.warn('Coordinates text element not found');
+                    return;
+                }
+                coordinatesText.textContent = 'Coordinates (°) ---.------, ---.------';
+            } catch (error) {
+                console.warn('Error clearing coordinate display:', error);
+            }
         }
 
         /**
@@ -981,11 +999,18 @@
          */
         function updateNorthArrow() {
             try {
+                // Ensure northArrow element exists
+                if (!northArrow) {
+                    console.warn('North arrow element not found');
+                    return;
+                }
+                
                 // Get the camera's current heading (rotation around the up axis)
                 const heading = viewer.camera.heading;
                 
-                // Convert heading from radians to degrees
-                const headingDegrees = Cesium.Math.toDegrees(heading);
+                // Convert heading from radians to degrees and normalize to 0-360
+                let headingDegrees = Cesium.Math.toDegrees(heading);
+                headingDegrees = ((headingDegrees % 360) + 360) % 360;
                 
                 // Rotate the north arrow to compensate for camera rotation
                 // Negative rotation because we want the arrow to point north regardless of camera heading
@@ -994,10 +1019,14 @@
                 // Apply rotation transform to the north arrow
                 northArrow.style.transform = `rotate(${rotation}deg)`;
                 
+
+                
             } catch (error) {
                 console.warn('North arrow update failed:', error);
                 // Reset to default orientation on error
-                northArrow.style.transform = 'rotate(0deg)';
+                if (northArrow) {
+                    northArrow.style.transform = 'rotate(0deg)';
+                }
             }
         }
 
@@ -1079,7 +1108,16 @@
         }
 
         // Initialize coordinate tracking after viewer is ready
-        initializeCoordinateTracking();
+        setTimeout(() => {
+            // Verify all elements exist before initializing
+            console.log('Checking elements:');
+            console.log('- northArrow:', !!northArrow);
+            console.log('- coordinatesText:', !!coordinatesText);
+            console.log('- scaleLine:', !!scaleLine);
+            console.log('- scaleText:', !!scaleText);
+            
+            initializeCoordinateTracking();
+        }, 100);
 
         /**
          * Interactive Marker Placement System
