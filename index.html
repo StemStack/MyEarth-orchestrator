@@ -1421,16 +1421,59 @@
         }
 
         /**
+         * Validate GLB/GLTF file format
+         * @param {File} file - The file to validate
+         * @returns {Promise<boolean>} - True if valid, false otherwise
+         */
+        async function validateModelFile(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const arrayBuffer = e.target.result;
+                    const dataView = new DataView(arrayBuffer);
+                    
+                    try {
+                        // Check GLB magic number (first 4 bytes should be "glTF")
+                        if (file.name.toLowerCase().endsWith('.glb')) {
+                            const magic = dataView.getUint32(0, true);
+                            const glTFMagic = 0x46546C67; // "glTF" in little-endian
+                            resolve(magic === glTFMagic);
+                        } else if (file.name.toLowerCase().endsWith('.gltf')) {
+                            // For GLTF JSON files, try to parse as JSON
+                            const text = new TextDecoder().decode(arrayBuffer);
+                            const json = JSON.parse(text);
+                            resolve(json.asset && json.asset.version);
+                        } else {
+                            resolve(false);
+                        }
+                    } catch (error) {
+                        console.warn('File validation error:', error);
+                        resolve(false);
+                    }
+                };
+                reader.onerror = () => resolve(false);
+                reader.readAsArrayBuffer(file.slice(0, 1024)); // Read first 1KB for validation
+            });
+        }
+
+        /**
          * Load a 3D model at the current camera center position
          * @param {File} file - The GLTF/GLB file to load
          */
-        function loadModelAtCameraCenter(file) {
+        async function loadModelAtCameraCenter(file) {
             console.log('Loading 3D model:', file.name, 'Size:', file.size, 'bytes');
             
             try {
                 // Validate file size (limit to 50MB)
                 if (file.size > 50 * 1024 * 1024) {
                     alert('File too large. Please use a file smaller than 50MB.');
+                    return;
+                }
+                
+                // Validate file format
+                const isValidFormat = await validateModelFile(file);
+                if (!isValidFormat) {
+                    alert('Invalid 3D model file. Please ensure it\'s a valid GLB or GLTF file.');
                     return;
                 }
                 
@@ -1494,7 +1537,20 @@
                 const originalConsoleError = console.error;
                 const errorHandler = function(...args) {
                     const errorString = args.join(' ');
-                    if (!modelLoadFailed && (errorString.includes('midpoint') || errorString.includes('incrementallyLoadTextures') || errorString.includes('Cannot read properties of undefined'))) {
+                    if (!modelLoadFailed && (
+                        errorString.includes('midpoint') || 
+                        errorString.includes('incrementallyLoadTextures') || 
+                        errorString.includes('Cannot read properties of undefined') ||
+                        errorString.includes('reading \'x\'') ||
+                        errorString.includes('fromCornerPoints') ||
+                        errorString.includes('new yue') ||
+                        errorString.includes('buildDrawCommands') ||
+                        errorString.includes('Ske') ||
+                        errorString.includes('To.update') ||
+                        errorString.includes('pn.fromCornerPoints') ||
+                        errorString.includes('qs.update') ||
+                        errorString.includes('Yl.updateAndExecuteCommands')
+                    )) {
                         modelLoadFailed = true;
                         console.warn('3D model compatibility error detected');
                         
@@ -1522,14 +1578,23 @@
                             text-align: center;
                         `;
                         errorDiv.innerHTML = `
-                            <h3 style="margin: 0 0 10px 0;">3D Model Not Compatible</h3>
-                            <p style="margin: 0 0 15px 0;">This GLB file cannot be displayed in CesiumJS. Common causes:</p>
+                            <h3 style="margin: 0 0 10px 0;">3D Model Not Compatible with CesiumJS</h3>
+                            <p style="margin: 0 0 15px 0;">This GLB file contains features that CesiumJS cannot render. Common issues:</p>
                             <ul style="text-align: left; margin: 0 0 15px 0; font-size: 13px;">
-                                <li>Complex geometry or materials</li>
-                                <li>Unsupported GLTF extensions</li>
-                                <li>File corruption or format issues</li>
+                                <li>Complex skeletal animations or morphing</li>
+                                <li>Advanced material properties (PBR extensions)</li>
+                                <li>Unsupported GLTF 2.0 extensions</li>
+                                <li>High-poly geometry with complex UV mapping</li>
+                                <li>Non-standard mesh structures</li>
                             </ul>
-                            <p style="margin: 0 0 15px 0; font-size: 12px;">Try simplifying the model or using a different 3D file.</p>
+                            <p style="margin: 0 0 15px 0; font-size: 12px;"><strong>Solution:</strong> Use simpler models or export with basic materials for web display.</p>
+                            <div style="text-align: left; font-size: 11px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px; margin-bottom: 15px;">
+                                <strong>Tips for CesiumJS compatibility:</strong><br>
+                                • Export with simplified materials<br>
+                                • Disable animations during export<br>
+                                • Use standard UV mapping<br>
+                                • Keep poly count under 10k triangles
+                            </div>
                             <button onclick="this.parentElement.remove()" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
                         `;
                         document.body.appendChild(errorDiv);
@@ -1621,7 +1686,13 @@
                             maximumScale: 1000,
                             runAnimations: false,
                             clampAnimations: true,
-                            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+                            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                            // Enhanced compatibility settings
+                            silhouetteColor: Cesium.Color.TRANSPARENT,
+                            silhouetteSize: 0,
+                            incrementallyLoadTextures: false,
+                            backFaceCulling: true,
+                            shadows: Cesium.ShadowMode.DISABLED
                         }
                     });
                     
