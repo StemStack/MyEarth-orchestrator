@@ -5025,8 +5025,7 @@
             protected_areas: {
                 url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer',
                 name: 'World Database of Protected Areas',
-                type: 'wms',
-                layers: '0,1,2,3,4,5,6',
+                type: 'arcgis',
                 format: 'image/png',
                 transparent: true
             }
@@ -5049,13 +5048,19 @@
                     if (service.type === 'wms') {
                         // Create WMS imagery provider for proper WMS services
                         imageryProvider = new Cesium.WebMapServiceImageryProvider({
-                            url: service.url + '/WMSServer',
+                            url: service.url,
                             layers: service.layers || '0',
                             parameters: {
                                 format: service.format || 'image/png',
                                 transparent: service.transparent || true,
-                                version: '1.3.0'
+                                version: '1.1.1'
                             },
+                            credit: service.name
+                        });
+                    } else if (service.type === 'arcgis') {
+                        // Create ArcGIS MapServer imagery provider for ESRI REST services
+                        imageryProvider = new Cesium.ArcGisMapServerImageryProvider({
+                            url: service.url,
                             credit: service.name
                         });
                     } else {
