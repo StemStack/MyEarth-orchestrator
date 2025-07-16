@@ -573,6 +573,157 @@
             background-color: rgba(25, 118, 210, 0.9);
         }
 
+        /* Measurement tool styles */
+        .measurement-controls {
+            position: absolute;
+            top: 200px;
+            right: 10px;
+            background: rgba(42, 42, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 12px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            z-index: 1000;
+            max-width: 280px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .measurement-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .measurement-title {
+            font-weight: bold;
+            font-size: 13px;
+            color: #ffa500;
+        }
+
+        .measurement-mode-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .measurement-mode-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: white;
+            font-size: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .measurement-mode-btn.active {
+            background: #ffa500;
+            border-color: #ffa500;
+            color: black;
+            font-weight: bold;
+        }
+
+        .measurement-mode-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .measurement-units {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .measurement-units label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .measurement-units select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            color: white;
+            font-size: 11px;
+            padding: 3px 6px;
+            cursor: pointer;
+        }
+
+        .measurement-results {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 10px;
+            min-height: 60px;
+        }
+
+        .measurement-result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            font-size: 11px;
+        }
+
+        .measurement-result-label {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .measurement-result-value {
+            color: #ffa500;
+            font-weight: bold;
+        }
+
+        .measurement-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .measurement-btn {
+            flex: 1;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .measurement-btn.primary {
+            background: #ffa500;
+            color: black;
+            font-weight: bold;
+        }
+
+        .measurement-btn.primary:hover {
+            background: #ff8c00;
+        }
+
+        .measurement-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .measurement-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .measurement-instructions {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+            margin: 8px 0;
+            line-height: 1.3;
+        }
+
         @media (max-width: 768px) {
             .zoom-controls {
                 top: 55px;
@@ -694,9 +845,53 @@
                 📦 Samples
             </button>
         </div>
+        
+        <!-- Measurement tool toggle -->
+        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <button onclick="toggleMeasurementTool()" style="width: 100%; padding: 5px 8px; background-color: rgba(255, 165, 0, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 3px; color: white; font-size: 10px; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease;">
+                📏 Measure
+            </button>
+        </div>
     </div>
 
     <!-- Drag and drop overlay -->
+    <!-- Measurement Controls -->
+    <div class="measurement-controls" id="measurementControls" style="display: none;">
+        <div class="measurement-header">
+            <div class="measurement-title">📏 Measurement Tool</div>
+            <button onclick="toggleMeasurementTool()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
+        </div>
+        
+        <div class="measurement-mode-buttons">
+            <button class="measurement-mode-btn active" data-mode="line" onclick="setMeasurementMode('line')">Line</button>
+            <button class="measurement-mode-btn" data-mode="area" onclick="setMeasurementMode('area')">Area</button>
+            <button class="measurement-mode-btn" data-mode="vertical" onclick="setMeasurementMode('vertical')">Vertical</button>
+        </div>
+        
+        <div class="measurement-units">
+            <label>Units:</label>
+            <select id="measurementUnits" onchange="updateMeasurementUnits()">
+                <option value="metric">Metric (m)</option>
+                <option value="imperial">Imperial (ft)</option>
+            </select>
+        </div>
+        
+        <div class="measurement-results" id="measurementResults">
+            <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 15px;">
+                No measurements yet
+            </div>
+        </div>
+        
+        <div class="measurement-instructions" id="measurementInstructions">
+            Click two points to measure distance
+        </div>
+        
+        <div class="measurement-actions">
+            <button class="measurement-btn primary" onclick="newMeasurement()">New</button>
+            <button class="measurement-btn secondary" onclick="clearMeasurements()">Clear All</button>
+        </div>
+    </div>
+
     <div class="drag-drop-overlay" id="dragDropOverlay" style="display: none;">
         <div class="drag-drop-content">
             <div class="drag-drop-icon">📁</div>
@@ -2444,6 +2639,548 @@
                 <button onclick="this.parentElement.remove()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Got It</button>
             `;
             document.body.appendChild(altDiv);
+        }
+
+        // Measurement tool state and variables
+        let measurementTool = {
+            isActive: false,
+            mode: 'line', // 'line', 'area', 'vertical'
+            units: 'metric', // 'metric', 'imperial'
+            points: [],
+            entities: [],
+            activePoints: [],
+            clickHandler: null,
+            results: {}
+        };
+
+        /**
+         * Toggle measurement tool visibility and functionality
+         */
+        function toggleMeasurementTool() {
+            const measurementControls = document.getElementById('measurementControls');
+            
+            if (measurementControls.style.display === 'none') {
+                measurementControls.style.display = 'block';
+                measurementTool.isActive = true;
+                startMeasurement();
+            } else {
+                measurementControls.style.display = 'none';
+                measurementTool.isActive = false;
+                stopMeasurement();
+            }
+        }
+
+        /**
+         * Set measurement mode (line, area, vertical)
+         */
+        function setMeasurementMode(mode) {
+            // Update UI
+            document.querySelectorAll('.measurement-mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            
+            // Update measurement state
+            measurementTool.mode = mode;
+            newMeasurement();
+            
+            // Update instructions
+            updateInstructions();
+        }
+
+        /**
+         * Update measurement instructions based on current mode
+         */
+        function updateInstructions() {
+            const instructionsEl = document.getElementById('measurementInstructions');
+            
+            switch(measurementTool.mode) {
+                case 'line':
+                    instructionsEl.textContent = 'Click two points to measure distance';
+                    break;
+                case 'area':
+                    instructionsEl.textContent = 'Click points to create area boundary (double-click to finish)';
+                    break;
+                case 'vertical':
+                    instructionsEl.textContent = 'Click two points to measure vertical distance';
+                    break;
+                default:
+                    instructionsEl.textContent = 'Select measurement mode';
+            }
+        }
+
+        /**
+         * Start measurement functionality
+         */
+        function startMeasurement() {
+            if (!viewer || !measurementTool.isActive) return;
+            
+            // Disable default click behavior temporarily
+            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function(event) {
+                handleMeasurementClick(event);
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            
+            updateInstructions();
+        }
+
+        /**
+         * Stop measurement functionality
+         */
+        function stopMeasurement() {
+            if (!viewer) return;
+            
+            // Re-enable default click behavior
+            viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        }
+
+        /**
+         * Handle click events for measurement
+         */
+        function handleMeasurementClick(event) {
+            if (!measurementTool.isActive) return;
+            
+            // Pick position on globe/terrain
+            const pickedPosition = viewer.camera.pickEllipsoid(event.position, viewer.scene.globe.ellipsoid);
+            if (!pickedPosition) return;
+            
+            measurementTool.activePoints.push(pickedPosition);
+            
+            // Add visual point marker
+            addPointMarker(pickedPosition, measurementTool.activePoints.length);
+            
+            // Handle different measurement modes
+            switch(measurementTool.mode) {
+                case 'line':
+                case 'vertical':
+                    if (measurementTool.activePoints.length === 2) {
+                        completeMeasurement();
+                    }
+                    break;
+                case 'area':
+                    if (measurementTool.activePoints.length >= 3) {
+                        // Area measurement requires at least 3 points
+                        // Will be completed with double-click or explicit finish
+                        updateAreaMeasurement();
+                    }
+                    break;
+            }
+        }
+
+        /**
+         * Update area measurement (for incremental area updates)
+         */
+        function updateAreaMeasurement() {
+            if (measurementTool.activePoints.length >= 3) {
+                // Clear previous area visualization
+                measurementTool.entities.forEach(entity => {
+                    if (entity.polygon) {
+                        viewer.entities.remove(entity);
+                    }
+                });
+                
+                // Draw current area
+                drawAreaPolygon();
+                
+                // Calculate and display current results
+                const results = calculateAreaMeasurement();
+                measurementTool.results = results;
+                displayResults(results);
+            }
+        }
+
+        /**
+         * Add visual point marker
+         */
+        function addPointMarker(position, pointNumber) {
+            const pointEntity = viewer.entities.add({
+                position: position,
+                point: {
+                    pixelSize: 8,
+                    color: Cesium.Color.ORANGE,
+                    outlineColor: Cesium.Color.WHITE,
+                    outlineWidth: 2,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                },
+                label: {
+                    text: pointNumber.toString(),
+                    font: '12pt Arial',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    pixelOffset: new Cesium.Cartesian2(0, -20),
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
+            
+            measurementTool.entities.push(pointEntity);
+        }
+
+        /**
+         * Complete measurement and show results
+         */
+        function completeMeasurement() {
+            if (measurementTool.activePoints.length < 2) return;
+            
+            let results = {};
+            
+            if (measurementTool.mode === 'line') {
+                results = calculateLineDistance();
+                drawMeasurementLine();
+            } else if (measurementTool.mode === 'vertical') {
+                results = calculateVerticalDistance();
+                drawMeasurementLine();
+            } else if (measurementTool.mode === 'area') {
+                results = calculateAreaMeasurement();
+                drawAreaPolygon();
+            }
+            
+            measurementTool.results = results;
+            displayResults(results);
+        }
+
+        /**
+         * Calculate line distance measurements
+         */
+        function calculateLineDistance() {
+            const point1 = measurementTool.activePoints[0];
+            const point2 = measurementTool.activePoints[1];
+            
+            // Convert to cartographic for height information
+            const cartographic1 = Cesium.Cartographic.fromCartesian(point1);
+            const cartographic2 = Cesium.Cartographic.fromCartesian(point2);
+            
+            // Calculate 3D direct distance
+            const distance3D = Cesium.Cartesian3.distance(point1, point2);
+            
+            // Calculate horizontal distance (on ellipsoid surface)
+            const geodesic = new Cesium.EllipsoidGeodesic(cartographic1, cartographic2);
+            const horizontalDistance = geodesic.surfaceDistance;
+            
+            // Calculate vertical distance
+            const verticalDistance = Math.abs(cartographic2.height - cartographic1.height);
+            
+            // Calculate slope and azimuth
+            const slope = horizontalDistance > 0 ? verticalDistance / horizontalDistance : 0;
+            const slopeAngle = Math.atan(slope) * (180 / Math.PI);
+            const azimuth = geodesic.startHeading * (180 / Math.PI);
+            
+            return {
+                direct: distance3D,
+                horizontal: horizontalDistance,
+                vertical: verticalDistance,
+                slope: slopeAngle,
+                azimuth: azimuth,
+                point1Height: cartographic1.height,
+                point2Height: cartographic2.height
+            };
+        }
+
+        /**
+         * Calculate vertical distance measurements
+         */
+        function calculateVerticalDistance() {
+            const results = calculateLineDistance();
+            return {
+                vertical: results.vertical,
+                point1Height: results.point1Height,
+                point2Height: results.point2Height,
+                heightDifference: results.point2Height - results.point1Height
+            };
+        }
+
+        /**
+         * Calculate area measurement (simplified polygon area)
+         */
+        function calculateAreaMeasurement() {
+            if (measurementTool.activePoints.length < 3) return {};
+            
+            // Convert points to cartographic
+            const cartographicPoints = measurementTool.activePoints.map(point => 
+                Cesium.Cartographic.fromCartesian(point)
+            );
+            
+            // Calculate approximate area using spherical excess method
+            let area = 0;
+            const R = 6371000; // Earth radius in meters
+            
+            for (let i = 0; i < cartographicPoints.length; i++) {
+                const j = (i + 1) % cartographicPoints.length;
+                const lat1 = cartographicPoints[i].latitude;
+                const lon1 = cartographicPoints[i].longitude;
+                const lat2 = cartographicPoints[j].latitude;
+                const lon2 = cartographicPoints[j].longitude;
+                
+                area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+            }
+            
+            area = Math.abs(area * R * R / 2);
+            
+            // Calculate perimeter
+            let perimeter = 0;
+            for (let i = 0; i < measurementTool.activePoints.length; i++) {
+                const j = (i + 1) % measurementTool.activePoints.length;
+                perimeter += Cesium.Cartesian3.distance(
+                    measurementTool.activePoints[i], 
+                    measurementTool.activePoints[j]
+                );
+            }
+            
+            return {
+                area: area,
+                perimeter: perimeter,
+                points: measurementTool.activePoints.length
+            };
+        }
+
+        /**
+         * Draw measurement line between points
+         */
+        function drawMeasurementLine() {
+            const lineEntity = viewer.entities.add({
+                polyline: {
+                    positions: measurementTool.activePoints,
+                    width: 3,
+                    material: Cesium.Color.ORANGE,
+                    clampToGround: true
+                }
+            });
+            
+            measurementTool.entities.push(lineEntity);
+            
+            // Add distance label at midpoint
+            if (measurementTool.activePoints.length === 2) {
+                const midpoint = Cesium.Cartesian3.midpoint(
+                    measurementTool.activePoints[0],
+                    measurementTool.activePoints[1],
+                    new Cesium.Cartesian3()
+                );
+                
+                const distance = formatDistance(measurementTool.results.direct || measurementTool.results.vertical);
+                
+                const labelEntity = viewer.entities.add({
+                    position: midpoint,
+                    label: {
+                        text: distance,
+                        font: '14pt Arial',
+                        fillColor: Cesium.Color.ORANGE,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        pixelOffset: new Cesium.Cartesian2(0, -30),
+                        heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    }
+                });
+                
+                measurementTool.entities.push(labelEntity);
+            }
+        }
+
+        /**
+         * Draw area polygon
+         */
+        function drawAreaPolygon() {
+            const polygonEntity = viewer.entities.add({
+                polygon: {
+                    hierarchy: measurementTool.activePoints,
+                    material: Cesium.Color.ORANGE.withAlpha(0.3),
+                    outline: true,
+                    outlineColor: Cesium.Color.ORANGE,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                }
+            });
+            
+            measurementTool.entities.push(polygonEntity);
+        }
+
+        /**
+         * Format distance value based on current units
+         */
+        function formatDistance(meters) {
+            if (measurementTool.units === 'metric') {
+                if (meters >= 1000) {
+                    return (meters / 1000).toFixed(2) + ' km';
+                } else {
+                    return meters.toFixed(2) + ' m';
+                }
+            } else {
+                const feet = meters * 3.28084;
+                if (feet >= 5280) {
+                    return (feet / 5280).toFixed(2) + ' mi';
+                } else {
+                    return feet.toFixed(2) + ' ft';
+                }
+            }
+        }
+
+        /**
+         * Format area value based on current units
+         */
+        function formatArea(squareMeters) {
+            if (measurementTool.units === 'metric') {
+                if (squareMeters >= 10000) {
+                    return (squareMeters / 10000).toFixed(2) + ' ha';
+                } else {
+                    return squareMeters.toFixed(2) + ' m²';
+                }
+            } else {
+                const squareFeet = squareMeters * 10.7639;
+                if (squareFeet >= 43560) {
+                    return (squareFeet / 43560).toFixed(2) + ' acres';
+                } else {
+                    return squareFeet.toFixed(2) + ' ft²';
+                }
+            }
+        }
+
+        /**
+         * Display measurement results in the UI
+         */
+        function displayResults(results) {
+            const resultsEl = document.getElementById('measurementResults');
+            let html = '';
+            
+            if (measurementTool.mode === 'line') {
+                html = `
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Direct Distance:</span>
+                        <span class="measurement-result-value">${formatDistance(results.direct)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Horizontal:</span>
+                        <span class="measurement-result-value">${formatDistance(results.horizontal)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Vertical:</span>
+                        <span class="measurement-result-value">${formatDistance(results.vertical)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Slope:</span>
+                        <span class="measurement-result-value">${results.slope.toFixed(1)}°</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Azimuth:</span>
+                        <span class="measurement-result-value">${results.azimuth.toFixed(1)}°</span>
+                    </div>
+                `;
+            } else if (measurementTool.mode === 'vertical') {
+                html = `
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Vertical Distance:</span>
+                        <span class="measurement-result-value">${formatDistance(results.vertical)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Height Difference:</span>
+                        <span class="measurement-result-value">${formatDistance(Math.abs(results.heightDifference))}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Point 1 Height:</span>
+                        <span class="measurement-result-value">${formatDistance(results.point1Height)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Point 2 Height:</span>
+                        <span class="measurement-result-value">${formatDistance(results.point2Height)}</span>
+                    </div>
+                `;
+            } else if (measurementTool.mode === 'area') {
+                html = `
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Area:</span>
+                        <span class="measurement-result-value">${formatArea(results.area)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Perimeter:</span>
+                        <span class="measurement-result-value">${formatDistance(results.perimeter)}</span>
+                    </div>
+                    <div class="measurement-result-item">
+                        <span class="measurement-result-label">Points:</span>
+                        <span class="measurement-result-value">${results.points}</span>
+                    </div>
+                `;
+            }
+            
+            resultsEl.innerHTML = html;
+        }
+
+        /**
+         * Update measurement units and refresh display
+         */
+        function updateMeasurementUnits() {
+            const unitsSelect = document.getElementById('measurementUnits');
+            measurementTool.units = unitsSelect.value;
+            
+            // Refresh results display if we have results
+            if (Object.keys(measurementTool.results).length > 0) {
+                displayResults(measurementTool.results);
+                
+                // Update line labels if present
+                updateLineLabels();
+            }
+        }
+
+        /**
+         * Update line labels with new units
+         */
+        function updateLineLabels() {
+            // Remove existing line labels and redraw
+            measurementTool.entities.forEach(entity => {
+                if (entity.label) {
+                    viewer.entities.remove(entity);
+                }
+            });
+            
+            // Redraw measurement line to update labels
+            if (measurementTool.mode === 'line' || measurementTool.mode === 'vertical') {
+                drawMeasurementLine();
+            }
+        }
+
+        /**
+         * Start new measurement (clear current)
+         */
+        function newMeasurement() {
+            clearCurrentMeasurement();
+            measurementTool.activePoints = [];
+            measurementTool.results = {};
+            
+            // Reset results display
+            const resultsEl = document.getElementById('measurementResults');
+            resultsEl.innerHTML = `
+                <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 15px;">
+                    No measurements yet
+                </div>
+            `;
+            
+            updateInstructions();
+        }
+
+        /**
+         * Clear current measurement entities
+         */
+        function clearCurrentMeasurement() {
+            measurementTool.entities.forEach(entity => {
+                viewer.entities.remove(entity);
+            });
+            measurementTool.entities = [];
+        }
+
+        /**
+         * Clear all measurements
+         */
+        function clearMeasurements() {
+            clearCurrentMeasurement();
+            measurementTool.activePoints = [];
+            measurementTool.results = {};
+            
+            // Reset results display
+            const resultsEl = document.getElementById('measurementResults');
+            resultsEl.innerHTML = `
+                <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 15px;">
+                    No measurements yet
+                </div>
+            `;
+            
+            updateInstructions();
         }
 
         /**
