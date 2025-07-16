@@ -1054,9 +1054,26 @@
                     // Convert screen coordinates to Cesium coordinates
                     const pick = new Cesium.Cartesian2(x, y);
                     
-                    // Cast ray from camera through mouse position to find intersection with globe
-                    const ray = viewer.camera.getPickRay(pick);
-                    const intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                    // Try different methods to get terrain intersection
+                    let intersection = null;
+                    
+                    // Method 1: Use scene.pickPosition for better terrain detection
+                    intersection = viewer.scene.pickPosition(pick);
+                    
+                    // Method 2: Fallback to globe.pick if pickPosition fails
+                    if (!intersection) {
+                        const ray = viewer.camera.getPickRay(pick);
+                        intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                    }
+                    
+                    // Method 3: Fallback to camera ray with ellipsoid intersection
+                    if (!intersection) {
+                        const ray = viewer.camera.getPickRay(pick);
+                        intersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
+                        if (intersection) {
+                            intersection = Cesium.Ray.getPoint(ray, intersection.start);
+                        }
+                    }
                     
                     if (intersection) {
                         // Convert Cartesian coordinates to geographic coordinates
@@ -1087,8 +1104,12 @@
             // Add mouse move listener for coordinate tracking
             canvas.addEventListener('mousemove', handleMouseMove);
             
+            // Also add to the main viewer element for better coverage
+            viewer.container.addEventListener('mousemove', handleMouseMove);
+            
             // Clear coordinates when mouse leaves canvas
             canvas.addEventListener('mouseleave', clearCoordinateDisplay);
+            viewer.container.addEventListener('mouseleave', clearCoordinateDisplay);
             
             // Add camera change listeners for scale bar and north arrow updates
             viewer.camera.changed.addEventListener(function() {
@@ -1103,8 +1124,10 @@
             // Initial updates
             updateScaleBar();
             updateNorthArrow();
+            clearCoordinateDisplay(); // Set initial state
             
             console.log('Live coordinate tracking, scale bar, and north arrow initialized');
+            console.log('Mouse event listeners attached to canvas and container');
         }
 
         // Initialize coordinate tracking after viewer is ready
