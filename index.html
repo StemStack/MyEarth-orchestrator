@@ -90,6 +90,11 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
+        // Create basic imagery provider
+        const imageryProvider = new Cesium.TileMapServiceImageryProvider({
+            url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+        });
+
         // Initialize the Cesium viewer without Ion dependencies
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable unnecessary UI widgets for clean appearance
@@ -104,18 +109,11 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
-            // Use OpenStreetMap imagery (no authentication required)
-            imageryProvider: new Cesium.OpenStreetMapImageryProvider({
-                url: 'https://a.tile.openstreetmap.org/'
-            }),
+            // Use basic built-in imagery
+            imageryProvider: imageryProvider,
             
             // Use ellipsoid terrain (no authentication required)
-            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
-            
-            // Disable Ion analytics and default data sources
-            requestRenderMode: false,
-            skyBox: false,
-            skyAtmosphere: false
+            terrainProvider: new Cesium.EllipsoidTerrainProvider()
         });
 
         // Set initial camera position for a nice Earth view
