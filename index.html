@@ -772,27 +772,34 @@
             padding: 0 15px;
             z-index: 1000;
             backdrop-filter: blur(10px);
-            font-size: 12px;
+            font-size: 11px;
+            overflow: hidden;
         }
 
         .bottom-left, .bottom-center, .bottom-right {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
+            white-space: nowrap;
+        }
+
+        .bottom-left {
+            flex: 2;
+            min-width: 0;
         }
 
         .bottom-center {
             flex: 1;
             justify-content: center;
-        }
-
-        .bottom-left {
-            flex: 1;
+            min-width: 0;
+            overflow: hidden;
         }
 
         .bottom-right {
             flex: 1;
             justify-content: flex-end;
+            min-width: 0;
+            text-align: right;
         }
 
         /* Scale Bar in Bottom Band */
@@ -817,9 +824,28 @@
         }
 
         .scale-text {
-            font-size: 11px;
+            font-size: 10px;
             color: #333;
             font-weight: 500;
+        }
+
+        #coordinatesInfo {
+            font-size: 10px;
+            color: #333;
+        }
+
+        #activeLayersInfo {
+            font-size: 10px;
+            color: #333;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+
+        #attributionInfo {
+            font-size: 10px;
+            color: #666;
+            text-overflow: ellipsis;
+            overflow: hidden;
         }
 
         .sidebar-header {
@@ -2935,7 +2961,9 @@
             // Add camera change listeners for scale bar, north arrow, and center coordinates
             viewer.camera.changed.addEventListener(function() {
                 updateScaleBar();
-                updateNorthArrow();
+                if (typeof updateNorthArrow === 'function') {
+                    updateNorthArrow();
+                }
                 updateCenterCoordinates();
                 updateBottomBand();
             });
@@ -6059,10 +6087,16 @@
                     activeLayersInfo.textContent = `Active Layers: ${activeLayersList.join(', ')}`;
                 }
                 
-                // Update attribution
+                // Update attribution - get clean text
                 const currentAttribution = document.querySelector('.cesium-credit-textContainer');
                 if (currentAttribution && attributionInfo) {
-                    attributionInfo.textContent = currentAttribution.textContent;
+                    let attributionText = currentAttribution.textContent || '© OpenStreetMap contributors';
+                    // Clean up and shorten attribution text
+                    attributionText = attributionText.replace(/\s+/g, ' ').trim();
+                    if (attributionText.length > 60) {
+                        attributionText = attributionText.substring(0, 57) + '...';
+                    }
+                    attributionInfo.textContent = attributionText;
                 }
             }
         }
