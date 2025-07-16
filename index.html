@@ -1010,14 +1010,14 @@
     <div class="basemap-switcher" id="basemapSwitcher">
         <div class="basemap-title">🗺️ Base Maps</div>
         <select class="basemap-dropdown" id="basemapSelect" onchange="switchBaseMap()">
+            <option value="otm" selected>OpenTopoMap</option>
             <option value="osm">OpenStreetMap</option>
-            <option value="otm">OpenTopoMap</option>
             <option value="stamen-terrain">Stamen Terrain</option>
             <option value="cartodb-positron">CartoDB Positron</option>
             <option value="esri-imagery">ESRI World Imagery</option>
         </select>
         <div class="basemap-attribution" id="basemapAttribution">
-            © OpenStreetMap contributors
+            © OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)
         </div>
     </div>
 
@@ -1153,10 +1153,10 @@
             }
         };
 
-        // Current base map
-        let currentBaseMap = 'osm';
+        // Current base map - default to OpenTopoMap for topographic view
+        let currentBaseMap = 'otm';
         
-        // Remove default imagery and add OpenStreetMap
+        // Remove default imagery and add OpenTopoMap
         viewer.imageryLayers.removeAll();
         viewer.imageryLayers.addImageryProvider(baseMaps[currentBaseMap].provider());
 

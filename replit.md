@@ -162,7 +162,8 @@ The CesiumJS globe viewer is now fully functional with:
 - Proper attribution handling and display for all map providers with legal compliance
 - Error handling and fallback to OpenStreetMap for failed provider connections
 - Clean integration with existing UI maintaining consistent styling and positioning
-- Home view centered on Europe (10°E, 54°N) at 4,000 km altitude for optimal European continent viewing
+- Home view centered on Europe (Swiss Alps region) with OpenTopoMap as default base layer showing topographic terrain
+- Default base map changed from OpenStreetMap to OpenTopoMap for enhanced terrain visualization
 - Realistic 3D terrain using Cesium.createWorldTerrain() with authentic elevation data
 - Proper terrain lighting with enableLighting and depthTestAgainstTerrain for realistic shadows
 - 2x terrain exaggeration for enhanced visibility of mountains and valleys
