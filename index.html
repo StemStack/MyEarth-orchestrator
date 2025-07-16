@@ -722,6 +722,9 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
+        // Completely disable Cesium Ion to prevent authentication errors
+        Cesium.Ion.defaultAccessToken = undefined;
+        
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable unnecessary UI widgets for clean appearance
@@ -737,9 +740,19 @@
             navigationHelpButton: true, // Keep navigation help
             
             // Use ellipsoid terrain (no authentication required)
-            terrainProvider: new Cesium.EllipsoidTerrainProvider()
+            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+            
+            // Disable Ion-dependent features
+            skyBox: false,
+            skyAtmosphere: false,
+            requestRenderMode: false,
+            maximumRenderTimeChange: Infinity
         });
 
+        // Disable any remaining Ion services
+        viewer.scene.globe.enableLighting = false;
+        viewer.scene.fog.enabled = false;
+        
         // Remove default imagery and add OpenStreetMap
         viewer.imageryLayers.removeAll();
         viewer.imageryLayers.addImageryProvider(new Cesium.OpenStreetMapImageryProvider({
