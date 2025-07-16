@@ -2013,7 +2013,7 @@
         
         <!-- North Arrow Tool - Integrated -->
         <div class="tool-icon" id="northArrowTool" title="North Arrow - Click to Reset" onclick="resetViewToNorth()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
+            <svg width="16" height="16" viewBox="0 0 24 24" style="transition: transform 0.3s ease;">
                 <path d="M12 2L8 8h8z" fill="currentColor"/>
                 <path d="M12 22L16 16H8z" fill="none" stroke="currentColor" stroke-width="1"/>
             </svg>
@@ -6788,11 +6788,17 @@
         setTimeout(() => {
             // Verify all elements exist before initializing
             console.log('Checking elements:');
-            console.log('- northArrow:', !!northArrow);
-            console.log('- coordinatesText:', !!coordinatesText);
-            console.log('- scaleLine:', !!scaleLine);
-            console.log('- scaleText:', !!scaleText);
-            console.log('- baseLayerToggle:', !!baseLayerToggle);
+            const northArrowElement = document.getElementById('northArrowTool');
+            const coordinatesTextElement = document.getElementById('coordinatesText');
+            const scaleLineElement = document.getElementById('scaleLine');
+            const scaleTextElement = document.getElementById('scaleText');
+            const baseLayerToggleElement = document.getElementById('baseLayerToggle');
+            
+            console.log('- northArrow:', !!northArrowElement);
+            console.log('- coordinatesText:', !!coordinatesTextElement);
+            console.log('- scaleLine:', !!scaleLineElement);
+            console.log('- scaleText:', !!scaleTextElement);
+            console.log('- baseLayerToggle:', !!baseLayerToggleElement);
             
             initializeCoordinateTracking();
             initializeLayerControls();
