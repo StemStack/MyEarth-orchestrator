@@ -394,7 +394,7 @@
         
         <!-- Coordinates display -->
         <div class="coordinates-info" id="coordinatesInfo">
-            <span class="coordinates-text" id="coordinatesText">Coordinates (m) ---.--- , ---.---</span>
+            <span class="coordinates-text" id="coordinatesText">Coordinates (°) ---.------, ---.------</span>
         </div>
     </div>
 
@@ -795,79 +795,87 @@
 
         /**
          * Calculates and updates the scale bar based on current map view
-         * Uses the camera's field of view and distance to determine appropriate scale
+         * Uses geodesic distance calculation for accurate metric representation
          */
         function updateScaleBar() {
             try {
-                // Get the camera's current position and calculate the scale
-                const camera = viewer.camera;
                 const canvas = viewer.canvas;
                 const ellipsoid = viewer.scene.globe.ellipsoid;
                 
-                // Calculate the distance represented by 100 pixels at current zoom level
-                const centerPick = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
-                const leftPick = new Cesium.Cartesian2(centerPick.x - 50, centerPick.y);
-                const rightPick = new Cesium.Cartesian2(centerPick.x + 50, centerPick.y);
+                // Get canvas dimensions
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
                 
-                const centerPosition = camera.pickEllipsoid(centerPick, ellipsoid);
-                const leftPosition = camera.pickEllipsoid(leftPick, ellipsoid);
-                const rightPosition = camera.pickEllipsoid(rightPick, ellipsoid);
+                // Define two points on screen separated by 100 pixels
+                const left = new Cesium.Cartesian2((width / 2) - 50, height / 2);
+                const right = new Cesium.Cartesian2((width / 2) + 50, height / 2);
                 
-                if (centerPosition && leftPosition && rightPosition) {
+                // Pick ellipsoid positions for both points
+                const leftPosition = viewer.camera.pickEllipsoid(left, ellipsoid);
+                const rightPosition = viewer.camera.pickEllipsoid(right, ellipsoid);
+                
+                if (leftPosition && rightPosition) {
+                    // Convert to cartographic coordinates
                     const leftCartographic = ellipsoid.cartesianToCartographic(leftPosition);
                     const rightCartographic = ellipsoid.cartesianToCartographic(rightPosition);
                     
-                    // Calculate distance in meters for 100 pixels
-                    const distance = Cesium.Cartographic.distance(leftCartographic, rightCartographic);
+                    // Calculate geodesic distance between the two points
+                    const geodesic = new Cesium.EllipsoidGeodesic(leftCartographic, rightCartographic);
+                    const pixelDistance = geodesic.surfaceDistance; // Distance in meters for 100 pixels
                     
-                    // Determine appropriate scale intervals and width
-                    let scaleDistance, scaleWidth, scaleLabel;
+                    // Determine appropriate scale values
+                    let targetDistance, scaleWidth, scaleLabel;
                     
-                    if (distance >= 100000) { // >= 100 km
-                        scaleDistance = Math.round(distance / 100000) * 100000;
-                        scaleWidth = (scaleDistance / distance) * 100;
-                        scaleLabel = (scaleDistance / 1000) + ' km';
-                    } else if (distance >= 10000) { // >= 10 km
-                        scaleDistance = Math.round(distance / 10000) * 10000;
-                        scaleWidth = (scaleDistance / distance) * 100;
-                        scaleLabel = (scaleDistance / 1000) + ' km';
-                    } else if (distance >= 1000) { // >= 1 km
-                        scaleDistance = Math.round(distance / 1000) * 1000;
-                        scaleWidth = (scaleDistance / distance) * 100;
-                        scaleLabel = (scaleDistance / 1000) + ' km';
-                    } else { // < 1 km
-                        scaleDistance = Math.round(distance / 100) * 100;
-                        scaleWidth = (scaleDistance / distance) * 100;
-                        scaleLabel = scaleDistance + ' m';
+                    if (pixelDistance >= 100000) {
+                        // For very large scales, use 100km intervals
+                        targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
+                        if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
+                        else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
+                        scaleLabel = (targetDistance / 1000) + ' km';
+                    } else if (pixelDistance >= 1000) {
+                        // For medium scales, use km
+                        targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
+                        if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
+                        else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
+                        scaleLabel = (targetDistance >= 1000) ? (targetDistance / 1000) + ' km' : targetDistance + ' m';
+                    } else {
+                        // For small scales, use meters
+                        targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
+                        if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
+                        else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
+                        scaleLabel = targetDistance + ' m';
                     }
                     
-                    // Update scale bar appearance
-                    scaleLine.style.width = Math.max(scaleWidth, 30) + 'px';
+                    // Calculate the width in pixels for our target distance
+                    scaleWidth = (targetDistance / pixelDistance) * 100;
+                    
+                    // Update the scale bar
+                    scaleLine.style.width = Math.max(Math.min(scaleWidth, 200), 30) + 'px';
                     scaleText.textContent = scaleLabel;
                 }
             } catch (error) {
-                console.warn('Scale bar update error:', error);
+                console.warn('Scale bar calculation failed, using default');
                 scaleLine.style.width = '60px';
                 scaleText.textContent = '1 km';
             }
         }
 
         /**
-         * Updates coordinate display with formatted values in metric format
+         * Updates coordinate display with formatted values in WGS84 degrees
          * @param {number} latitude - Latitude in degrees
          * @param {number} longitude - Longitude in degrees  
          */
         function updateCoordinateDisplay(latitude, longitude) {
-            const latText = latitude.toFixed(3);
-            const lonText = longitude.toFixed(3);
-            coordinatesText.textContent = `Coordinates (m) ${latText}, ${lonText}`;
+            const latText = latitude.toFixed(6);
+            const lonText = longitude.toFixed(6);
+            coordinatesText.textContent = `Coordinates (°) ${latText}, ${lonText}`;
         }
 
         /**
          * Clears coordinate display when mouse is not over terrain
          */
         function clearCoordinateDisplay() {
-            coordinatesText.textContent = 'Coordinates (m) ---.---, ---.---';
+            coordinatesText.textContent = 'Coordinates (°) ---.------, ---.------';
         }
 
         /**
