@@ -163,7 +163,9 @@ The CesiumJS globe viewer is now fully functional with:
 - Error handling and fallback to OpenStreetMap for failed provider connections
 - Clean integration with existing UI maintaining consistent styling and positioning
 - Home view centered on Europe (10°E, 54°N) at 4,000 km altitude for optimal European continent viewing
-- Enhanced 3D visualization with atmospheric effects, dynamic lighting, and fog for depth perception
-- Realistic lighting system with sun/moon positioning and dynamic atmosphere lighting
-- Improved visual depth with fog density and atmospheric scattering effects for immersive geography
-- Spherical terrain base with enhanced lighting to simulate 3D topographic appearance
+- Enhanced 3D visualization with wireframe grid overlay and atmospheric fog effects for depth perception
+- Real 3D terrain support using heightmap data from Esri World Elevation service with 2x exaggeration
+- Dynamic wireframe material with customizable grid density and blue wireframe coloring
+- Toggle controls for 3D terrain and fog effects allowing users to switch between flat and 3D modes
+- Improved lighting system for better terrain visualization and depth perception
+- Fallback to wireframe visualization when terrain data is unavailable

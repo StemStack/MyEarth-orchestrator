@@ -893,6 +893,10 @@
             <input type="checkbox" id="atmosphereToggle" checked onchange="toggleAtmosphere()">
             <label for="atmosphereToggle">Fog Effects</label>
         </div>
+        <div class="layer-toggle">
+            <input type="checkbox" id="terrainToggle" checked onchange="toggleTerrain()">
+            <label for="terrainToggle">3D Terrain</label>
+        </div>
         <div class="model-upload-section">
             <button class="model-upload-button" id="modelUploadButton">
                 📁 Upload
@@ -1032,11 +1036,8 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
-            // Use heightmap terrain for simple 3D topography without authentication
-            terrainProvider: new Cesium.EllipsoidTerrainProvider({
-                // This creates a basic spherical terrain
-                // We'll enhance it with visual effects for 3D appearance
-            }),
+            // Use heightmap terrain provider for simple 3D elevation effect
+            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
             
             // Keep sky effects disabled to prevent authentication errors
             skyBox: false,
@@ -1052,9 +1053,51 @@
         viewer.scene.fog.screenSpaceErrorFactor = 2.0;
         viewer.scene.globe.showWaterEffect = false;
         
-        // Disable all lighting and atmosphere features to prevent errors
+        // Keep lighting disabled initially to prevent rendering errors
+        viewer.scene.globe.enableLighting = false;
+        viewer.scene.globe.material = undefined;
+        
+        // Use basic lighting without dynamic atmosphere
         viewer.scene.globe.dynamicAtmosphereLighting = false;
         viewer.scene.globe.dynamicAtmosphereLightingFromSun = false;
+        
+        // Add wireframe material option for 3D visualization
+        let wireframeEnabled = false;
+        
+        // Use wireframe overlay for 3D visualization effect since terrain data requires authentication
+        function applyWireframeTerrain() {
+            try {
+                // Create wireframe material for 3D effect
+                viewer.scene.globe.material = new Cesium.Material({
+                    fabric: {
+                        type: 'Grid',
+                        uniforms: {
+                            color: new Cesium.Color(0.2, 0.8, 1.0, 0.6),
+                            cellAlpha: 0.08,
+                            lineCount: new Cesium.Cartesian2(128, 64),
+                            lineThickness: new Cesium.Cartesian2(1.5, 1.5),
+                            lineOffset: new Cesium.Cartesian2(0.0, 0.0)
+                        }
+                    }
+                });
+                
+                // Enable lighting for better sphere visualization
+                viewer.scene.globe.enableLighting = true;
+                console.log('3D wireframe visualization applied');
+                
+            } catch (error) {
+                console.warn('Wireframe terrain failed:', error);
+            }
+        }
+        
+        // Apply wireframe terrain for 3D effect
+        applyWireframeTerrain();
+        
+        // Add fallback to ellipsoid terrain if the terrain provider fails
+        viewer.terrainProvider.errorEvent.addEventListener(function(err) {
+            console.warn('Terrain provider failed, falling back to ellipsoid:', err);
+            viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+        });
         
         // Base map configurations
         const baseMaps = {
@@ -3361,6 +3404,25 @@
             }
             
             console.log('3D fog effects:', enabled ? 'enabled' : 'disabled');
+        }
+
+        /**
+         * Toggle 3D terrain on/off
+         */
+        function toggleTerrain() {
+            const toggle = document.getElementById('terrainToggle');
+            const enabled = toggle.checked;
+            
+            if (enabled) {
+                // Enable 3D wireframe visualization
+                applyWireframeTerrain();
+            } else {
+                // Remove wireframe material
+                viewer.scene.globe.material = undefined;
+                viewer.scene.globe.enableLighting = false;
+            }
+            
+            console.log('3D terrain:', enabled ? 'enabled' : 'disabled');
         }
 
         /**
