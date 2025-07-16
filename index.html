@@ -478,43 +478,148 @@
             border: 1px solid rgba(0, 0, 0, 0.5);
         }
 
-        /* Layer controls styling */
-        .layer-controls {
+        /* Swiss-style sidebar navigation */
+        .sidebar {
             position: absolute;
-            top: 70px;
-            left: 10px;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 13px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
             z-index: 1000;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid rgba(0, 0, 0, 0.3);
-            border-radius: 4px;
-            padding: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-            min-width: 120px;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
         }
 
-        .layer-toggle {
+        .sidebar.collapsed {
+            transform: translateX(-250px);
+        }
+
+        .sidebar-header {
+            background: #dc143c;
+            color: white;
+            padding: 12px 15px;
+            font-weight: 600;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            right: -40px;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 5px;
+            justify-content: center;
+            font-size: 14px;
+            color: #333;
+            z-index: 1001;
         }
 
-        .layer-toggle:last-child {
-            margin-bottom: 0;
+        .sidebar-section {
+            border-bottom: 1px solid #e0e0e0;
         }
 
-        .layer-toggle input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .layer-toggle label {
-            font-family: Arial, sans-serif;
+        .section-header {
+            padding: 12px 15px;
+            background: #f5f5f5;
+            font-weight: 600;
             font-size: 12px;
-            color: #000;
+            color: #555;
             cursor: pointer;
             user-select: none;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header:hover {
+            background: #eee;
+        }
+
+        .section-content {
+            padding: 10px 15px;
+            background: white;
+        }
+
+        .section-content.collapsed {
+            display: none;
+        }
+
+        .control-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .control-item input[type="checkbox"] {
+            margin-right: 8px;
+            transform: scale(0.9);
+        }
+
+        .control-item label {
+            cursor: pointer;
+            user-select: none;
+            flex: 1;
+        }
+
+        .control-button {
+            width: 100%;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #333;
+            margin-bottom: 6px;
+            transition: background 0.2s ease;
+        }
+
+        .control-button:hover {
+            background: #e9ecef;
+        }
+
+        .control-button.primary {
+            background: #0d6efd;
+            color: white;
+            border-color: #0d6efd;
+        }
+
+        .control-button.primary:hover {
+            background: #0b5ed7;
+        }
+
+        .control-button.secondary {
+            background: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+
+        .control-button.secondary:hover {
+            background: #5c636a;
+        }
+
+        .webgl-notice {
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid #ffc107;
+            border-radius: 3px;
+            font-size: 11px;
+            color: #856404;
         }
 
         /* Model upload section */
@@ -1028,50 +1133,98 @@
         <div class="crosshair-vertical"></div>
     </div>
 
-    <!-- Layer toggle controls -->
-    <div class="layer-controls" id="layerControls">
-        <div class="layer-toggle">
-            <input type="checkbox" id="baseLayerToggle" checked>
-            <label for="baseLayerToggle">Base Map</label>
-        </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="atmosphereToggle" checked onchange="toggleAtmosphere()">
-            <label for="atmosphereToggle">Fog Effects</label>
-        </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="terrainToggle" checked onchange="toggleTerrain()">
-            <label for="terrainToggle">3D Terrain</label>
-        </div>
-        <div class="webgl-notice" style="margin-top: 10px; padding: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; font-size: 11px; color: #ccc;">
-            <div>For best 3D terrain performance:</div>
-            <button onclick="window.open(window.location.href, '_blank')" style="margin-top: 4px; padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
-                Open in New Tab
-            </button>
+    <!-- Swiss-style Sidebar Navigation -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
+        <div class="sidebar-header">
+            🌍 CesiumJS Globe Viewer
         </div>
         
-        <!-- Service Loader Button -->
-        <div style="margin-top: 10px;">
-            <button onclick="toggleServiceLoader()" style="width: 100%; padding: 8px; background: #2c3e50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">
-                📡 Load Data Services
-            </button>
-        </div>
-        <div class="model-upload-section">
-            <button class="model-upload-button" id="modelUploadButton">
-                📁 Upload
-            </button>
-            <div class="model-upload-hint">
-                Drag files or <span style="opacity: 0.9;">GLB/GLTF only</span>
+        <!-- Base Layers Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('baseLayers')">
+                <span>🗺️ Base Layers</span>
+                <span>▼</span>
             </div>
-            <button class="sample-models-button" onclick="showSampleModels()">
-                📦 Samples
-            </button>
+            <div class="section-content" id="baseLayers">
+                <div class="control-item">
+                    <input type="checkbox" id="baseLayerToggle" checked>
+                    <label for="baseLayerToggle">Base Map Visible</label>
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="atmosphereToggle" checked onchange="toggleAtmosphere()">
+                    <label for="atmosphereToggle">Atmosphere Effects</label>
+                </div>
+                <div class="control-item">
+                    <input type="checkbox" id="terrainToggle" checked onchange="toggleTerrain()">
+                    <label for="terrainToggle">3D Terrain</label>
+                </div>
+            </div>
         </div>
         
-        <!-- Measurement tool toggle -->
-        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-            <button onclick="toggleMeasurementTool()" style="width: 100%; padding: 5px 8px; background-color: rgba(255, 165, 0, 0.9); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 3px; color: white; font-size: 10px; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease;">
-                📏 Measure
-            </button>
+        <!-- Data Services Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('dataServices')">
+                <span>📡 Data Services</span>
+                <span>▼</span>
+            </div>
+            <div class="section-content" id="dataServices">
+                <button class="control-button primary" onclick="toggleServiceLoader()">
+                    Load External Data
+                </button>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                    Import GeoJSON, WMS, and TileJSON data sources
+                </div>
+            </div>
+        </div>
+        
+        <!-- Measurement Tools Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('measurementTools')">
+                <span>📏 Measurement</span>
+                <span>▼</span>
+            </div>
+            <div class="section-content" id="measurementTools">
+                <button class="control-button secondary" onclick="toggleMeasurementTool()">
+                    Distance & Area Tool
+                </button>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                    Measure distances, areas, and elevations
+                </div>
+            </div>
+        </div>
+        
+        <!-- 3D Models Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('models3d')">
+                <span>🏗️ 3D Models</span>
+                <span>▼</span>
+            </div>
+            <div class="section-content" id="models3d">
+                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
+                    Drag & drop GLB/GLTF files onto the map
+                </div>
+                <button class="control-button" onclick="showSampleModels()">
+                    View Sample Models
+                </button>
+            </div>
+        </div>
+        
+        <!-- Performance Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('performance')">
+                <span>⚡ Performance</span>
+                <span>▼</span>
+            </div>
+            <div class="section-content collapsed" id="performance">
+                <div class="webgl-notice">
+                    <div style="font-weight: 600; margin-bottom: 4px;">WebGL Optimization</div>
+                    <div style="margin-bottom: 8px;">For best 3D terrain performance, open in a new tab for full GPU acceleration.</div>
+                    <button class="control-button" onclick="window.open(window.location.href, '_blank')">
+                        Open in New Tab
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -4610,6 +4763,37 @@
         }
         
         console.log('✓ Service Loader system initialized');
+        
+        /**
+         * Swiss-style Sidebar Functions
+         */
+        
+        // Toggle sidebar visibility
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            // Update toggle button
+            const toggleBtn = sidebar.querySelector('.sidebar-toggle');
+            toggleBtn.textContent = sidebar.classList.contains('collapsed') ? '☰' : '✕';
+        }
+        
+        // Toggle section collapse/expand
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId);
+            const header = content.previousElementSibling;
+            const arrow = header.querySelector('span:last-child');
+            
+            content.classList.toggle('collapsed');
+            arrow.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+        }
+        
+        // Show sample models function (placeholder)
+        function showSampleModels() {
+            alert('Sample 3D models feature - placeholder for future implementation');
+        }
+        
+        console.log('✓ Swiss-style sidebar initialized');
 
         // Initialize coordinate tracking after viewer is ready
         setTimeout(() => {
