@@ -1132,6 +1132,9 @@
                 <button class="control-button primary" onclick="toggleServiceLoader()">
                     Load External Data
                 </button>
+                <button class="control-button" onclick="goToBiodiversityHotspot()" style="margin-top: 4px;">
+                    🌍 Find WMS Data
+                </button>
                 <div style="font-size: 11px; color: #666; margin-top: 4px;">
                     Import GeoJSON, WMS, and TileJSON data sources
                 </div>
@@ -4809,6 +4812,34 @@
         }
         
         console.log('✓ Swiss-style sidebar initialized');
+        
+        /**
+         * Navigate to common biodiversity hotspots to view WMS data
+         */
+        function goToBiodiversityHotspot() {
+            // Common locations where GBIF species density data is typically visible
+            const hotspots = [
+                { name: "Amazon Basin", lon: -60.0, lat: -3.0, height: 1000000 },
+                { name: "Congo Basin", lon: 18.0, lat: 0.0, height: 1000000 },
+                { name: "Southeast Asia", lon: 110.0, lat: 0.0, height: 1500000 },
+                { name: "Madagascar", lon: 47.0, lat: -20.0, height: 800000 },
+                { name: "California Coast", lon: -120.0, lat: 36.0, height: 500000 }
+            ];
+            
+            // Select a random hotspot
+            const hotspot = hotspots[Math.floor(Math.random() * hotspots.length)];
+            
+            viewer.camera.setView({
+                destination: Cesium.Cartesian3.fromDegrees(hotspot.lon, hotspot.lat, hotspot.height),
+                orientation: {
+                    heading: 0.0,
+                    pitch: Cesium.Math.toRadians(-90),
+                    roll: 0.0
+                }
+            });
+            
+            console.log(`✓ Navigated to ${hotspot.name} - look for colored overlays on the map`);
+        }
         
         /**
          * Reset view orientation to North
