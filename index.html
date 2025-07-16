@@ -781,6 +781,7 @@
             align-items: center;
             gap: 12px;
             white-space: nowrap;
+            overflow: hidden;
         }
 
         .bottom-left {
@@ -807,31 +808,78 @@
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
             #bottomBand {
-                padding: 0 10px;
-                font-size: 10px;
+                padding: 0 8px;
+                font-size: 9px;
+                gap: 8px;
             }
             
             .bottom-left {
                 flex: 1;
                 max-width: 33.333%;
+                overflow: hidden;
             }
             
             .bottom-right {
                 flex: 2;
                 max-width: 66.667%;
-                gap: 6px;
+                gap: 4px;
+                overflow: hidden;
             }
             
             #coordinatesInfo {
-                font-size: 9px;
+                font-size: 8px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
             
             #activeLayersInfo {
-                font-size: 9px;
+                font-size: 8px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 45%;
             }
             
             #attributionInfo {
-                font-size: 9px;
+                font-size: 8px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 45%;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+            #bottomBand {
+                padding: 0 6px;
+                font-size: 8px;
+            }
+            
+            .bottom-left {
+                flex: 1;
+                max-width: 30%;
+            }
+            
+            .bottom-right {
+                flex: 2;
+                max-width: 70%;
+                gap: 2px;
+            }
+            
+            #coordinatesInfo {
+                font-size: 7px;
+            }
+            
+            #activeLayersInfo {
+                font-size: 7px;
+                max-width: 40%;
+            }
+            
+            #attributionInfo {
+                font-size: 7px;
+                max-width: 40%;
             }
         }
 
@@ -2410,10 +2458,10 @@
 
         // Define Europe and North Africa overview with vertical perspective
         const europeHomeView = {
-            destination: Cesium.Cartesian3.fromDegrees(15.0, 45.0, 4000000.0), // Center on Europe/North Africa
+            destination: Cesium.Cartesian3.fromDegrees(10.0, 40.0, 8000000.0), // Center on Europe/North Africa
             orientation: {
                 heading: Cesium.Math.toRadians(0),
-                pitch: Cesium.Math.toRadians(-90), // Vertical (straight down) view
+                pitch: Cesium.Math.toRadians(-45), // Angled view for better perspective
                 roll: 0.0
             }
         };
@@ -5918,9 +5966,9 @@
         function resetToHomeView() {
             if (viewer) {
                 viewer.camera.setView({
-                    destination: Cesium.Cartesian3.fromDegrees(0, 0, 20000000)
+                    destination: Cesium.Cartesian3.fromDegrees(10, 40, 8000000)
                 });
-                console.log('✓ View reset to home position');
+                console.log('✓ View reset to home position (Europe/North Africa)');
             }
         }
 
@@ -5961,7 +6009,7 @@
                                 <li>🔍 Search - Find locations</li>
                                 <li>📏 Measurement - Measure distances</li>
                                 <li>📍 Markers - Place point markers</li>
-                                <li>🏠 Home - Return to global view</li>
+                                <li>Home - Return to global view</li>
                             </ul>
                             <p><strong>Base Maps:</strong> Switch between different map styles</p>
                             <p><strong>Data Layers:</strong> Toggle environmental data overlays</p>
@@ -6148,7 +6196,18 @@
             // Initialize bottom band updates
             setInterval(updateBottomBand, 1000);
             
-            console.log('✓ Menu system initialized - left panel visible, floating button hidden');
+            // Start with both panels collapsed by default
+        const leftPanelEl = document.getElementById('leftPanel');
+        const rightPanelEl = document.getElementById('rightPanel');
+        
+        if (leftPanelEl) {
+            leftPanelEl.classList.add('collapsed');
+        }
+        if (rightPanelEl) {
+            rightPanelEl.classList.add('collapsed');
+        }
+        
+        console.log('✓ Menu system initialized - both panels collapsed by default');
         });
 
         // Update bottom band information
@@ -6216,11 +6275,17 @@
                     let attributionText = currentAttribution.textContent || '© OpenStreetMap contributors';
                     // Clean up and condense attribution text
                     attributionText = attributionText.replace(/\s+/g, ' ').trim();
-                    // Further condense common phrases
+                    // Further condense common phrases for mobile
                     attributionText = attributionText.replace('OpenStreetMap contributors', 'OSM');
                     attributionText = attributionText.replace('contributors', 'contrib.');
                     attributionText = attributionText.replace('Copyright', '©');
-                    if (attributionText.length > 35) {
+                    
+                    // More aggressive condensing for mobile
+                    if (window.innerWidth <= 768) {
+                        if (attributionText.length > 25) {
+                            attributionText = attributionText.substring(0, 22) + '...';
+                        }
+                    } else if (attributionText.length > 35) {
                         attributionText = attributionText.substring(0, 32) + '...';
                     }
                     attributionInfo.textContent = attributionText;
@@ -6312,14 +6377,14 @@
 
         // Updated toggle function for left panel
         function toggleLeftPanel() {
-            const leftPanel = document.getElementById('leftPanel');
+            const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
             const floatingButton = document.getElementById('floatingMenuButton');
             
-            if (leftPanel.classList.contains('collapsed')) {
+            if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
-                leftPanel.classList.remove('collapsed');
-                leftPanel.style.transform = 'translateX(0)';
+                leftPanelElement.classList.remove('collapsed');
+                leftPanelElement.style.transform = 'translateX(0)';
                 cesiumContainer.classList.add('with-left-panel');
                 if (floatingButton) {
                     floatingButton.style.display = 'none';
@@ -6327,8 +6392,8 @@
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
-                leftPanel.classList.add('collapsed');
-                leftPanel.style.transform = 'translateX(-100%)';
+                leftPanelElement.classList.add('collapsed');
+                leftPanelElement.style.transform = 'translateX(-100%)';
                 cesiumContainer.classList.remove('with-left-panel');
                 setTimeout(() => {
                     if (floatingButton) {
@@ -6339,9 +6404,9 @@
             }
             
             // Update toggle button text
-            const toggleBtn = leftPanel.querySelector('.sidebar-toggle');
+            const toggleBtn = leftPanelElement.querySelector('.sidebar-toggle');
             if (toggleBtn) {
-                toggleBtn.textContent = leftPanel.classList.contains('collapsed') ? '☰' : '✕';
+                toggleBtn.textContent = leftPanelElement.classList.contains('collapsed') ? '☰' : '✕';
             }
         }
 
