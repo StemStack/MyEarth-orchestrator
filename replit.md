@@ -135,3 +135,7 @@ The CesiumJS globe viewer is now fully functional with:
 - Sample model source recommendations for testing CesiumJS compatibility
 - Progressive model loading monitoring system with better state detection
 - Completely eliminated Cesium Ion authentication errors with enhanced service disabling
+- Extended 3D file format recognition to support OBJ, FBX, DAE, STL, PLY, LAS, DXF, USDZ formats
+- Smart format validation with specific conversion guidance for unsupported formats
+- Enhanced drag-and-drop UI with comprehensive format support indicators
+- Professional format-specific warning dialogs with converter recommendations

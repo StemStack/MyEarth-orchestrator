@@ -684,7 +684,8 @@
                 📁 Upload 3D Model
             </button>
             <div class="model-upload-hint">
-                Or drag GLTF/GLB files anywhere
+                Or drag 3D model files anywhere<br>
+                <span style="font-size: 9px; opacity: 0.8;">Supports: GLB, GLTF, OBJ, FBX, DAE, STL, PLY, LAS, DXF, USDZ</span>
             </div>
             <button class="sample-models-button" onclick="showSampleModels()">
                 📦 Try Sample Models
@@ -696,13 +697,13 @@
     <div class="drag-drop-overlay" id="dragDropOverlay" style="display: none;">
         <div class="drag-drop-content">
             <div class="drag-drop-icon">📁</div>
-            <div class="drag-drop-text">Drop GLTF/GLB 3D Model Here</div>
-            <div class="drag-drop-subtext">Supported formats: .gltf, .glb</div>
+            <div class="drag-drop-text">Drop 3D Model Here</div>
+            <div class="drag-drop-subtext">Supported: GLB, GLTF, OBJ, FBX, DAE, STL, PLY, LAS, DXF, USDZ</div>
         </div>
     </div>
 
     <!-- File input (hidden) -->
-    <input type="file" id="modelFileInput" accept=".gltf,.glb" style="display: none;">
+    <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
 
     <!-- Universal search bar -->
     <div class="search-container">
@@ -1447,6 +1448,89 @@
         }
 
         /**
+         * Check if file format is a recognized 3D model format
+         * @param {string} filename - The filename to check
+         * @returns {object} - Object with format info and support status
+         */
+        function check3DFileFormat(filename) {
+            const extension = filename.toLowerCase().split('.').pop();
+            
+            const supportedFormats = {
+                'glb': { name: 'GLTF Binary', supported: true, description: 'Optimized for web display' },
+                'gltf': { name: 'GLTF JSON', supported: true, description: 'Standard web 3D format' }
+            };
+            
+            const unsupportedFormats = {
+                'obj': { name: 'Wavefront OBJ', supported: false, description: 'Legacy 3D mesh format' },
+                'fbx': { name: 'Autodesk FBX', supported: false, description: 'Animation-rich format' },
+                'dae': { name: 'COLLADA', supported: false, description: 'XML-based 3D format' },
+                'stl': { name: 'Stereolithography', supported: false, description: '3D printing format' },
+                'ply': { name: 'Polygon File Format', supported: false, description: 'Point cloud/mesh format' },
+                'las': { name: 'LAS Point Cloud', supported: false, description: 'LiDAR data format' },
+                'dxf': { name: 'AutoCAD DXF', supported: false, description: 'CAD drawing format' },
+                'usdz': { name: 'Universal Scene Description', supported: false, description: 'Apple AR format' }
+            };
+            
+            if (supportedFormats[extension]) {
+                return { ...supportedFormats[extension], extension, isKnown3D: true };
+            } else if (unsupportedFormats[extension]) {
+                return { ...unsupportedFormats[extension], extension, isKnown3D: true };
+            } else {
+                return { name: 'Unknown', supported: false, extension, isKnown3D: false };
+            }
+        }
+
+        /**
+         * Show format compatibility warning for unsupported 3D files
+         * @param {object} formatInfo - Format information object
+         * @param {string} filename - The filename
+         */
+        function showFormatWarning(formatInfo, filename) {
+            const warningDiv = document.createElement('div');
+            warningDiv.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 152, 0, 0.95);
+                color: white;
+                padding: 25px;
+                border-radius: 12px;
+                z-index: 10001;
+                font-family: Arial, sans-serif;
+                max-width: 450px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            `;
+            
+            warningDiv.innerHTML = `
+                <h3 style="margin: 0 0 15px 0;">Format Not Supported in Browser</h3>
+                <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                    <strong>${formatInfo.name} (.${formatInfo.extension})</strong><br>
+                    <span style="font-size: 13px;">${formatInfo.description}</span>
+                </div>
+                <p style="margin-bottom: 20px; font-size: 14px;">
+                    This file format is not supported in the browser. Please convert to <strong>.glb</strong> or <strong>3D Tiles</strong> before importing.
+                </p>
+                <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+                    <strong>Recommended Converters:</strong>
+                    <ul style="font-size: 13px; margin-top: 8px; line-height: 1.6;">
+                        <li><strong>Blender</strong> - Free, supports most formats → GLB export</li>
+                        <li><strong>FBX2glTF</strong> - Facebook's official FBX converter</li>
+                        <li><strong>obj2gltf</strong> - Command line OBJ to GLTF converter</li>
+                        <li><strong>Online converters</strong> - Search "convert ${formatInfo.extension} to glb"</li>
+                    </ul>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
+                    <button onclick="showModelAlternatives(); this.parentElement.parentElement.remove();" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Get Help</button>
+                </div>
+            `;
+            
+            document.body.appendChild(warningDiv);
+        }
+
+        /**
          * Validate GLB/GLTF file format
          * @param {File} file - The file to validate
          * @returns {Promise<boolean>} - True if valid, false otherwise
@@ -1490,13 +1574,27 @@
             console.log('Loading 3D model:', file.name, 'Size:', file.size, 'bytes');
             
             try {
+                // Check file format first
+                const formatInfo = check3DFileFormat(file.name);
+                
+                if (!formatInfo.supported) {
+                    if (formatInfo.isKnown3D) {
+                        // Show format-specific warning for known 3D formats
+                        showFormatWarning(formatInfo, file.name);
+                    } else {
+                        // Generic message for unknown formats
+                        alert('File format not recognized as a 3D model. Please use .glb or .gltf files.');
+                    }
+                    return;
+                }
+                
                 // Validate file size (limit to 50MB)
                 if (file.size > 50 * 1024 * 1024) {
                     alert('File too large. Please use a file smaller than 50MB.');
                     return;
                 }
                 
-                // Validate file format
+                // Validate file format integrity for supported formats
                 const isValidFormat = await validateModelFile(file);
                 if (!isValidFormat) {
                     alert('Invalid 3D model file. Please ensure it\'s a valid GLB or GLTF file.');
@@ -1973,11 +2071,13 @@
                     const file = files[0];
                     const fileName = file.name.toLowerCase();
                     
-                    // Check file extension
-                    if (fileName.endsWith('.gltf') || fileName.endsWith('.glb')) {
+                    // Check if it's a 3D model file
+                    const formatInfo = check3DFileFormat(file.name);
+                    
+                    if (formatInfo.isKnown3D) {
                         loadModelAtCameraCenter(file);
                     } else {
-                        alert('Please drop a valid GLTF (.gltf) or GLB (.glb) file.');
+                        alert('File not recognized as a 3D model. Supported: .glb, .gltf, .obj, .fbx, .dae, .stl, .ply, .las, .dxf, .usdz');
                     }
                 }
             });
