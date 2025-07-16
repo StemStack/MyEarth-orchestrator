@@ -104,19 +104,14 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
+            // Use OpenStreetMap imagery (no authentication required)
+            imageryProvider: new Cesium.OpenStreetMapImageryProvider({
+                url: 'https://a.tile.openstreetmap.org/'
+            }),
+            
             // Use ellipsoid terrain (no authentication required)
             terrainProvider: new Cesium.EllipsoidTerrainProvider()
         });
-
-        // Remove default imagery layer and add our own
-        viewer.imageryLayers.removeAll();
-        
-        // Add built-in Natural Earth II imagery
-        const imageryLayer = viewer.imageryLayers.addImageryProvider(
-            new Cesium.TileMapServiceImageryProvider({
-                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-            })
-        );
 
         // Set initial camera position for a nice Earth view
         viewer.camera.setView({
