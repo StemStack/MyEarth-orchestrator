@@ -552,6 +552,23 @@
             line-height: 1.2;
         }
 
+        .sample-models-button {
+            width: 100%;
+            padding: 6px 12px;
+            background-color: rgba(52, 152, 219, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-top: 8px;
+        }
+
+        .sample-models-button:hover {
+            background-color: rgba(52, 152, 219, 1);
+        }
+
         @media (max-width: 768px) {
             .zoom-controls {
                 top: 55px;
@@ -669,6 +686,9 @@
             <div class="model-upload-hint">
                 Or drag GLTF/GLB files anywhere
             </div>
+            <button class="sample-models-button" onclick="showSampleModels()">
+                📦 Try Sample Models
+            </button>
         </div>
     </div>
 
@@ -1599,9 +1619,13 @@
                                 • Export with simplified materials<br>
                                 • Disable animations during export<br>
                                 • Use standard UV mapping<br>
-                                • Keep poly count under 10k triangles
+                                • Keep poly count under 10k triangles<br>
+                                • Try converting to GLTF format instead of GLB
                             </div>
-                            <button onclick="this.parentElement.remove()" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="this.parentElement.parentElement.remove()" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
+                                <button onclick="showModelAlternatives()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Show Alternatives</button>
+                            </div>
                         `;
                         document.body.appendChild(errorDiv);
                         
@@ -1813,6 +1837,100 @@
                 console.error('Error in model loading process:', error);
                 alert('Error processing 3D model file: ' + error.message);
             }
+        }
+
+        /**
+         * Show sample compatible 3D models for testing
+         */
+        function showSampleModels() {
+            const sampleDiv = document.createElement('div');
+            sampleDiv.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(44, 62, 80, 0.95);
+                color: white;
+                padding: 25px;
+                border-radius: 12px;
+                z-index: 10001;
+                font-family: Arial, sans-serif;
+                max-width: 550px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            `;
+            sampleDiv.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: #52c41a;">Test with Compatible Models</h3>
+                <div style="text-align: left; margin-bottom: 20px;">
+                    <p style="margin-bottom: 15px;">Try these known CesiumJS-compatible sources:</p>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                        <strong>🌐 Free 3D Model Sites:</strong>
+                        <ul style="font-size: 13px; line-height: 1.6; margin-top: 8px;">
+                            <li><strong>Cesium Sandcastle</strong> - Official examples with GLB models</li>
+                            <li><strong>Khronos Group</strong> - Official GLTF sample models</li>
+                            <li><strong>Sketchfab</strong> - Filter by "Downloadable" + "GLTF"</li>
+                            <li><strong>Poly Haven</strong> - Simple objects, good for testing</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px;">
+                        <strong>✅ What Works Best:</strong>
+                        <ul style="font-size: 13px; line-height: 1.6; margin-top: 8px;">
+                            <li>Simple geometric objects (cubes, spheres, vehicles)</li>
+                            <li>Models under 5MB with basic materials</li>
+                            <li>GLTF 2.0 format without custom extensions</li>
+                            <li>Static models without skeletal animation</li>
+                        </ul>
+                    </div>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: #52c41a; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Find Models</button>
+            `;
+            document.body.appendChild(sampleDiv);
+        }
+
+        /**
+         * Show alternatives for incompatible models
+         */
+        function showModelAlternatives() {
+            const altDiv = document.createElement('div');
+            altDiv.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(52, 73, 94, 0.95);
+                color: white;
+                padding: 25px;
+                border-radius: 12px;
+                z-index: 10001;
+                font-family: Arial, sans-serif;
+                max-width: 500px;
+                text-align: center;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            `;
+            altDiv.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: #3498db;">Alternative Solutions</h3>
+                <div style="text-align: left; margin-bottom: 20px;">
+                    <p style="margin-bottom: 15px;"><strong>Free 3D Model Converters:</strong></p>
+                    <ul style="font-size: 13px; line-height: 1.6;">
+                        <li><strong>Blender</strong> - Free, powerful 3D software with GLTF export</li>
+                        <li><strong>Sketchfab</strong> - Online model viewer with download options</li>
+                        <li><strong>Three.js Editor</strong> - Web-based GLTF optimizer</li>
+                        <li><strong>gltf-pipeline</strong> - Command line GLTF optimizer</li>
+                    </ul>
+                    
+                    <p style="margin: 15px 0 10px 0;"><strong>Quick Export Tips:</strong></p>
+                    <ul style="font-size: 13px; line-height: 1.6;">
+                        <li>In Blender: File → Export → glTF 2.0 → "Include: Selected Objects"</li>
+                        <li>Disable "Include Animations" and "Apply Modifiers"</li>
+                        <li>Use "GLTF Separate" format instead of "GLTF Binary"</li>
+                        <li>Reduce polygon count with Decimate modifier</li>
+                    </ul>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Got It</button>
+            `;
+            document.body.appendChild(altDiv);
         }
 
         /**
