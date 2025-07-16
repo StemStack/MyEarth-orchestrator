@@ -117,5 +117,5 @@ The CesiumJS globe viewer is now fully functional with:
 - Dynamic metric scale bar with automatic scaling (meters/kilometers)
 - Professional bottom-left panel with coordinates in WGS84 degrees format
 - Real-time scale bar updates based on camera zoom level and position
-- Interactive north arrow compass showing camera view direction (larger size, positioned above scale)
-- Visual compass needle that rotates to match the direction the camera is facing
+- Interactive north arrow compass pointing to geographic north (larger size, positioned above scale)
+- Visual compass needle that always points north regardless of camera rotation

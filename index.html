@@ -976,20 +976,20 @@
         }
 
         /**
-         * Updates the north arrow rotation to match camera view direction
-         * Arrow rotates to show the direction the camera is facing
+         * Updates the north arrow rotation to always point to geographic north
+         * Arrow compensates for camera rotation to maintain north orientation
          */
         function updateNorthArrow() {
             try {
-                // Get the camera's current heading (direction it's facing)
+                // Get the camera's current heading (rotation around the up axis)
                 const heading = viewer.camera.heading;
                 
                 // Convert heading from radians to degrees
                 const headingDegrees = Cesium.Math.toDegrees(heading);
                 
-                // Rotate the north arrow to match the camera's heading
-                // The arrow shows which direction the camera is pointing
-                const rotation = headingDegrees;
+                // Rotate the north arrow to compensate for camera rotation
+                // Negative rotation because we want the arrow to point north regardless of camera heading
+                const rotation = -headingDegrees;
                 
                 // Apply rotation transform to the north arrow
                 northArrow.style.transform = `rotate(${rotation}deg)`;
