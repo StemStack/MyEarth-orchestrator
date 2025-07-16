@@ -1313,12 +1313,12 @@
                 <span>▼</span>
             </div>
             <div class="section-content" id="models3d">
-                <div style="font-size: 11px; color: #666; margin-bottom: 8px;">
-                    Drag & drop GLB/GLTF files onto the map
-                </div>
-                <button class="control-button" onclick="showSampleModels()">
-                    View Sample Models
+                <button class="control-button secondary" id="modelUploadButton">
+                    Upload 3D Model
                 </button>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                    Drag & drop GLB/GLTF files or click to browse
+                </div>
             </div>
         </div>
         
@@ -1503,53 +1503,24 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Completely disable Cesium Ion services to prevent any paid service usage
+        // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
         if (typeof Cesium !== 'undefined') {
-            // Disable Ion completely
+            // Disable Ion access tokens and servers
             if (Cesium.Ion) {
-                Cesium.Ion.defaultAccessToken = undefined;
+                Cesium.Ion.defaultAccessToken = '';
                 Cesium.Ion.defaultServer = undefined;
-                
-                // Override Ion resource creation
-                if (Cesium.IonResource) {
-                    Cesium.IonResource.fromAssetId = function() {
-                        console.warn('Ion services disabled - using free alternatives only');
-                        throw new Error('Ion services are disabled to prevent paid service usage');
-                    };
-                }
             }
             
-            // Override any imagery provider that might call Ion services
-            const originalArcGisProvider = Cesium.ArcGisMapServerImageryProvider;
-            if (originalArcGisProvider) {
-                Cesium.ArcGisMapServerImageryProvider = function(options) {
-                    // Ensure no Ion credit checking
-                    if (options.credit && typeof options.credit === 'object' && options.credit.isIon) {
-                        options.credit = typeof options.credit === 'string' ? options.credit : 'ESRI ArcGIS';
-                    }
-                    return new originalArcGisProvider(options);
+            // Override Ion resource to prevent usage
+            if (Cesium.IonResource && Cesium.IonResource.fromAssetId) {
+                Cesium.IonResource.fromAssetId = function() {
+                    console.warn('Ion services disabled - using free alternatives only');
+                    throw new Error('Ion services disabled');
                 };
-                // Copy all properties
-                Object.setPrototypeOf(Cesium.ArcGisMapServerImageryProvider, originalArcGisProvider);
-                Cesium.ArcGisMapServerImageryProvider.prototype = originalArcGisProvider.prototype;
             }
         }
         
         console.log('✓ Ion services completely disabled - using only free, open-source data');
-        
-        // Additional Ion blocking - override any credit system that checks Ion
-        if (typeof Cesium !== 'undefined' && Cesium.Credit) {
-            const originalCredit = Cesium.Credit;
-            Cesium.Credit = function(html, showOnScreen) {
-                // Remove any Ion detection
-                if (typeof html === 'object' && html.isIon) {
-                    html = html.text || 'Data Provider';
-                }
-                return new originalCredit(html, showOnScreen);
-            };
-            Object.setPrototypeOf(Cesium.Credit, originalCredit);
-            Cesium.Credit.prototype = originalCredit.prototype;
-        }
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
