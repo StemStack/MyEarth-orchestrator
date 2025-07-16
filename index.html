@@ -1053,9 +1053,10 @@
         viewer.scene.fog.screenSpaceErrorFactor = 2.0;
         viewer.scene.globe.showWaterEffect = false;
         
-        // Keep lighting disabled initially to prevent rendering errors
+        // Keep initial state clean
         viewer.scene.globe.enableLighting = false;
         viewer.scene.globe.material = undefined;
+        viewer.scene.globe.terrainExaggeration = 1.0;
         
         // Use basic lighting without dynamic atmosphere
         viewer.scene.globe.dynamicAtmosphereLighting = false;
@@ -1064,34 +1065,55 @@
         // Add wireframe material option for 3D visualization
         let wireframeEnabled = false;
         
-        // Use wireframe overlay for 3D visualization effect since terrain data requires authentication
-        function applyWireframeTerrain() {
+        // Create real 3D terrain using elevation data without authentication
+        function applyRealTerrain() {
             try {
-                // Create wireframe material for 3D effect
-                viewer.scene.globe.material = new Cesium.Material({
-                    fabric: {
-                        type: 'Grid',
-                        uniforms: {
-                            color: new Cesium.Color(0.2, 0.8, 1.0, 0.6),
-                            cellAlpha: 0.08,
-                            lineCount: new Cesium.Cartesian2(128, 64),
-                            lineThickness: new Cesium.Cartesian2(1.5, 1.5),
-                            lineOffset: new Cesium.Cartesian2(0.0, 0.0)
-                        }
-                    }
+                // Use terrain provider that works without authentication
+                const terrainProvider = new Cesium.CesiumTerrainProvider({
+                    url: 'https://terrain.agi.com/stk-terrain/v1/tilesets/world/tiles',
+                    requestWaterMask: false,
+                    requestVertexNormals: false
                 });
                 
-                // Enable lighting for better sphere visualization
+                viewer.terrainProvider = terrainProvider;
+                viewer.scene.globe.terrainExaggeration = 5.0; // Very high exaggeration for dramatic visibility
                 viewer.scene.globe.enableLighting = true;
-                console.log('3D wireframe visualization applied');
+                
+                console.log('Real 3D terrain applied successfully');
+                
+                // Add error handling if terrain fails to load
+                terrainProvider.errorEvent.addEventListener(function(error) {
+                    console.warn('Terrain failed to load, using fallback');
+                    viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+                    applyWireframeFallback();
+                });
                 
             } catch (error) {
-                console.warn('Wireframe terrain failed:', error);
+                console.warn('3D terrain initialization failed:', error);
+                applyWireframeFallback();
             }
         }
         
-        // Apply wireframe terrain for 3D effect
-        applyWireframeTerrain();
+        // Fallback wireframe when terrain data unavailable
+        function applyWireframeFallback() {
+            viewer.scene.globe.material = new Cesium.Material({
+                fabric: {
+                    type: 'Grid',
+                    uniforms: {
+                        color: new Cesium.Color(0.2, 0.8, 1.0, 0.6),
+                        cellAlpha: 0.08,
+                        lineCount: new Cesium.Cartesian2(128, 64),
+                        lineThickness: new Cesium.Cartesian2(1.5, 1.5),
+                        lineOffset: new Cesium.Cartesian2(0.0, 0.0)
+                    }
+                }
+            });
+            viewer.scene.globe.enableLighting = true;
+            console.log('Wireframe fallback applied');
+        }
+        
+        // Apply real terrain
+        applyRealTerrain();
         
         // Add fallback to ellipsoid terrain if the terrain provider fails
         viewer.terrainProvider.errorEvent.addEventListener(function(err) {
@@ -1147,12 +1169,12 @@
         viewer.imageryLayers.removeAll();
         viewer.imageryLayers.addImageryProvider(baseMaps[currentBaseMap].provider());
 
-        // Define European home view coordinates
+        // Define Alps home view coordinates for dramatic terrain demonstration
         const europeHomeView = {
-            destination: Cesium.Cartesian3.fromDegrees(10.0, 54.0, 4000000.0),
+            destination: Cesium.Cartesian3.fromDegrees(8.0, 46.5, 50000.0), // Swiss Alps
             orientation: {
                 heading: 0.0,
-                pitch: -Cesium.Math.PI_OVER_TWO,
+                pitch: -0.5, // Tilted view to see terrain better
                 roll: 0.0
             }
         };
@@ -3414,10 +3436,12 @@
             const enabled = toggle.checked;
             
             if (enabled) {
-                // Enable 3D wireframe visualization
-                applyWireframeTerrain();
+                // Enable real 3D terrain
+                applyRealTerrain();
             } else {
-                // Remove wireframe material
+                // Disable 3D terrain - use flat ellipsoid
+                viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+                viewer.scene.globe.terrainExaggeration = 1.0;
                 viewer.scene.globe.material = undefined;
                 viewer.scene.globe.enableLighting = false;
             }
