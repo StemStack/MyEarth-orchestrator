@@ -1979,11 +1979,58 @@
             </svg>
         </div>
         <div class="tool-icon" id="themeToggleTool" title="Toggle Theme" onclick="toggleTheme()">☾</div>
-        <div class="tool-icon" id="baseMapTool" title="Base Maps" onclick="toggleBaseMapPanel()">
+        <!-- Base Map Icons -->
+        <div class="tool-icon" id="osmStandardTool" title="OSM Standard" onclick="switchBaseMap('osm')">
             <svg width="16" height="16" viewBox="0 0 24 24">
-                <polygon points="3 6 9 1 15 6 21 1 21 18 15 23 9 18 3 23" fill="none" stroke="currentColor" stroke-width="2"/>
-                <line x1="9" y1="1" x2="9" y2="18" stroke="currentColor" stroke-width="2"/>
-                <line x1="15" y1="6" x2="15" y2="23" stroke="currentColor" stroke-width="2"/>
+                <rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M6 6h12M6 12h12M6 18h12" stroke="currentColor" stroke-width="1"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="osmHumanitarianTool" title="OSM Humanitarian" onclick="switchBaseMap('humanitarian')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="cyclOSMTool" title="CyclOSM" onclick="switchBaseMap('cyclosm')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="openTopoTool" title="OpenTopoMap" onclick="switchBaseMap('topo')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M3 20l6-6 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="9" cy="14" r="1" fill="currentColor"/>
+                <circle cx="13" cy="10" r="1" fill="currentColor"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="monochromeTool" title="Monochrome" onclick="switchBaseMap('monochrome')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M3 3l18 18" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="darkModeTool" title="Dark Mode Map" onclick="switchBaseMap('dark')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="cartoDTool" title="CartoDB Positron" onclick="switchBaseMap('cartodb')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
+        </div>
+        <div class="tool-icon" id="esriTool" title="ESRI World Imagery" onclick="switchBaseMap('esri')">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
+                <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
+                <rect x="14" y="6" width="4" height="4" fill="currentColor"/>
+                <rect x="6" y="14" width="4" height="4" fill="currentColor"/>
+                <rect x="14" y="14" width="4" height="4" fill="currentColor"/>
             </svg>
         </div>
         <div class="tool-icon" id="layerTool" title="Data Layers" onclick="toggleLayerPanel()">
@@ -2020,6 +2067,36 @@
     </div>
 
 
+
+    <!-- Bottom Information Band -->
+    <div id="bottomBand">
+        <div class="bottom-left">
+            <div id="scaleInfo">Scale: 1:1,000,000</div>
+            <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
+        </div>
+        <div class="bottom-center">
+            <div id="activeLayersInfo">Active Layers: OSM Standard</div>
+        </div>
+        <div class="bottom-right">
+            <div id="attributionInfo">© OpenStreetMap contributors</div>
+        </div>
+    </div>
+
+    <!-- Scale bar and coordinates display -->
+    <div class="bottom-left-panel" id="bottomLeftPanel">
+        <!-- Scale bar -->
+        <div class="scale-bar-container" id="scaleBarContainer">
+            <div class="scale-bar" id="scaleBar">
+                <div class="scale-line" id="scaleLine"></div>
+                <div class="scale-text" id="scaleText">1 km</div>
+            </div>
+        </div>
+        
+        <!-- Coordinates display -->
+        <div class="coordinates-info" id="coordinatesInfo">
+            <span class="coordinates-text" id="coordinatesText">Coordinates (°) ---.------, ---.------</span>
+        </div>
+    </div>
 
     <!-- Floating menu button (appears when sidebar is collapsed) -->
     <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()">☰</button>
@@ -2698,18 +2775,21 @@
          */
         function updateCoordinateDisplay(latitude, longitude) {
             try {
+                // Update compact coordinates in right panel
                 const compactCoordinates = document.getElementById('compactCoordinates');
-                if (!compactCoordinates) {
-                    console.warn('Compact coordinates element not found');
-                    return;
+                if (compactCoordinates) {
+                    const latDir = latitude >= 0 ? 'N' : 'S';
+                    const lonDir = longitude >= 0 ? 'E' : 'W';
+                    compactCoordinates.innerHTML = `${Math.abs(latitude).toFixed(1)}°${latDir}<br>${Math.abs(longitude).toFixed(1)}°${lonDir}`;
                 }
                 
-                const latText = latitude.toFixed(1);
-                const lonText = longitude.toFixed(1);
-                const latDir = latitude >= 0 ? 'N' : 'S';
-                const lonDir = longitude >= 0 ? 'E' : 'W';
-                
-                compactCoordinates.innerHTML = `${Math.abs(latitude).toFixed(1)}°${latDir}<br>${Math.abs(longitude).toFixed(1)}°${lonDir}`;
+                // Update full coordinates in bottom left panel
+                const coordinatesText = document.getElementById('coordinatesText');
+                if (coordinatesText) {
+                    const latText = latitude.toFixed(6);
+                    const lonText = longitude.toFixed(6);
+                    coordinatesText.textContent = `Coordinates (°) ${latText}, ${lonText}`;
+                }
                 
             } catch (error) {
                 console.warn('Error updating coordinate display:', error);
@@ -2721,12 +2801,18 @@
          */
         function clearCoordinateDisplay() {
             try {
+                // Clear compact coordinates in right panel
                 const compactCoordinates = document.getElementById('compactCoordinates');
-                if (!compactCoordinates) {
-                    console.warn('Compact coordinates element not found');
-                    return;
+                if (compactCoordinates) {
+                    compactCoordinates.innerHTML = '--°-<br>--°-';
                 }
-                compactCoordinates.innerHTML = '--°-<br>--°-';
+                
+                // Clear full coordinates in bottom left panel
+                const coordinatesText = document.getElementById('coordinatesText');
+                if (coordinatesText) {
+                    coordinatesText.textContent = 'Coordinates (°) ---.------, ---.------';
+                }
+                
             } catch (error) {
                 console.warn('Error clearing coordinate display:', error);
             }
@@ -2756,9 +2842,9 @@
                 const rotation = -headingDegrees;
                 
                 // Apply rotation transform to the north arrow in the right panel
-                const northArrowTool = document.getElementById('northArrowTool');
-                if (northArrowTool) {
-                    const svg = northArrowTool.querySelector('svg');
+                const northArrowElement = document.getElementById('northArrowTool');
+                if (northArrowElement) {
+                    const svg = northArrowElement.querySelector('svg');
                     if (svg) {
                         svg.style.transform = `rotate(${rotation}deg)`;
                     }
@@ -2767,9 +2853,9 @@
             } catch (error) {
                 console.warn('North arrow update failed:', error);
                 // Reset to default orientation on error
-                const northArrowTool = document.getElementById('northArrowTool');
-                if (northArrowTool) {
-                    const svg = northArrowTool.querySelector('svg');
+                const northArrowElement = document.getElementById('northArrowTool');
+                if (northArrowElement) {
+                    const svg = northArrowElement.querySelector('svg');
                     if (svg) {
                         svg.style.transform = 'rotate(0deg)';
                     }
@@ -5512,6 +5598,119 @@
         }
 
         /**
+         * Switch Base Map
+         */
+        function switchBaseMap(mapType) {
+            const baseMapSelector = document.getElementById('baseMapSelector');
+            if (baseMapSelector) {
+                baseMapSelector.value = mapType;
+                baseMapSelector.dispatchEvent(new Event('change'));
+            }
+        }
+
+        /**
+         * Reset View to North
+         */
+        function resetViewToNorth() {
+            if (viewer) {
+                viewer.scene.camera.setView({
+                    destination: viewer.scene.camera.position,
+                    orientation: {
+                        heading: 0.0,
+                        pitch: viewer.scene.camera.pitch,
+                        roll: 0.0
+                    }
+                });
+            }
+        }
+
+        /**
+         * Zoom Functions
+         */
+        function zoomIn() {
+            if (viewer) {
+                viewer.scene.camera.zoomIn(viewer.scene.camera.getMagnitude() * 0.3);
+            }
+        }
+
+        function zoomOut() {
+            if (viewer) {
+                viewer.scene.camera.zoomOut(viewer.scene.camera.getMagnitude() * 0.3);
+            }
+        }
+
+        function resetView() {
+            if (viewer) {
+                viewer.scene.camera.setView({
+                    destination: Cesium.Cartesian3.fromDegrees(0, 0, 15000000)
+                });
+            }
+        }
+
+        function refreshMap() {
+            if (viewer) {
+                viewer.scene.requestRender();
+            }
+        }
+
+        function toggleFullscreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
+        function toggleSearchPanel() {
+            const searchSection = document.getElementById('searchSection');
+            if (searchSection) {
+                searchSection.classList.toggle('collapsed');
+            }
+        }
+
+        function toggleBaseMapPanel() {
+            const baseMapSection = document.getElementById('baseMapSection');
+            if (baseMapSection) {
+                baseMapSection.classList.toggle('collapsed');
+            }
+        }
+
+        function toggleLayerPanel() {
+            const layerSection = document.getElementById('layerSection');
+            if (layerSection) {
+                layerSection.classList.toggle('collapsed');
+            }
+        }
+
+        function toggleMeasurementTool() {
+            const measurementSection = document.getElementById('measurementSection');
+            if (measurementSection) {
+                measurementSection.classList.toggle('collapsed');
+            }
+        }
+
+        function toggleMarkerMode() {
+            const markerSection = document.getElementById('markerSection');
+            if (markerSection) {
+                markerSection.classList.toggle('collapsed');
+            }
+        }
+
+        function toggleModelPanel() {
+            const modelSection = document.getElementById('modelSection');
+            if (modelSection) {
+                modelSection.classList.toggle('collapsed');
+            }
+        }
+
+        function toggleSettingsPanel() {
+            const settingsSection = document.getElementById('settingsSection');
+            if (settingsSection) {
+                settingsSection.classList.toggle('collapsed');
+            }
+        }
+
+        /**
          * Night Mode Theme Toggle Functionality
          */
         function toggleTheme() {
@@ -5675,8 +5874,8 @@
                 floatingButton.style.display = 'none';
             }
             
-            // Bottom band removed - no updates needed
-            // setInterval(updateBottomBand, 1000);
+            // Initialize bottom band updates
+            setInterval(updateBottomBand, 1000);
             
             console.log('✓ Menu system initialized - left panel visible, floating button hidden');
         });
