@@ -100,3 +100,7 @@ The CesiumJS globe viewer is now fully functional with:
 - Configured ellipsoid terrain provider to avoid external terrain services
 - Disabled sky box and atmosphere features that require Ion services
 - Simplified viewer configuration for reliable operation without third-party authentication
+- Added custom zoom controls (+/- buttons) in top-left corner
+- Implemented universal search bar with Nominatim geocoding API integration
+- Search supports place names, addresses, and coordinate input formats
+- Added loading spinner and error handling for search functionality
