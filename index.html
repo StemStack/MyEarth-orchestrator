@@ -1190,6 +1190,170 @@
             line-height: 1.3;
         }
 
+        /* Point Marker Management Styles */
+        .points-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+
+        .points-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .points-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #ffa500;
+        }
+
+        .points-count {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .points-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 8px;
+        }
+
+        .point-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 6px;
+            border-left: 3px solid #ff0000;
+        }
+
+        .point-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .point-name-input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 4px;
+            border-radius: 2px;
+            flex: 1;
+            margin-right: 6px;
+        }
+
+        .point-name-input:focus {
+            background: rgba(255, 255, 255, 0.1);
+            outline: 1px solid #ffa500;
+        }
+
+        .point-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .point-action-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .point-color-btn {
+            background: #ff0000;
+            color: white;
+        }
+
+        .point-color-btn:hover {
+            opacity: 0.8;
+        }
+
+        .point-delete-btn {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff6666;
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .point-delete-btn:hover {
+            background: rgba(255, 0, 0, 0.4);
+        }
+
+        .point-coordinates {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: monospace;
+            margin: 2px 0;
+        }
+
+        .point-timestamp {
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        .color-picker-dropdown {
+            position: absolute;
+            background: rgba(42, 42, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            padding: 8px;
+            z-index: 10000;
+            display: none;
+            flex-wrap: wrap;
+            gap: 4px;
+            width: 120px;
+        }
+
+        .color-option {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        .color-option:hover {
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .points-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .points-clear-btn {
+            flex: 1;
+            padding: 4px 8px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 3px;
+            color: #ff6666;
+            font-size: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .points-clear-btn:hover {
+            background: rgba(255, 0, 0, 0.4);
+        }
+
 
 
         @media (max-width: 768px) {
@@ -1591,6 +1755,27 @@
             <button class="measurement-btn primary" onclick="newMeasurement()">New</button>
             <button class="measurement-btn secondary" onclick="clearMeasurements()">Clear All</button>
         </div>
+
+        <!-- Point Marker Management Section -->
+        <div class="points-section">
+            <div class="points-header">
+                <span class="points-title">📍 Point Markers</span>
+                <span class="points-count" id="pointsCount">0 points</span>
+            </div>
+            
+            <div class="points-list" id="pointsList">
+                <!-- Point items will be dynamically inserted here -->
+            </div>
+
+            <div class="points-actions">
+                <button class="points-clear-btn" onclick="clearAllPoints()">Clear All Points</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Picker Dropdown -->
+    <div class="color-picker-dropdown" id="colorPickerDropdown">
+        <!-- Color options will be dynamically inserted here -->
     </div>
 
     <div class="drag-drop-overlay" id="dragDropOverlay" style="display: none;">
@@ -5617,29 +5802,35 @@
          * Each marker displays a label and can be managed through the marker collection.
          */
 
-        // Marker management system
+        // Enhanced Marker Management System with UI Integration
         let markerCounter = 0;
-        const markers = new Map(); // Store markers with unique IDs for potential future management
+        const markers = new Map(); // Store markers with unique IDs and metadata
+        const availableColors = [
+            '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF',
+            '#FFA500', '#800080', '#008000', '#000080', '#800000', '#808000',
+            '#008080', '#FF69B4', '#DC143C', '#32CD32', '#4169E1', '#FFD700'
+        ];
 
         /**
-         * Creates a red marker billboard at specified coordinates
+         * Creates a colored marker billboard at specified coordinates with UI integration
          * @param {number} longitude - Longitude in degrees
          * @param {number} latitude - Latitude in degrees
          * @param {string} label - Display label for the marker
-         * @returns {Object} Created marker entity
+         * @param {string} color - Hex color for the marker (optional, defaults to red)
+         * @returns {Object} Created marker entity with metadata
          */
-        function createMarker(longitude, latitude, label) {
+        function createMarker(longitude, latitude, label, color = '#FF0000') {
             const markerId = `marker_${++markerCounter}`;
             
             const marker = viewer.entities.add({
                 id: markerId,
                 position: Cesium.Cartesian3.fromDegrees(longitude, latitude),
                 billboard: {
-                    image: createMarkerPin(), // Custom red pin graphic
+                    image: createMarkerPin(color), // Custom colored pin graphic
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                     horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
                     scale: 1.0,
-                    pixelOffset: new Cesium.Cartesian2(0, 0), // Remove offset for exact positioning
+                    pixelOffset: new Cesium.Cartesian2(0, 0),
                     heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                 },
                 label: {
@@ -5650,35 +5841,46 @@
                     outlineWidth: 2,
                     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                    pixelOffset: new Cesium.Cartesian2(0, -36), // Adjust label position relative to marker
+                    pixelOffset: new Cesium.Cartesian2(0, -36),
                     disableDepthTestDistance: Number.POSITIVE_INFINITY
                 }
             });
 
-            // Store marker reference for potential future management
-            markers.set(markerId, {
+            // Store marker with enhanced metadata
+            const markerData = {
                 entity: marker,
                 coordinates: { longitude, latitude },
                 label: label,
-                timestamp: new Date()
-            });
-
-            return marker;
+                color: color,
+                timestamp: new Date(),
+                id: markerId
+            };
+            
+            markers.set(markerId, markerData);
+            
+            // Update UI
+            updatePointsUI();
+            
+            return markerData;
         }
 
         /**
-         * Creates a red marker pin graphic with precise bottom point positioning
+         * Creates a colored marker pin graphic with precise bottom point positioning
+         * @param {string} color - Hex color for the marker pin
          * @returns {HTMLCanvasElement} Canvas element containing the marker graphic
          */
-        function createMarkerPin() {
+        function createMarkerPin(color = '#FF0000') {
             const canvas = document.createElement('canvas');
             canvas.width = 24;
             canvas.height = 36;
             const ctx = canvas.getContext('2d');
 
-            // Draw red marker pin shape with precise positioning
-            ctx.fillStyle = '#FF0000';
-            ctx.strokeStyle = '#8B0000';
+            // Calculate darker stroke color
+            const strokeColor = darkenColor(color, 0.3);
+
+            // Draw colored marker pin shape with precise positioning
+            ctx.fillStyle = color;
+            ctx.strokeStyle = strokeColor;
             ctx.lineWidth = 2;
 
             // Main pin body (circle) - positioned higher to accommodate point
@@ -5703,6 +5905,23 @@
             ctx.fill();
 
             return canvas;
+        }
+
+        /**
+         * Darken a hex color by a percentage
+         * @param {string} color - Hex color string
+         * @param {number} percent - Percentage to darken (0-1)
+         * @returns {string} Darkened hex color
+         */
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace("#", ""), 16);
+            const amt = Math.round(2.55 * percent * 100);
+            const R = (num >> 16) - amt;
+            const G = (num >> 8 & 0x00FF) - amt;
+            const B = (num & 0x0000FF) - amt;
+            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
         }
 
         /**
@@ -5791,8 +6010,190 @@
         initializeMarkerPlacement();
 
         console.log('CesiumJS Globe Viewer initialized successfully');
+        /**
+         * Point Marker Management UI Functions
+         */
+        
+        /**
+         * Updates the points UI with current marker data
+         */
+        function updatePointsUI() {
+            const pointsList = document.getElementById('pointsList');
+            const pointsCount = document.getElementById('pointsCount');
+            
+            if (!pointsList || !pointsCount) return;
+            
+            const markerArray = Array.from(markers.values());
+            pointsCount.textContent = `${markerArray.length} point${markerArray.length === 1 ? '' : 's'}`;
+            
+            if (markerArray.length === 0) {
+                pointsList.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; padding: 20px;">No markers placed</div>';
+                return;
+            }
+            
+            pointsList.innerHTML = markerArray.map(marker => createPointItemHTML(marker)).join('');
+        }
+        
+        /**
+         * Creates HTML for a point item in the list
+         * @param {Object} marker - Marker data object
+         * @returns {string} HTML string for the point item
+         */
+        function createPointItemHTML(marker) {
+            const { id, label, coordinates, color, timestamp } = marker;
+            const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            return `
+                <div class="point-item" data-marker-id="${id}" style="border-left-color: ${color}">
+                    <div class="point-header">
+                        <input type="text" class="point-name-input" value="${label}" 
+                               onchange="updateMarkerLabel('${id}', this.value)" 
+                               onblur="updateMarkerLabel('${id}', this.value)">
+                        <div class="point-actions">
+                            <button class="point-action-btn point-color-btn" 
+                                    style="background: ${color}" 
+                                    onclick="showColorPicker('${id}', this)" 
+                                    title="Change color">●</button>
+                            <button class="point-action-btn point-delete-btn" 
+                                    onclick="deleteMarker('${id}')" 
+                                    title="Delete point">✕</button>
+                        </div>
+                    </div>
+                    <div class="point-coordinates">
+                        ${coordinates.latitude.toFixed(6)}°, ${coordinates.longitude.toFixed(6)}°
+                    </div>
+                    <div class="point-timestamp">Added at ${timeStr}</div>
+                </div>
+            `;
+        }
+        
+        /**
+         * Shows color picker for a specific marker
+         * @param {string} markerId - ID of the marker to change color
+         * @param {HTMLElement} buttonElement - Button that triggered the picker
+         */
+        function showColorPicker(markerId, buttonElement) {
+            const colorPicker = document.getElementById('colorPickerDropdown');
+            if (!colorPicker) return;
+            
+            // Position the color picker near the button
+            const rect = buttonElement.getBoundingClientRect();
+            colorPicker.style.left = (rect.left - 60) + 'px';
+            colorPicker.style.top = (rect.bottom + 5) + 'px';
+            
+            // Create color options
+            colorPicker.innerHTML = availableColors.map(color => 
+                `<div class="color-option" style="background: ${color}" 
+                      onclick="changeMarkerColor('${markerId}', '${color}')" 
+                      title="${color}"></div>`
+            ).join('');
+            
+            colorPicker.style.display = 'flex';
+            
+            // Hide picker when clicking outside
+            setTimeout(() => {
+                document.addEventListener('click', hideColorPicker, { once: true });
+            }, 100);
+        }
+        
+        /**
+         * Hides the color picker dropdown
+         */
+        function hideColorPicker() {
+            const colorPicker = document.getElementById('colorPickerDropdown');
+            if (colorPicker) {
+                colorPicker.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Changes the color of a specific marker
+         * @param {string} markerId - ID of the marker to change
+         * @param {string} newColor - New hex color for the marker
+         */
+        function changeMarkerColor(markerId, newColor) {
+            const markerData = markers.get(markerId);
+            if (!markerData) return;
+            
+            // Update marker color in the data
+            markerData.color = newColor;
+            
+            // Recreate the marker with new color
+            const { coordinates, label } = markerData;
+            const newPin = createMarkerPin(newColor);
+            markerData.entity.billboard.image = newPin;
+            
+            // Update UI
+            updatePointsUI();
+            hideColorPicker();
+            
+            console.log(`Marker ${markerId} color changed to ${newColor}`);
+        }
+        
+        /**
+         * Updates the label of a specific marker
+         * @param {string} markerId - ID of the marker to update
+         * @param {string} newLabel - New label text
+         */
+        function updateMarkerLabel(markerId, newLabel) {
+            const markerData = markers.get(markerId);
+            if (!markerData || !newLabel.trim()) return;
+            
+            // Update marker label in the data
+            markerData.label = newLabel.trim();
+            markerData.entity.label.text = newLabel.trim();
+            
+            console.log(`Marker ${markerId} label updated to: ${newLabel}`);
+        }
+        
+        /**
+         * Deletes a specific marker
+         * @param {string} markerId - ID of the marker to delete
+         */
+        function deleteMarker(markerId) {
+            const markerData = markers.get(markerId);
+            if (!markerData) return;
+            
+            // Remove from Cesium viewer
+            viewer.entities.remove(markerData.entity);
+            
+            // Remove from our data store
+            markers.delete(markerId);
+            
+            // Update UI
+            updatePointsUI();
+            
+            console.log(`Marker ${markerId} deleted`);
+        }
+        
+        /**
+         * Clears all point markers
+         */
+        function clearAllPoints() {
+            if (markers.size === 0) return;
+            
+            if (confirm(`Delete all ${markers.size} point markers?`)) {
+                // Remove all markers from viewer
+                markers.forEach(markerData => {
+                    viewer.entities.remove(markerData.entity);
+                });
+                
+                // Clear data store
+                markers.clear();
+                markerCounter = 0;
+                
+                // Update UI
+                updatePointsUI();
+                
+                console.log('All point markers cleared');
+            }
+        }
+
         // Initialize theme system on page load
         initializeTheme();
+        
+        // Initialize points UI
+        updatePointsUI();
         
     </script>
 </body>

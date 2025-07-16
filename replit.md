@@ -197,6 +197,15 @@ The CesiumJS globe viewer is now fully functional with:
 - Worldwide land degradation coverage showing 34-year trend analysis of bare ground change
 - Multi-layer legend system supporting both protected areas and land degradation legends simultaneously
 - Color-coded land degradation legend showing vegetation recovery, improvement, stable areas, and degradation patterns
+- Complete night mode (dark theme) implementation with CSS variables system
+- Theme toggle switch in sidebar with localStorage persistence for user preferences
+- Smooth theme transitions applied to all UI components (sidebar, panels, inputs, legends)
+- Comprehensive point marker management UI integrated into measurement panel
+- Interactive point editing with name changes, color customization, and coordinate display
+- 18-color palette for marker customization with visual color picker dropdown
+- Individual point deletion and bulk clear functionality with confirmation dialogs
+- Real-time UI updates showing marker count, coordinates, and timestamp information
+- Enhanced marker creation system supporting custom colors and labels
 
 ## Service Loader System
 
