@@ -3778,17 +3778,7 @@
             });
             
             console.log('Drag and drop for 3D models initialized');
-        
-        /**
-         * Service Loader System
-         * 
-         * Modular system for loading external geospatial data services
-         * Supports: GeoJSON, WMS, and TileJSON formats
-         */
-        
-        // Active data layers management
-        let activeDataLayers = new Map();
-        let layerCounter = 0;
+        }
         
         /**
          * Toggle Service Loader Panel visibility
@@ -4199,7 +4189,427 @@
         }
         
         console.log('✓ Service Loader system initialized');
+
+        /**
+         * Service Loader System
+         * 
+         * Modular system for loading external geospatial data services
+         * Supports: GeoJSON, WMS, and TileJSON formats
+         */
+        
+        // Active data layers management
+        let activeDataLayers = new Map();
+        let layerCounter = 0;
+        
+        /**
+         * Toggle Service Loader Panel visibility
+         */
+        function toggleServiceLoader() {
+            const panel = document.getElementById('serviceLoaderPanel');
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+                updateServiceInputs(); // Initialize with default format
+            } else {
+                panel.style.display = 'none';
+            }
         }
+        
+        /**
+         * Update input fields based on selected service format
+         */
+        function updateServiceInputs() {
+            const format = document.getElementById('serviceFormat').value;
+            const geojsonInputs = document.getElementById('geojsonInputs');
+            const wmsInputs = document.getElementById('wmsInputs');
+            const tilejsonInputs = document.getElementById('tilejsonInputs');
+            
+            // Hide all input sections
+            geojsonInputs.style.display = 'none';
+            wmsInputs.style.display = 'none';
+            tilejsonInputs.style.display = 'none';
+            
+            // Show selected format inputs
+            switch(format) {
+                case 'geojson':
+                    geojsonInputs.style.display = 'block';
+                    break;
+                case 'wms':
+                    wmsInputs.style.display = 'block';
+                    break;
+                case 'tilejson':
+                    tilejsonInputs.style.display = 'block';
+                    break;
+            }
+        }
+        
+        /**
+         * Load selected service based on current format
+         */
+        function loadSelectedService() {
+            const format = document.getElementById('serviceFormat').value;
+            
+            try {
+                switch(format) {
+                    case 'geojson':
+                        loadGeoJsonLayer();
+                        break;
+                    case 'wms':
+                        loadWmsLayer();
+                        break;
+                    case 'tilejson':
+                        loadTileJsonLayer();
+                        break;
+                    default:
+                        showServiceError('Unknown service format selected');
+                }
+            } catch (error) {
+                console.error('Service loading error:', error);
+                showServiceError(`Failed to load ${format.toUpperCase()} service: ${error.message}`);
+            }
+        }
+        
+        /**
+         * Load GeoJSON data from URL
+         * Uses Cesium.GeoJsonDataSource.load() with random colors per feature
+         */
+        function loadGeoJsonLayer() {
+            const url = document.getElementById('geojsonUrl').value.trim();
+            
+            if (!url) {
+                showServiceError('Please enter a GeoJSON URL');
+                return;
+            }
+            
+            console.log('Loading GeoJSON from:', url);
+            
+            Cesium.GeoJsonDataSource.load(url, {
+                stroke: Cesium.Color.fromRandom({ alpha: 0.8 }),
+                fill: Cesium.Color.fromRandom({ alpha: 0.5 }),
+                strokeWidth: 2,
+                markerSymbol: '?'
+            }).then(function(dataSource) {
+                // Add to viewer
+                viewer.dataSources.add(dataSource);
+                
+                // Generate layer info
+                const layerId = `geojson_${++layerCounter}`;
+                const layerName = url.split('/').pop() || `GeoJSON Layer ${layerCounter}`;
+                
+                // Store layer reference
+                activeDataLayers.set(layerId, {
+                    id: layerId,
+                    name: layerName,
+                    type: 'GeoJSON',
+                    dataSource: dataSource,
+                    visible: true,
+                    url: url
+                });
+                
+                // Add click handlers for feature popups
+                addGeoJsonClickHandler(dataSource);
+                
+                // Update UI
+                updateActiveLayersList();
+                
+                // Zoom to data if possible
+                try {
+                    viewer.flyTo(dataSource);
+                } catch (e) {
+                    console.warn('Could not zoom to GeoJSON data:', e);
+                }
+                
+                console.log('✓ GeoJSON layer loaded successfully:', layerName);
+                
+                // Clear input
+                document.getElementById('geojsonUrl').value = '';
+                
+            }).catch(function(error) {
+                console.error('GeoJSON loading failed:', error);
+                showServiceError(`Failed to load GeoJSON: ${error.message}`);
+            });
+        }
+        
+        /**
+         * Add click handler for GeoJSON features to show popups
+         */
+        function addGeoJsonClickHandler(dataSource) {
+            viewer.selectedEntityChanged.addEventListener(function(selectedEntity) {
+                if (selectedEntity && dataSource.entities.contains(selectedEntity)) {
+                    const properties = selectedEntity.properties;
+                    if (properties) {
+                        let popupContent = '<h4>Feature Properties:</h4>';
+                        
+                        for (const propertyName of properties.propertyNames) {
+                            const value = properties[propertyName];
+                            if (value !== undefined) {
+                                popupContent += `<p><strong>${propertyName}:</strong> ${value}</p>`;
+                            }
+                        }
+                        
+                        // Create simple popup (can be enhanced with better styling)
+                        console.log('Feature clicked:', popupContent);
+                    }
+                }
+            });
+        }
+        
+        /**
+         * Load WMS (Web Map Service) as imagery overlay
+         * Uses WebMapServiceImageryProvider
+         */
+        function loadWmsLayer() {
+            const url = document.getElementById('wmsUrl').value.trim();
+            const layers = document.getElementById('wmsLayers').value.trim();
+            const format = document.getElementById('wmsFormat').value;
+            
+            if (!url || !layers) {
+                showServiceError('Please enter WMS URL and layer name(s)');
+                return;
+            }
+            
+            console.log('Loading WMS service:', { url, layers, format });
+            
+            try {
+                const wmsProvider = new Cesium.WebMapServiceImageryProvider({
+                    url: url,
+                    layers: layers,
+                    parameters: {
+                        format: format,
+                        transparent: true,
+                        version: '1.3.0'
+                    },
+                    credit: `WMS: ${url}`
+                });
+                
+                // Add as imagery layer
+                const imageryLayer = viewer.imageryLayers.addImageryProvider(wmsProvider);
+                
+                // Generate layer info
+                const layerId = `wms_${++layerCounter}`;
+                const layerName = `WMS: ${layers}`;
+                
+                // Store layer reference
+                activeDataLayers.set(layerId, {
+                    id: layerId,
+                    name: layerName,
+                    type: 'WMS',
+                    imageryLayer: imageryLayer,
+                    visible: true,
+                    url: url,
+                    layers: layers
+                });
+                
+                // Update UI
+                updateActiveLayersList();
+                
+                console.log('✓ WMS layer loaded successfully:', layerName);
+                
+                // Clear inputs
+                document.getElementById('wmsUrl').value = '';
+                document.getElementById('wmsLayers').value = '';
+                
+            } catch (error) {
+                console.error('WMS loading failed:', error);
+                showServiceError(`Failed to load WMS service: ${error.message}`);
+            }
+        }
+        
+        /**
+         * Load TileJSON service (Mapbox-style raster tiles)
+         * Fetches TileJSON spec and creates UrlTemplateImageryProvider
+         */
+        function loadTileJsonLayer() {
+            const url = document.getElementById('tilejsonUrl').value.trim();
+            
+            if (!url) {
+                showServiceError('Please enter a TileJSON URL');
+                return;
+            }
+            
+            console.log('Loading TileJSON from:', url);
+            
+            // Fetch TileJSON specification
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(tileJsonSpec => {
+                    if (!tileJsonSpec.tiles || !tileJsonSpec.tiles.length) {
+                        throw new Error('Invalid TileJSON: missing tiles array');
+                    }
+                    
+                    // Create imagery provider from TileJSON
+                    const tileProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: tileJsonSpec.tiles[0], // Use first tile URL template
+                        credit: tileJsonSpec.attribution || `TileJSON: ${url}`,
+                        minimumLevel: tileJsonSpec.minzoom || 0,
+                        maximumLevel: tileJsonSpec.maxzoom || 18
+                    });
+                    
+                    // Add as imagery layer
+                    const imageryLayer = viewer.imageryLayers.addImageryProvider(tileProvider);
+                    
+                    // Generate layer info
+                    const layerId = `tilejson_${++layerCounter}`;
+                    const layerName = tileJsonSpec.name || `TileJSON Layer ${layerCounter}`;
+                    
+                    // Store layer reference
+                    activeDataLayers.set(layerId, {
+                        id: layerId,
+                        name: layerName,
+                        type: 'TileJSON',
+                        imageryLayer: imageryLayer,
+                        visible: true,
+                        url: url,
+                        spec: tileJsonSpec
+                    });
+                    
+                    // Update UI
+                    updateActiveLayersList();
+                    
+                    console.log('✓ TileJSON layer loaded successfully:', layerName);
+                    
+                    // Clear input
+                    document.getElementById('tilejsonUrl').value = '';
+                })
+                .catch(error => {
+                    console.error('TileJSON loading failed:', error);
+                    showServiceError(`Failed to load TileJSON: ${error.message}`);
+                });
+        }
+        
+        /**
+         * Update the active layers list UI
+         */
+        function updateActiveLayersList() {
+            const listContainer = document.getElementById('activeLayersList');
+            
+            if (activeDataLayers.size === 0) {
+                listContainer.innerHTML = `
+                    <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 10px;">
+                        No data layers loaded
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            for (const [layerId, layer] of activeDataLayers) {
+                const toggleClass = layer.visible ? '' : 'disabled';
+                const toggleText = layer.visible ? 'Hide' : 'Show';
+                
+                html += `
+                    <div class="layer-item">
+                        <div class="layer-info">
+                            <div class="layer-name">${layer.name}</div>
+                            <div class="layer-type">${layer.type}</div>
+                        </div>
+                        <div class="layer-controls">
+                            <button class="layer-toggle-btn ${toggleClass}" onclick="toggleDataLayer('${layerId}')">
+                                ${toggleText}
+                            </button>
+                            <button class="layer-remove-btn" onclick="removeDataLayer('${layerId}')">
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            listContainer.innerHTML = html;
+        }
+        
+        /**
+         * Toggle visibility of a data layer
+         */
+        function toggleDataLayer(layerId) {
+            const layer = activeDataLayers.get(layerId);
+            if (!layer) return;
+            
+            layer.visible = !layer.visible;
+            
+            // Toggle visibility based on layer type
+            if (layer.dataSource) {
+                // GeoJSON data source
+                layer.dataSource.show = layer.visible;
+            } else if (layer.imageryLayer) {
+                // WMS/TileJSON imagery layer
+                layer.imageryLayer.show = layer.visible;
+            }
+            
+            // Update UI
+            updateActiveLayersList();
+            
+            console.log(`Layer ${layer.name} ${layer.visible ? 'shown' : 'hidden'}`);
+        }
+        
+        /**
+         * Remove a data layer completely
+         */
+        function removeDataLayer(layerId) {
+            const layer = activeDataLayers.get(layerId);
+            if (!layer) return;
+            
+            // Remove from viewer based on layer type
+            if (layer.dataSource) {
+                // GeoJSON data source
+                viewer.dataSources.remove(layer.dataSource);
+            } else if (layer.imageryLayer) {
+                // WMS/TileJSON imagery layer
+                viewer.imageryLayers.remove(layer.imageryLayer);
+            }
+            
+            // Remove from active layers
+            activeDataLayers.delete(layerId);
+            
+            // Update UI
+            updateActiveLayersList();
+            
+            console.log(`Layer ${layer.name} removed`);
+        }
+        
+        /**
+         * Show user-friendly error message
+         */
+        function showServiceError(message) {
+            // Create simple error modal
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(231, 76, 60, 0.95);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                z-index: 10001;
+                font-family: Arial, sans-serif;
+                text-align: center;
+                max-width: 400px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            `;
+            errorDiv.innerHTML = `
+                <h3 style="margin: 0 0 10px 0;">Service Loading Error</h3>
+                <p style="margin: 0 0 15px 0;">${message}</p>
+                <button onclick="this.parentElement.remove()" style="background: white; color: #e74c3c; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    OK
+                </button>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentElement) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+        
+        console.log('✓ Service Loader system initialized');
 
         // Initialize coordinate tracking after viewer is ready
         setTimeout(() => {
