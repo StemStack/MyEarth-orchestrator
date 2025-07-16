@@ -1531,9 +1531,49 @@
         }
 
         /**
-         * Validate GLB/GLTF file format
+         * Validate file format (only GLB/GLTF allowed)
          * @param {File} file - The file to validate
-         * @returns {Promise<boolean>} - True if valid, false otherwise
+         * @returns {object} - Validation result with isValid and message
+         */
+        function validateFileFormat(file) {
+            const fileName = file.name.toLowerCase();
+            const isGLB = fileName.endsWith('.glb');
+            const isGLTF = fileName.endsWith('.gltf');
+            
+            if (!isGLB && !isGLTF) {
+                return {
+                    isValid: false,
+                    message: "Only .glb or .gltf files are supported. Please convert your model before uploading."
+                };
+            }
+            
+            return { isValid: true, message: null };
+        }
+
+        /**
+         * Validate file size (5MB limit)
+         * @param {File} file - The file to validate
+         * @returns {object} - Validation result with isValid and message
+         */
+        function validateFileSize(file) {
+            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            
+            if (file.size > maxSize) {
+                return {
+                    isValid: false,
+                    message: `This model (${fileSizeMB}MB) may be too large for CesiumJS to handle efficiently. Try reducing the file below 5MB.`,
+                    size: fileSizeMB
+                };
+            }
+            
+            return { isValid: true, message: null };
+        }
+
+        /**
+         * Validate GLB/GLTF file format integrity
+         * @param {File} file - The file to validate
+         * @returns {Promise<object>} - Validation result with isValid and message
          */
         async function validateModelFile(file) {
             return new Promise((resolve) => {
@@ -1547,23 +1587,203 @@
                         if (file.name.toLowerCase().endsWith('.glb')) {
                             const magic = dataView.getUint32(0, true);
                             const glTFMagic = 0x46546C67; // "glTF" in little-endian
-                            resolve(magic === glTFMagic);
+                            const isValid = magic === glTFMagic;
+                            resolve({
+                                isValid,
+                                message: isValid ? null : "Invalid GLB file format. File may be corrupted or not a valid GLB."
+                            });
                         } else if (file.name.toLowerCase().endsWith('.gltf')) {
                             // For GLTF JSON files, try to parse as JSON
                             const text = new TextDecoder().decode(arrayBuffer);
                             const json = JSON.parse(text);
-                            resolve(json.asset && json.asset.version);
+                            const isValid = json.asset && json.asset.version;
+                            resolve({
+                                isValid,
+                                message: isValid ? null : "Invalid GLTF file format. Missing required asset information."
+                            });
                         } else {
-                            resolve(false);
+                            resolve({
+                                isValid: false,
+                                message: "Unsupported file format."
+                            });
                         }
                     } catch (error) {
                         console.warn('File validation error:', error);
-                        resolve(false);
+                        resolve({
+                            isValid: false,
+                            message: "Could not read file. File may be corrupted."
+                        });
                     }
                 };
-                reader.onerror = () => resolve(false);
+                reader.onerror = () => resolve({
+                    isValid: false,
+                    message: "Error reading file."
+                });
                 reader.readAsArrayBuffer(file.slice(0, 1024)); // Read first 1KB for validation
             });
+        }
+
+        /**
+         * Show error modal with consistent styling
+         * @param {string} title - Modal title
+         * @param {string} message - Main message
+         * @param {Array} buttons - Array of button objects {text, action, style}
+         */
+        function showErrorModal(title, message, buttons = null) {
+            // Remove any existing modals
+            const existingModals = document.querySelectorAll('.error-modal');
+            existingModals.forEach(modal => modal.remove());
+            
+            const modal = document.createElement('div');
+            modal.className = 'error-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 10000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-family: Arial, sans-serif;
+            `;
+            
+            const modalContent = document.createElement('div');
+            modalContent.style.cssText = `
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                max-width: 480px;
+                width: 90%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                position: relative;
+                animation: modalSlideIn 0.3s ease-out;
+            `;
+            
+            // Add animation styles
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes modalSlideIn {
+                    from { transform: translateY(-20px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            modalContent.innerHTML = `
+                <div style="display: flex; align-items: center; margin-bottom: 16px;">
+                    <span style="font-size: 24px; margin-right: 12px;">${title.includes('❌') ? title : '❌ ' + title}</span>
+                </div>
+                <div style="color: #333; line-height: 1.6; margin-bottom: 24px;">
+                    ${message}
+                </div>
+                <div id="modalButtons" style="display: flex; gap: 12px; justify-content: flex-end;"></div>
+            `;
+            
+            const buttonsContainer = modalContent.querySelector('#modalButtons');
+            
+            // Default buttons if none provided
+            if (!buttons) {
+                buttons = [
+                    { text: 'Got It', action: () => modal.remove(), style: 'primary' }
+                ];
+            }
+            
+            buttons.forEach(button => {
+                const btn = document.createElement('button');
+                btn.textContent = button.text;
+                btn.onclick = button.action;
+                
+                const baseStyle = `
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                `;
+                
+                if (button.style === 'primary') {
+                    btn.style.cssText = baseStyle + `
+                        background: #007bff;
+                        color: white;
+                    `;
+                    btn.onmouseover = () => btn.style.background = '#0056b3';
+                    btn.onmouseout = () => btn.style.background = '#007bff';
+                } else {
+                    btn.style.cssText = baseStyle + `
+                        background: #f8f9fa;
+                        color: #333;
+                        border: 1px solid #dee2e6;
+                    `;
+                    btn.onmouseover = () => btn.style.background = '#e9ecef';
+                    btn.onmouseout = () => btn.style.background = '#f8f9fa';
+                }
+                
+                buttonsContainer.appendChild(btn);
+            });
+            
+            modal.appendChild(modalContent);
+            document.body.appendChild(modal);
+            
+            // Close on overlay click
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+            
+            // Close on Escape key
+            const escapeHandler = (e) => {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                    document.removeEventListener('keydown', escapeHandler);
+                }
+            };
+            document.addEventListener('keydown', escapeHandler);
+        }
+
+        /**
+         * Show compatibility error modal with detailed guidance
+         * @param {string} fileName - Name of the failed file
+         */
+        function showCompatibilityError(fileName) {
+            const message = `
+                <p>This GLB file includes features CesiumJS cannot render, such as:</p>
+                <ul style="margin: 12px 0; padding-left: 20px; color: #666;">
+                    <li>Rigging or animation</li>
+                    <li>Advanced shaders/materials</li>
+                    <li>Unsupported glTF extensions</li>
+                    <li>Too many polygons</li>
+                </ul>
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                    <strong style="color: #007bff;">💡 Quick Fix Tips:</strong>
+                    <div style="margin-top: 8px; font-size: 14px; color: #555;">
+                        Export a basic GLB with no animations, simplified materials, and under 5MB using Blender.
+                    </div>
+                </div>
+            `;
+            
+            const buttons = [
+                {
+                    text: 'Got It',
+                    action: () => document.querySelector('.error-modal').remove(),
+                    style: 'primary'
+                },
+                {
+                    text: 'How to Fix',
+                    action: () => {
+                        window.open('https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html', '_blank');
+                    },
+                    style: 'secondary'
+                }
+            ];
+            
+            showErrorModal('Model Not Compatible', message, buttons);
         }
 
         /**
@@ -1574,32 +1794,56 @@
             console.log('Loading 3D model:', file.name, 'Size:', file.size, 'bytes');
             
             try {
-                // Check file format first
-                const formatInfo = check3DFileFormat(file.name);
-                
-                if (!formatInfo.supported) {
-                    if (formatInfo.isKnown3D) {
-                        // Show format-specific warning for known 3D formats
-                        showFormatWarning(formatInfo, file.name);
-                    } else {
-                        // Generic message for unknown formats
-                        alert('File format not recognized as a 3D model. Please use .glb or .gltf files.');
-                    }
+                // Step 1: Validate file format (only .glb/.gltf allowed)
+                const formatValidation = validateFileFormat(file);
+                if (!formatValidation.isValid) {
+                    showErrorModal('Unsupported File Format', formatValidation.message);
                     return;
                 }
                 
-                // Validate file size (limit to 50MB)
-                if (file.size > 50 * 1024 * 1024) {
-                    alert('File too large. Please use a file smaller than 50MB.');
+                // Step 2: Validate file size (5MB limit with warning)
+                const sizeValidation = validateFileSize(file);
+                if (!sizeValidation.isValid) {
+                    showErrorModal('Large File Warning', sizeValidation.message, [
+                        {
+                            text: 'Continue Anyway',
+                            action: () => {
+                                document.querySelector('.error-modal').remove();
+                                proceedWithModelLoading(file);
+                            },
+                            style: 'primary'
+                        },
+                        {
+                            text: 'Cancel',
+                            action: () => document.querySelector('.error-modal').remove(),
+                            style: 'secondary'
+                        }
+                    ]);
                     return;
                 }
                 
-                // Validate file format integrity for supported formats
-                const isValidFormat = await validateModelFile(file);
-                if (!isValidFormat) {
-                    alert('Invalid 3D model file. Please ensure it\'s a valid GLB or GLTF file.');
+                // Step 3: Validate file integrity
+                const integrityValidation = await validateModelFile(file);
+                if (!integrityValidation.isValid) {
+                    showErrorModal('Invalid File', integrityValidation.message);
                     return;
                 }
+                
+                // All validations passed, proceed with loading
+                proceedWithModelLoading(file);
+                
+            } catch (error) {
+                console.error('Error in model validation:', error);
+                showErrorModal('Validation Error', 'An error occurred while validating the file. Please try again.');
+            }
+        }
+
+        /**
+         * Proceed with model loading after validation
+         * @param {File} file - Validated file to load
+         */
+        async function proceedWithModelLoading(file) {
+            try {
                 
                 // Get center of camera view coordinates
                 const canvas = viewer.canvas;
@@ -1740,48 +1984,8 @@
                             clearTimeout(errorRecoveryTimeout);
                         }
                         
-                        // Show compatibility error message
-                        const errorDiv = document.createElement('div');
-                        errorDiv.style.cssText = `
-                            position: absolute;
-                            top: 50%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            background: rgba(255,69,58,0.9);
-                            color: white;
-                            padding: 20px;
-                            border-radius: 8px;
-                            z-index: 10000;
-                            font-family: Arial, sans-serif;
-                            max-width: 400px;
-                            text-align: center;
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                        `;
-                        errorDiv.innerHTML = `
-                            <h3 style="margin: 0 0 10px 0;">🚫 Model Not Compatible</h3>
-                            <p style="margin: 0 0 15px 0; font-size: 14px;">This GLB file has features that cause CesiumJS rendering issues.</p>
-                            <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                                <strong style="font-size: 13px;">Common Issues:</strong>
-                                <ul style="font-size: 12px; margin: 8px 0 0 0; line-height: 1.4;">
-                                    <li>Complex animations or rigging</li>
-                                    <li>Advanced material shaders</li>
-                                    <li>Unsupported GLTF extensions</li>
-                                    <li>High polygon complexity</li>
-                                </ul>
-                            </div>
-                            <div style="text-align: left; background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                                <strong style="font-size: 13px;">🔧 Quick Fix:</strong>
-                                <div style="font-size: 12px; margin-top: 6px; line-height: 1.4;">
-                                    Export as <strong>basic GLB</strong> with no animations,<br>
-                                    simplified materials, and under 5MB file size.
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; justify-content: center;">
-                                <button onclick="this.parentElement.parentElement.remove(); restoreCameraControls();" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Got It</button>
-                                <button onclick="showModelAlternatives(); this.parentElement.parentElement.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Get Help</button>
-                            </div>
-                        `;
-                        document.body.appendChild(errorDiv);
+                        // Show compatibility error modal
+                        showCompatibilityError(file.name);
                         
                         // Place a marker at the intended location
                         try {
@@ -1860,6 +2064,7 @@
                 try {
                     console.log('Attempting to load 3D model...');
                     
+                    // Use readyPromise for proper error handling
                     modelEntity = viewer.entities.add({
                         name: `3D Model - ${file.name}`,
                         position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
@@ -1879,6 +2084,63 @@
                             shadows: Cesium.ShadowMode.DISABLED
                         }
                     });
+                    
+                    // Handle model loading with readyPromise
+                    if (modelEntity.model.readyPromise) {
+                        modelEntity.model.readyPromise
+                            .then(() => {
+                                if (!modelLoadFailed) {
+                                    console.log('Model loaded successfully via readyPromise');
+                                    
+                                    // Clean up loading indicator
+                                    if (document.body.contains(loadingMessage)) {
+                                        document.body.removeChild(loadingMessage);
+                                    }
+                                    
+                                    // Remove fallback marker
+                                    viewer.entities.remove(fallbackEntity);
+                                    
+                                    // Restore console.error
+                                    console.error = originalConsoleError;
+                                    
+                                    // Fly to model
+                                    viewer.camera.setView({
+                                        destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
+                                        orientation: {
+                                            heading: 0,
+                                            pitch: Cesium.Math.toRadians(-30),
+                                            roll: 0
+                                        }
+                                    });
+                                }
+                            })
+                            .catch((error) => {
+                                if (!modelLoadFailed) {
+                                    console.warn('Model readyPromise failed:', error);
+                                    modelLoadFailed = true;
+                                    
+                                    // Clean up
+                                    if (document.body.contains(loadingMessage)) {
+                                        document.body.removeChild(loadingMessage);
+                                    }
+                                    
+                                    if (modelEntity) {
+                                        try {
+                                            viewer.entities.remove(modelEntity);
+                                        } catch (e) {
+                                            console.warn('Error removing failed model:', e);
+                                        }
+                                    }
+                                    
+                                    restoreCameraControls();
+                                    console.error = originalConsoleError;
+                                    URL.revokeObjectURL(modelUrl);
+                                    
+                                    // Show compatibility error
+                                    showCompatibilityError(file.name);
+                                }
+                            });
+                    }
                     
                     // Set up monitoring for successful model loading
                     let loadingTimeout;
@@ -1965,44 +2227,19 @@
                             
                             URL.revokeObjectURL(modelUrl);
                             
-                            // Show timeout message
-                            const timeoutDiv = document.createElement('div');
-                            timeoutDiv.style.cssText = `
-                                position: absolute;
-                                top: 50%;
-                                left: 50%;
-                                transform: translate(-50%, -50%);
-                                background: rgba(255, 152, 0, 0.9);
-                                color: white;
-                                padding: 20px;
-                                border-radius: 8px;
-                                z-index: 10000;
-                                font-family: Arial, sans-serif;
-                                max-width: 400px;
-                                text-align: center;
-                                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                            `;
-                            timeoutDiv.innerHTML = `
-                                <h3 style="margin: 0 0 10px 0;">⏱️ Model Loading Timeout</h3>
-                                <p style="margin: 0 0 15px 0; font-size: 14px;">The model is taking too long to load. This could indicate compatibility issues.</p>
-                                <div style="text-align: left; background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                                    <strong style="font-size: 13px;">💡 Try This:</strong>
-                                    <div style="font-size: 12px; margin-top: 6px; line-height: 1.4;">
-                                        • Use a smaller file (under 5MB)<br>
-                                        • Export with basic materials only<br>
-                                        • Disable animations before export
-                                    </div>
-                                </div>
-                                <button onclick="this.parentElement.remove();" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">OK</button>
-                            `;
-                            document.body.appendChild(timeoutDiv);
-                            
-                            // Auto-remove timeout message
-                            setTimeout(() => {
-                                if (document.body.contains(timeoutDiv)) {
-                                    document.body.removeChild(timeoutDiv);
-                                }
-                            }, 6000);
+                            // Show timeout modal
+                            showErrorModal(
+                                'Model Loading Timeout',
+                                `The model is taking too long to load. This could indicate compatibility issues.
+                                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                                    <strong style="color: #007bff;">💡 Try This:</strong>
+                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #555;">
+                                        <li>Use a smaller file (under 5MB)</li>
+                                        <li>Export with basic materials only</li>
+                                        <li>Disable animations before export</li>
+                                    </ul>
+                                </div>`
+                            );
                         }
                     }, 8000); // 8 second timeout
                     
@@ -2025,13 +2262,13 @@
                         }
                     });
                     
-                    alert('Could not load 3D model. A marker has been placed at the location.');
+                    showErrorModal('Model Loading Error', 'Could not load 3D model. A marker has been placed at the location.');
                     URL.revokeObjectURL(modelUrl);
                 }
                 
             } catch (error) {
                 console.error('Error in model loading process:', error);
-                alert('Error processing 3D model file: ' + error.message);
+                showErrorModal('Processing Error', 'Error processing 3D model file: ' + error.message);
             }
         }
 
