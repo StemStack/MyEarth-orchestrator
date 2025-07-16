@@ -949,18 +949,18 @@
 
         /**
          * Handles click events on the globe for marker placement
-         * Uses proper globe picking to determine precise click coordinates
+         * Uses precise ellipsoid intersection for exact positioning
          * @param {ClickEvent} event - Cesium click event
          */
         function handleGlobeClick(event) {
             try {
-                // Primary method: Use camera ray to intersect with globe ellipsoid
-                const ray = viewer.camera.getPickRay(event.position);
-                const intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                // Use direct ellipsoid picking for most accurate positioning
+                const ellipsoid = viewer.scene.globe.ellipsoid;
+                const cartesian = viewer.camera.pickEllipsoid(event.position, ellipsoid);
                 
-                if (intersection) {
+                if (cartesian) {
                     // Convert Cartesian coordinates to geographic coordinates
-                    const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                    const cartographic = ellipsoid.cartesianToCartographic(cartesian);
                     const longitude = Cesium.Math.toDegrees(cartographic.longitude);
                     const latitude = Cesium.Math.toDegrees(cartographic.latitude);
 
@@ -970,19 +970,22 @@
 
                     console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
                 } else {
-                    // Fallback: Direct ellipsoid intersection if globe picking fails
-                    const ellipsoid = viewer.scene.globe.ellipsoid;
-                    const cartesian = viewer.camera.pickEllipsoid(event.position, ellipsoid);
-                    
-                    if (cartesian) {
-                        const cartographic = ellipsoid.cartesianToCartographic(cartesian);
-                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                    // Secondary method: Try scene picking for terrain intersection
+                    const pickedObject = viewer.scene.pick(event.position);
+                    if (pickedObject && pickedObject.primitive) {
+                        const ray = viewer.camera.getPickRay(event.position);
+                        const intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                        
+                        if (intersection) {
+                            const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
 
-                        const label = `Point ${markerCounter + 1}`;
-                        const marker = createMarker(longitude, latitude, label);
+                            const label = `Point ${markerCounter + 1}`;
+                            const marker = createMarker(longitude, latitude, label);
 
-                        console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
+                            console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
+                        }
                     } else {
                         console.log('Click position not on globe surface');
                     }
@@ -997,9 +1000,32 @@
          * Attaches click event handler to enable marker placement
          */
         function initializeMarkerPlacement() {
-            // Enable click events on the viewer
+            // Disable default click behavior to avoid conflicts
+            viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            
+            // Enable precise click events on the viewer
             viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(
-                handleGlobeClick,
+                function(click) {
+                    // Ensure we have the exact click position
+                    const pickedPosition = click.position;
+                    
+                    // Use the most direct ellipsoid intersection method
+                    const ellipsoid = viewer.scene.globe.ellipsoid;
+                    const cartesian = viewer.camera.pickEllipsoid(pickedPosition, ellipsoid);
+                    
+                    if (cartesian) {
+                        // Convert to geographic coordinates with high precision
+                        const cartographic = ellipsoid.cartesianToCartographic(cartesian);
+                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                        // Create marker at exact position
+                        const label = `Point ${markerCounter + 1}`;
+                        const marker = createMarker(longitude, latitude, label);
+
+                        console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
+                    }
+                },
                 Cesium.ScreenSpaceEventType.LEFT_CLICK
             );
 
