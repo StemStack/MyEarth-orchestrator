@@ -177,54 +177,79 @@
             font-size: 12px;
         }
 
-        /* Live coordinates display */
-        .coordinates-display {
+        /* Bottom left panel with scale bar and coordinates */
+        .bottom-left-panel {
             position: absolute;
             bottom: 10px;
             left: 10px;
             z-index: 1000;
-            background-color: rgba(42, 42, 42, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            padding: 12px 15px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-            font-family: 'Courier New', monospace;
-            min-width: 180px;
-        }
-
-        .coordinates-title {
-            color: #fff;
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .coordinate-row {
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Scale bar styling */
+        .scale-bar-container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            padding: 8px 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .scale-bar {
+            display: flex;
             align-items: center;
-            margin-bottom: 4px;
+            gap: 8px;
         }
 
-        .coordinate-row:last-child {
-            margin-bottom: 0;
+        .scale-line {
+            height: 2px;
+            background-color: #000;
+            position: relative;
+            min-width: 60px;
         }
 
-        .coordinate-label {
-            color: rgba(255, 255, 255, 0.8);
+        .scale-line::before,
+        .scale-line::after {
+            content: '';
+            position: absolute;
+            width: 1px;
+            height: 8px;
+            background-color: #000;
+            top: -3px;
+        }
+
+        .scale-line::before {
+            left: 0;
+        }
+
+        .scale-line::after {
+            right: 0;
+        }
+
+        .scale-text {
+            font-family: Arial, sans-serif;
             font-size: 11px;
+            color: #000;
             font-weight: 500;
-            min-width: 50px;
+            white-space: nowrap;
         }
 
-        .coordinate-value {
-            color: #00ff88;
+        /* Coordinates info styling */
+        .coordinates-info {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+            padding: 6px 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .coordinates-text {
+            font-family: Arial, sans-serif;
             font-size: 11px;
-            font-weight: 600;
-            text-align: right;
-            flex: 1;
+            color: #000;
+            font-weight: 400;
         }
 
         .search-button {
@@ -314,21 +339,24 @@
                 font-size: 11px;
             }
 
-            .coordinates-display {
+            .bottom-left-panel {
                 bottom: 5px;
                 left: 5px;
-                padding: 8px 10px;
-                min-width: 150px;
+                gap: 6px;
             }
 
-            .coordinates-title {
-                font-size: 11px;
-                margin-bottom: 6px;
+            .scale-bar-container,
+            .coordinates-info {
+                padding: 6px 8px;
             }
 
-            .coordinate-label,
-            .coordinate-value {
+            .scale-text,
+            .coordinates-text {
                 font-size: 10px;
+            }
+
+            .scale-line {
+                min-width: 50px;
             }
         }
     </style>
@@ -354,20 +382,19 @@
         <div class="suggestions-dropdown" id="suggestionsDropdown" style="display: none;"></div>
     </div>
 
-    <!-- Live coordinates display -->
-    <div class="coordinates-display" id="coordinatesDisplay">
-        <div class="coordinates-title">Mouse Position</div>
-        <div class="coordinate-row">
-            <span class="coordinate-label">Lat:</span>
-            <span class="coordinate-value" id="latValue">--</span>
+    <!-- Scale bar and coordinates display -->
+    <div class="bottom-left-panel" id="bottomLeftPanel">
+        <!-- Scale bar -->
+        <div class="scale-bar-container" id="scaleBarContainer">
+            <div class="scale-bar" id="scaleBar">
+                <div class="scale-line" id="scaleLine"></div>
+                <div class="scale-text" id="scaleText">1 km</div>
+            </div>
         </div>
-        <div class="coordinate-row">
-            <span class="coordinate-label">Lon:</span>
-            <span class="coordinate-value" id="lonValue">--</span>
-        </div>
-        <div class="coordinate-row">
-            <span class="coordinate-label">Height:</span>
-            <span class="coordinate-value" id="heightValue">--</span>
+        
+        <!-- Coordinates display -->
+        <div class="coordinates-info" id="coordinatesInfo">
+            <span class="coordinates-text" id="coordinatesText">Coordinates (m) ---.--- , ---.---</span>
         </div>
     </div>
 
@@ -432,11 +459,12 @@
         const loadingSpinner = document.getElementById('loadingSpinner');
         const suggestionsDropdown = document.getElementById('suggestionsDropdown');
         
-        // Add coordinate display elements
-        const coordinatesDisplay = document.getElementById('coordinatesDisplay');
-        const latValue = document.getElementById('latValue');
-        const lonValue = document.getElementById('lonValue');
-        const heightValue = document.getElementById('heightValue');
+        // Add scale bar and coordinate display elements
+        const bottomLeftPanel = document.getElementById('bottomLeftPanel');
+        const scaleBar = document.getElementById('scaleBar');
+        const scaleLine = document.getElementById('scaleLine');
+        const scaleText = document.getElementById('scaleText');
+        const coordinatesText = document.getElementById('coordinatesText');
         
         // Autocomplete state
         let searchTimeout;
@@ -766,24 +794,80 @@
         const COORDINATE_UPDATE_INTERVAL = 50; // Update every 50ms for smooth tracking
 
         /**
-         * Updates coordinate display with formatted values
+         * Calculates and updates the scale bar based on current map view
+         * Uses the camera's field of view and distance to determine appropriate scale
+         */
+        function updateScaleBar() {
+            try {
+                // Get the camera's current position and calculate the scale
+                const camera = viewer.camera;
+                const canvas = viewer.canvas;
+                const ellipsoid = viewer.scene.globe.ellipsoid;
+                
+                // Calculate the distance represented by 100 pixels at current zoom level
+                const centerPick = new Cesium.Cartesian2(canvas.clientWidth / 2, canvas.clientHeight / 2);
+                const leftPick = new Cesium.Cartesian2(centerPick.x - 50, centerPick.y);
+                const rightPick = new Cesium.Cartesian2(centerPick.x + 50, centerPick.y);
+                
+                const centerPosition = camera.pickEllipsoid(centerPick, ellipsoid);
+                const leftPosition = camera.pickEllipsoid(leftPick, ellipsoid);
+                const rightPosition = camera.pickEllipsoid(rightPick, ellipsoid);
+                
+                if (centerPosition && leftPosition && rightPosition) {
+                    const leftCartographic = ellipsoid.cartesianToCartographic(leftPosition);
+                    const rightCartographic = ellipsoid.cartesianToCartographic(rightPosition);
+                    
+                    // Calculate distance in meters for 100 pixels
+                    const distance = Cesium.Cartographic.distance(leftCartographic, rightCartographic);
+                    
+                    // Determine appropriate scale intervals and width
+                    let scaleDistance, scaleWidth, scaleLabel;
+                    
+                    if (distance >= 100000) { // >= 100 km
+                        scaleDistance = Math.round(distance / 100000) * 100000;
+                        scaleWidth = (scaleDistance / distance) * 100;
+                        scaleLabel = (scaleDistance / 1000) + ' km';
+                    } else if (distance >= 10000) { // >= 10 km
+                        scaleDistance = Math.round(distance / 10000) * 10000;
+                        scaleWidth = (scaleDistance / distance) * 100;
+                        scaleLabel = (scaleDistance / 1000) + ' km';
+                    } else if (distance >= 1000) { // >= 1 km
+                        scaleDistance = Math.round(distance / 1000) * 1000;
+                        scaleWidth = (scaleDistance / distance) * 100;
+                        scaleLabel = (scaleDistance / 1000) + ' km';
+                    } else { // < 1 km
+                        scaleDistance = Math.round(distance / 100) * 100;
+                        scaleWidth = (scaleDistance / distance) * 100;
+                        scaleLabel = scaleDistance + ' m';
+                    }
+                    
+                    // Update scale bar appearance
+                    scaleLine.style.width = Math.max(scaleWidth, 30) + 'px';
+                    scaleText.textContent = scaleLabel;
+                }
+            } catch (error) {
+                console.warn('Scale bar update error:', error);
+                scaleLine.style.width = '60px';
+                scaleText.textContent = '1 km';
+            }
+        }
+
+        /**
+         * Updates coordinate display with formatted values in metric format
          * @param {number} latitude - Latitude in degrees
          * @param {number} longitude - Longitude in degrees  
-         * @param {number} height - Height above terrain in meters
          */
-        function updateCoordinateDisplay(latitude, longitude, height) {
-            latValue.textContent = latitude.toFixed(6) + '°';
-            lonValue.textContent = longitude.toFixed(6) + '°';
-            heightValue.textContent = height > 0 ? height.toFixed(0) + 'm' : 'Sea Level';
+        function updateCoordinateDisplay(latitude, longitude) {
+            const latText = latitude.toFixed(3);
+            const lonText = longitude.toFixed(3);
+            coordinatesText.textContent = `Coordinates (m) ${latText}, ${lonText}`;
         }
 
         /**
          * Clears coordinate display when mouse is not over terrain
          */
         function clearCoordinateDisplay() {
-            latValue.textContent = '--';
-            lonValue.textContent = '--';
-            heightValue.textContent = '--';
+            coordinatesText.textContent = 'Coordinates (m) ---.---, ---.---';
         }
 
         /**
@@ -819,9 +903,8 @@
                         const cartographic = Cesium.Cartographic.fromCartesian(intersection);
                         const latitude = Cesium.Math.toDegrees(cartographic.latitude);
                         const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                        const height = cartographic.height;
                         
-                        updateCoordinateDisplay(latitude, longitude, height);
+                        updateCoordinateDisplay(latitude, longitude);
                     } else {
                         // Mouse is not over terrain (e.g., over space)
                         clearCoordinateDisplay();
@@ -835,8 +918,8 @@
         }
 
         /**
-         * Initialize coordinate tracking system
-         * Attaches mouse move listener to the Cesium canvas
+         * Initialize coordinate tracking and scale bar systems
+         * Attaches mouse move listener and camera change handlers
          */
         function initializeCoordinateTracking() {
             const canvas = viewer.canvas;
@@ -847,7 +930,14 @@
             // Clear coordinates when mouse leaves canvas
             canvas.addEventListener('mouseleave', clearCoordinateDisplay);
             
-            console.log('Live coordinate tracking initialized');
+            // Add camera change listener for scale bar updates
+            viewer.camera.changed.addEventListener(updateScaleBar);
+            viewer.scene.morphComplete.addEventListener(updateScaleBar);
+            
+            // Initial scale bar update
+            updateScaleBar();
+            
+            console.log('Live coordinate tracking and scale bar initialized');
         }
 
         // Initialize coordinate tracking after viewer is ready
