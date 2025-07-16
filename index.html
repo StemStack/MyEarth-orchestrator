@@ -517,6 +517,41 @@
             user-select: none;
         }
 
+        /* Model upload section */
+        .model-upload-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .model-upload-button {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: rgba(68, 68, 68, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .model-upload-button:hover {
+            background-color: rgba(85, 85, 85, 1);
+        }
+
+        .model-upload-hint {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+            margin-top: 5px;
+            line-height: 1.2;
+        }
+
         @media (max-width: 768px) {
             .zoom-controls {
                 top: 55px;
@@ -626,6 +661,14 @@
         <div class="layer-toggle">
             <input type="checkbox" id="baseLayerToggle" checked>
             <label for="baseLayerToggle">Base Map</label>
+        </div>
+        <div class="model-upload-section">
+            <button class="model-upload-button" id="modelUploadButton">
+                📁 Upload 3D Model
+            </button>
+            <div class="model-upload-hint">
+                Or drag GLTF/GLB files anywhere
+            </div>
         </div>
     </div>
 
@@ -766,6 +809,7 @@
         // Add drag and drop elements
         const dragDropOverlay = document.getElementById('dragDropOverlay');
         const modelFileInput = document.getElementById('modelFileInput');
+        const modelUploadButton = document.getElementById('modelUploadButton');
         
         // Add scale bar and coordinate display elements
         const bottomLeftPanel = document.getElementById('bottomLeftPanel');
@@ -1353,6 +1397,11 @@
             // Base layer toggle functionality
             baseLayerToggle.addEventListener('change', function() {
                 toggleBaseLayer(this.checked);
+            });
+            
+            // Model upload button functionality
+            modelUploadButton.addEventListener('click', function() {
+                modelFileInput.click();
             });
             
             console.log('Layer controls initialized');
