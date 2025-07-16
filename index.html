@@ -786,6 +786,7 @@
         .bottom-left {
             flex: 1;
             min-width: 0;
+            max-width: 33.333%;
         }
 
         .bottom-center {
@@ -800,6 +801,38 @@
             min-width: 0;
             text-align: right;
             gap: 8px;
+            max-width: 66.667%;
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            #bottomBand {
+                padding: 0 10px;
+                font-size: 10px;
+            }
+            
+            .bottom-left {
+                flex: 1;
+                max-width: 33.333%;
+            }
+            
+            .bottom-right {
+                flex: 2;
+                max-width: 66.667%;
+                gap: 6px;
+            }
+            
+            #coordinatesInfo {
+                font-size: 9px;
+            }
+            
+            #activeLayersInfo {
+                font-size: 9px;
+            }
+            
+            #attributionInfo {
+                font-size: 9px;
+            }
         }
 
         /* Scale Bar in Bottom Band */
@@ -832,6 +865,9 @@
         #coordinatesInfo {
             font-size: 10px;
             color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         #activeLayersInfo {
@@ -839,6 +875,7 @@
             color: #333;
             text-overflow: ellipsis;
             overflow: hidden;
+            white-space: nowrap;
         }
 
         #attributionInfo {
@@ -846,6 +883,7 @@
             color: #666;
             text-overflow: ellipsis;
             overflow: hidden;
+            white-space: nowrap;
         }
 
         .sidebar-header {
@@ -2852,10 +2890,10 @@
                     compactCoordinates.innerHTML = `${Math.abs(latitude).toFixed(1)}°${latDir}<br>${Math.abs(longitude).toFixed(1)}°${lonDir}`;
                 }
                 
-                // Update coordinates in bottom band
+                // Update coordinates in bottom band with cm precision
                 const coordinatesInfo = document.getElementById('coordinatesInfo');
                 if (coordinatesInfo) {
-                    coordinatesInfo.textContent = `Lat: ${latitude.toFixed(3)}° Lon: ${longitude.toFixed(3)}°`;
+                    coordinatesInfo.textContent = `Lat: ${latitude.toFixed(8)}° Lon: ${longitude.toFixed(8)}°`;
                 }
                 
             } catch (error) {
@@ -6141,7 +6179,8 @@
                         const cartographic = Cesium.Cartographic.fromCartesian(intersection);
                         const latitude = Cesium.Math.toDegrees(cartographic.latitude);
                         const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                        coordinatesInfo.textContent = `Lat: ${latitude.toFixed(3)}° Lon: ${longitude.toFixed(3)}°`;
+                        // Display with cm precision (8 decimal places ≈ 1.1 cm at equator)
+                        coordinatesInfo.textContent = `Lat: ${latitude.toFixed(8)}° Lon: ${longitude.toFixed(8)}°`;
                     }
                 } catch (error) {
                     if (coordinatesInfo) {
