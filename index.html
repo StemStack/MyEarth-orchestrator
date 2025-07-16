@@ -111,6 +111,10 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 1000;
+            width: 350px;
+        }
+
+        .search-input-wrapper {
             display: flex;
             align-items: center;
             background-color: rgba(42, 42, 42, 0.95);
@@ -133,6 +137,44 @@
 
         .search-container input::placeholder {
             color: rgba(255, 255, 255, 0.6);
+        }
+
+        .suggestions-dropdown {
+            background-color: rgba(42, 42, 42, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item.selected {
+            background-color: rgba(68, 68, 68, 0.8);
+        }
+
+        .suggestion-name {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .suggestion-details {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
         }
 
         .search-button {
@@ -209,6 +251,18 @@
                 width: calc(100% - 50px);
                 font-size: 12px;
             }
+
+            .suggestion-item {
+                padding: 10px 12px;
+            }
+
+            .suggestion-name {
+                font-size: 13px;
+            }
+
+            .suggestion-details {
+                font-size: 11px;
+            }
         }
     </style>
 </head>
@@ -225,9 +279,12 @@
 
     <!-- Universal search bar -->
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Search address, place, or coordinates..." autocomplete="off">
-        <button class="search-button" id="searchButton">🔍</button>
-        <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
+        <div class="search-input-wrapper">
+            <input type="text" id="searchInput" placeholder="Search address, place, or coordinates..." autocomplete="off">
+            <button class="search-button" id="searchButton">🔍</button>
+            <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
+        </div>
+        <div class="suggestions-dropdown" id="suggestionsDropdown" style="display: none;"></div>
     </div>
 
     <!-- CesiumJS JavaScript -->
@@ -289,6 +346,12 @@
         const searchInput = document.getElementById('searchInput');
         const searchButton = document.getElementById('searchButton');
         const loadingSpinner = document.getElementById('loadingSpinner');
+        const suggestionsDropdown = document.getElementById('suggestionsDropdown');
+        
+        // Autocomplete state
+        let searchTimeout;
+        let currentSuggestions = [];
+        let selectedSuggestionIndex = -1;
 
         zoomInButton.addEventListener('click', function() {
             const camera = viewer.camera;
@@ -346,6 +409,25 @@
                 }
             }
             return null;
+        }
+
+        // Function to get autocomplete suggestions
+        async function getAutocompleteSuggestions(query) {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&addressdetails=1&limit=5`);
+                const data = await response.json();
+                return data.map(item => ({
+                    lat: parseFloat(item.lat),
+                    lon: parseFloat(item.lon),
+                    name: item.name || item.display_name.split(',')[0],
+                    displayName: item.display_name,
+                    type: item.type,
+                    address: item.address
+                }));
+            } catch (error) {
+                console.error('Autocomplete error:', error);
+                return [];
+            }
         }
 
         // Function to geocode using Nominatim API
@@ -415,11 +497,155 @@
             }
         }
 
+        // Function to display suggestions
+        function displaySuggestions(suggestions) {
+            currentSuggestions = suggestions;
+            selectedSuggestionIndex = -1;
+            
+            if (suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+            
+            const html = suggestions.map((suggestion, index) => {
+                const name = suggestion.name || 'Unknown';
+                const details = formatSuggestionDetails(suggestion);
+                return `
+                    <div class="suggestion-item" data-index="${index}">
+                        <div class="suggestion-name">${escapeHtml(name)}</div>
+                        <div class="suggestion-details">${escapeHtml(details)}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            suggestionsDropdown.innerHTML = html;
+            suggestionsDropdown.style.display = 'block';
+            
+            // Add click event listeners to suggestions
+            suggestionsDropdown.querySelectorAll('.suggestion-item').forEach((item, index) => {
+                item.addEventListener('click', () => selectSuggestion(index));
+            });
+        }
+
+        // Function to format suggestion details
+        function formatSuggestionDetails(suggestion) {
+            const parts = [];
+            if (suggestion.address) {
+                if (suggestion.address.city) parts.push(suggestion.address.city);
+                if (suggestion.address.state) parts.push(suggestion.address.state);
+                if (suggestion.address.country) parts.push(suggestion.address.country);
+            }
+            return parts.length > 0 ? parts.join(', ') : suggestion.displayName;
+        }
+
+        // Function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Function to hide suggestions
+        function hideSuggestions() {
+            suggestionsDropdown.style.display = 'none';
+            currentSuggestions = [];
+            selectedSuggestionIndex = -1;
+        }
+
+        // Function to select a suggestion
+        function selectSuggestion(index) {
+            if (index >= 0 && index < currentSuggestions.length) {
+                const suggestion = currentSuggestions[index];
+                flyToLocation(suggestion.lat, suggestion.lon);
+                searchInput.value = '';
+                hideSuggestions();
+            }
+        }
+
+        // Function to highlight selected suggestion
+        function updateSelectedSuggestion() {
+            suggestionsDropdown.querySelectorAll('.suggestion-item').forEach((item, index) => {
+                if (index === selectedSuggestionIndex) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        // Debounced autocomplete function
+        function handleInputChange() {
+            const query = searchInput.value.trim();
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            // Hide suggestions if input is empty
+            if (!query) {
+                hideSuggestions();
+                return;
+            }
+            
+            // Don't autocomplete if input looks like coordinates
+            if (isCoordinates(query)) {
+                hideSuggestions();
+                return;
+            }
+            
+            // Set new timeout for autocomplete
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const suggestions = await getAutocompleteSuggestions(query);
+                    displaySuggestions(suggestions);
+                } catch (error) {
+                    console.error('Autocomplete failed:', error);
+                    hideSuggestions();
+                }
+            }, 300); // 300ms debounce
+        }
+
         // Add search event listeners
         searchButton.addEventListener('click', performSearch);
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        
+        // Enhanced input event listeners
+        searchInput.addEventListener('input', handleInputChange);
+        
+        searchInput.addEventListener('keydown', function(e) {
+            if (suggestionsDropdown.style.display === 'block' && currentSuggestions.length > 0) {
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, currentSuggestions.length - 1);
+                        updateSelectedSuggestion();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                        updateSelectedSuggestion();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedSuggestionIndex >= 0) {
+                            selectSuggestion(selectedSuggestionIndex);
+                        } else {
+                            performSearch();
+                        }
+                        break;
+                    case 'Escape':
+                        hideSuggestions();
+                        break;
+                }
+            } else if (e.key === 'Enter') {
                 performSearch();
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                hideSuggestions();
             }
         });
 

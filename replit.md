@@ -104,3 +104,6 @@ The CesiumJS globe viewer is now fully functional with:
 - Implemented universal search bar with Nominatim geocoding API integration
 - Search supports place names, addresses, and coordinate input formats
 - Added loading spinner and error handling for search functionality
+- Enhanced search with live autocomplete suggestions (300ms debounced)
+- Autocomplete dropdown with formatted location details and keyboard navigation
+- Click-to-fly functionality and arrow key selection support
