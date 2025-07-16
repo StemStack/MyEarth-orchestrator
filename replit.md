@@ -97,14 +97,15 @@ The CesiumJS globe viewer is now fully functional with:
 ## Recent Changes (July 16, 2025)
 
 - **MapX-Style UI**: Complete redesign matching MapX interface with clean, round monochrome icons
-- **Right Panel Redesign**: 2-column grid layout with 50px circular icons, color inversion on activation
-- **Enhanced Tool Icons**: 14 professional tools including zoom, reset, fullscreen, search, theme toggle, layers, measurements
-- **Clean Monochrome Design**: White background, subtle shadows, smooth hover effects with transform animations
-- **Improved Icon Positioning**: Floating right panel with backdrop blur and proper spacing
-- **Integrated Tool Functions**: Each icon directly controls corresponding left panel sections
-- **Professional Button Styling**: Consistent hover states, active color inversion, and shadow effects
-- **Responsive Icon Grid**: 2-column layout with 8px gaps, proper overflow handling
-- **Clean Typography**: Consistent font weights and sizing for all UI elements
+- **Smaller Icons**: Reduced icon size from 50px to 36px for more compact design
+- **Frameless Design**: Removed borders and frames, using transparent background with subtle shadows
+- **Collapsible Right Panel**: Added collapse/expand functionality with toggle button
+- **2-Column Grid Layout**: Organized in compact 2x7 grid with 4px spacing
+- **Professional SVG Icons**: Clean, minimalist icons for all tools (search, layers, measurements, etc.)
+- **Color Inversion on Activation**: Icons turn black background with white icons when active
+- **Smooth Animations**: Hover effects with scale transform and shadow changes
+- **Consistent Sizing**: All icons properly sized at 16px within 36px circles
+- **MapX-Style Positioning**: Floating panel in top-right corner with transparent background
 - **Enhanced User Experience**: Smooth transitions, proper visual feedback, and intuitive tool organization
 
 ## Service Loader System
