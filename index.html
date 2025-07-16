@@ -1329,7 +1329,7 @@
     <div class="bottom-left-panel" id="bottomLeftPanel">
         <!-- North arrow compass -->
         <div class="north-arrow-container" id="northArrowContainer">
-            <div class="north-arrow" id="northArrow">
+            <div class="north-arrow" id="northArrow" onclick="resetViewToNorth()" style="cursor: pointer;" title="Click to reset view orientation to North">
                 <div class="arrow-needle"></div>
                 <div class="arrow-label">N</div>
             </div>
@@ -4809,6 +4809,50 @@
         }
         
         console.log('✓ Swiss-style sidebar initialized');
+        
+        /**
+         * Reset view orientation to North
+         * Maintains current position but sets heading to 0 (north) and standard pitch
+         */
+        function resetViewToNorth() {
+            try {
+                const currentPosition = viewer.camera.position;
+                const currentCartographic = viewer.camera.positionCartographic;
+                
+                // Calculate a good viewing height if too close
+                let viewHeight = currentCartographic.height;
+                if (viewHeight < 2000) {
+                    viewHeight = 2000; // Minimum 2km for good overview
+                }
+                
+                // Set camera view with north orientation
+                viewer.camera.setView({
+                    destination: Cesium.Cartesian3.fromRadians(
+                        currentCartographic.longitude,
+                        currentCartographic.latitude,
+                        viewHeight
+                    ),
+                    orientation: {
+                        heading: 0.0,  // North direction (0 radians)
+                        pitch: Cesium.Math.toRadians(-90),  // Straight down view
+                        roll: 0.0
+                    }
+                });
+                
+                console.log('✓ View reset to North orientation');
+            } catch (error) {
+                console.warn('Error resetting view to North:', error);
+                // Fallback to default home view if error occurs
+                viewer.camera.setView({
+                    destination: Cesium.Cartesian3.fromDegrees(15.0, 45.0, 4000000),
+                    orientation: {
+                        heading: 0.0,
+                        pitch: Cesium.Math.toRadians(-90),
+                        roll: 0.0
+                    }
+                });
+            }
+        }
 
         // Initialize coordinate tracking after viewer is ready
         setTimeout(() => {
