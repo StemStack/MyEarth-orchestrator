@@ -2853,26 +2853,38 @@
             // Calculate 3D direct distance
             const distance3D = Cesium.Cartesian3.distance(point1, point2);
             
-            // Calculate horizontal distance (on ellipsoid surface)
+            // Calculate horizontal distance (geodesic distance on ellipsoid)
             const geodesic = new Cesium.EllipsoidGeodesic(cartographic1, cartographic2);
-            const horizontalDistance = geodesic.surfaceDistance;
+            const horizontalDistance = geodesic.surfaceDistance || 0;
             
-            // Calculate vertical distance
-            const verticalDistance = Math.abs(cartographic2.height - cartographic1.height);
+            // Calculate vertical distance (ensure heights are valid)
+            const height1 = cartographic1.height || 0;
+            const height2 = cartographic2.height || 0;
+            const verticalDistance = Math.abs(height2 - height1);
             
-            // Calculate slope and azimuth
+            // Calculate slope and azimuth (with safety checks)
             const slope = horizontalDistance > 0 ? verticalDistance / horizontalDistance : 0;
             const slopeAngle = Math.atan(slope) * (180 / Math.PI);
-            const azimuth = geodesic.startHeading * (180 / Math.PI);
+            
+            // Get azimuth (heading) with fallback
+            let azimuth = 0;
+            try {
+                azimuth = (geodesic.startHeading || 0) * (180 / Math.PI);
+                // Normalize azimuth to 0-360 degrees
+                azimuth = azimuth < 0 ? azimuth + 360 : azimuth;
+            } catch (e) {
+                console.warn('Azimuth calculation failed:', e);
+                azimuth = 0;
+            }
             
             return {
-                direct: distance3D,
-                horizontal: horizontalDistance,
-                vertical: verticalDistance,
-                slope: slopeAngle,
-                azimuth: azimuth,
-                point1Height: cartographic1.height,
-                point2Height: cartographic2.height
+                direct: distance3D || 0,
+                horizontal: horizontalDistance || 0,
+                vertical: verticalDistance || 0,
+                slope: slopeAngle || 0,
+                azimuth: azimuth || 0,
+                point1Height: height1,
+                point2Height: height2
             };
         }
 
@@ -2997,14 +3009,17 @@
          * Format distance value based on current units
          */
         function formatDistance(meters) {
+            // Ensure meters is a valid number
+            const validMeters = parseFloat(meters) || 0;
+            
             if (measurementTool.units === 'metric') {
-                if (meters >= 1000) {
-                    return (meters / 1000).toFixed(2) + ' km';
+                if (validMeters >= 1000) {
+                    return (validMeters / 1000).toFixed(2) + ' km';
                 } else {
-                    return meters.toFixed(2) + ' m';
+                    return validMeters.toFixed(2) + ' m';
                 }
             } else {
-                const feet = meters * 3.28084;
+                const feet = validMeters * 3.28084;
                 if (feet >= 5280) {
                     return (feet / 5280).toFixed(2) + ' mi';
                 } else {
@@ -3017,14 +3032,17 @@
          * Format area value based on current units
          */
         function formatArea(squareMeters) {
+            // Ensure squareMeters is a valid number
+            const validSquareMeters = parseFloat(squareMeters) || 0;
+            
             if (measurementTool.units === 'metric') {
-                if (squareMeters >= 10000) {
-                    return (squareMeters / 10000).toFixed(2) + ' ha';
+                if (validSquareMeters >= 10000) {
+                    return (validSquareMeters / 10000).toFixed(2) + ' ha';
                 } else {
-                    return squareMeters.toFixed(2) + ' m²';
+                    return validSquareMeters.toFixed(2) + ' m²';
                 }
             } else {
-                const squareFeet = squareMeters * 10.7639;
+                const squareFeet = validSquareMeters * 10.7639;
                 if (squareFeet >= 43560) {
                     return (squareFeet / 43560).toFixed(2) + ' acres';
                 } else {
@@ -3040,66 +3058,78 @@
             const resultsEl = document.getElementById('measurementResults');
             let html = '';
             
-            if (measurementTool.mode === 'line') {
-                html = `
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Direct Distance:</span>
-                        <span class="measurement-result-value">${formatDistance(results.direct)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Horizontal:</span>
-                        <span class="measurement-result-value">${formatDistance(results.horizontal)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Vertical:</span>
-                        <span class="measurement-result-value">${formatDistance(results.vertical)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Slope:</span>
-                        <span class="measurement-result-value">${results.slope.toFixed(1)}°</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Azimuth:</span>
-                        <span class="measurement-result-value">${results.azimuth.toFixed(1)}°</span>
-                    </div>
-                `;
-            } else if (measurementTool.mode === 'vertical') {
-                html = `
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Vertical Distance:</span>
-                        <span class="measurement-result-value">${formatDistance(results.vertical)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Height Difference:</span>
-                        <span class="measurement-result-value">${formatDistance(Math.abs(results.heightDifference))}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Point 1 Height:</span>
-                        <span class="measurement-result-value">${formatDistance(results.point1Height)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Point 2 Height:</span>
-                        <span class="measurement-result-value">${formatDistance(results.point2Height)}</span>
-                    </div>
-                `;
-            } else if (measurementTool.mode === 'area') {
-                html = `
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Area:</span>
-                        <span class="measurement-result-value">${formatArea(results.area)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Perimeter:</span>
-                        <span class="measurement-result-value">${formatDistance(results.perimeter)}</span>
-                    </div>
-                    <div class="measurement-result-item">
-                        <span class="measurement-result-label">Points:</span>
-                        <span class="measurement-result-value">${results.points}</span>
+            // Add debugging
+            console.log('Display results called with:', results);
+            
+            try {
+                if (measurementTool.mode === 'line') {
+                    html = `
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Direct Distance:</span>
+                            <span class="measurement-result-value">${formatDistance(results.direct || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Horizontal:</span>
+                            <span class="measurement-result-value">${formatDistance(results.horizontal || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Vertical:</span>
+                            <span class="measurement-result-value">${formatDistance(results.vertical || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Slope:</span>
+                            <span class="measurement-result-value">${(parseFloat(results.slope) || 0).toFixed(1)}°</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Azimuth:</span>
+                            <span class="measurement-result-value">${(parseFloat(results.azimuth) || 0).toFixed(1)}°</span>
+                        </div>
+                    `;
+                } else if (measurementTool.mode === 'vertical') {
+                    html = `
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Vertical Distance:</span>
+                            <span class="measurement-result-value">${formatDistance(results.vertical || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Height Difference:</span>
+                            <span class="measurement-result-value">${formatDistance(Math.abs(results.heightDifference || 0))}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Point 1 Height:</span>
+                            <span class="measurement-result-value">${formatDistance(results.point1Height || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Point 2 Height:</span>
+                            <span class="measurement-result-value">${formatDistance(results.point2Height || 0)}</span>
+                        </div>
+                    `;
+                } else if (measurementTool.mode === 'area') {
+                    html = `
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Area:</span>
+                            <span class="measurement-result-value">${formatArea(results.area || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Perimeter:</span>
+                            <span class="measurement-result-value">${formatDistance(results.perimeter || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
+                            <span class="measurement-result-label">Points:</span>
+                            <span class="measurement-result-value">${results.points || 0}</span>
+                        </div>
+                    `;
+                }
+                
+                resultsEl.innerHTML = html;
+            } catch (error) {
+                console.error('Error displaying results:', error);
+                resultsEl.innerHTML = `
+                    <div style="text-align: center; color: #ff6b6b; font-size: 11px; margin-top: 15px;">
+                        Error displaying measurements
                     </div>
                 `;
             }
-            
-            resultsEl.innerHTML = html;
         }
 
         /**
