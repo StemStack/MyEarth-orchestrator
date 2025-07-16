@@ -108,9 +108,9 @@ The CesiumJS globe viewer is now fully functional with:
 - Autocomplete dropdown with formatted location details and keyboard navigation
 - Click-to-fly functionality and arrow key selection support
 - Camera positioning set to vertical nadir view (90° straight down) at 2km altitude
-- Live coordinates display showing latitude, longitude, and height under mouse cursor
-- Throttled coordinate updates (50ms intervals) for optimal performance
-- Ray-casting implementation for precise terrain intersection detection
+- Live coordinates display showing latitude and longitude of camera center view
+- Center crosshair indicator for precise location reference
+- Real-time coordinate updates on camera movement and position changes
 - Interactive marker placement system with click-to-place functionality
 - Custom red pin graphics with white labels and sequential numbering
 - Marker persistence with coordinate tracking and timestamp logging
@@ -118,4 +118,4 @@ The CesiumJS globe viewer is now fully functional with:
 - Professional bottom-left panel with coordinates in WGS84 degrees format
 - Real-time scale bar updates based on camera zoom level and position
 - Interactive north arrow compass pointing to geographic north (larger size, positioned above scale)
-- Visual compass needle that always points north regardless of camera rotation
+- Visual compass needle with faster response time (0.1s transitions) that always points north regardless of camera rotation

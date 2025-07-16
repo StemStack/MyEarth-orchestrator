@@ -270,7 +270,7 @@
             position: relative;
             width: 36px;
             height: 36px;
-            transition: transform 0.2s ease;
+            transition: transform 0.1s ease-out;
         }
 
         .arrow-needle {
@@ -447,6 +447,36 @@
                 font-size: 11px;
             }
         }
+
+        /* Center crosshair styling */
+        .center-crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .crosshair-horizontal {
+            position: absolute;
+            top: -1px;
+            left: -10px;
+            width: 20px;
+            height: 2px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.5);
+        }
+
+        .crosshair-vertical {
+            position: absolute;
+            top: -10px;
+            left: -1px;
+            width: 2px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
 
@@ -458,6 +488,12 @@
     <div class="zoom-controls">
         <button class="zoom-button" id="zoomIn" title="Zoom In">+</button>
         <button class="zoom-button" id="zoomOut" title="Zoom Out">−</button>
+    </div>
+
+    <!-- Center crosshair -->
+    <div class="center-crosshair" id="centerCrosshair">
+        <div class="crosshair-horizontal"></div>
+        <div class="crosshair-vertical"></div>
     </div>
 
     <!-- Universal search bar -->
@@ -1031,74 +1067,44 @@
         }
 
         /**
-         * Handles mouse movement over the Cesium viewer canvas
-         * Uses camera ray casting to determine world coordinates
-         * @param {MouseEvent} event - Mouse move event
+         * Updates coordinates to show center of camera view
+         * Uses camera position and center screen ray casting
          */
-        function handleMouseMove(event) {
-            // Throttle updates for performance optimization
-            if (coordinateUpdateThrottle) {
-                return;
-            }
-
-            coordinateUpdateThrottle = setTimeout(() => {
-                coordinateUpdateThrottle = null;
-
-                try {
-                    // Get mouse position relative to canvas
-                    const canvas = viewer.canvas;
-                    const rect = canvas.getBoundingClientRect();
-                    const x = event.clientX - rect.left;
-                    const y = event.clientY - rect.top;
-                    
-                    console.log(`Mouse position: ${x}, ${y}`); // Debug log
-                    
-                    // Convert screen coordinates to Cesium coordinates
-                    const pick = new Cesium.Cartesian2(x, y);
-                    
-                    // Try different methods to get terrain intersection
-                    let intersection = null;
-                    
-                    // Method 1: Use scene.pickPosition for better terrain detection
-                    intersection = viewer.scene.pickPosition(pick);
-                    console.log('Method 1 result:', !!intersection); // Debug log
-                    
-                    // Method 2: Fallback to globe.pick if pickPosition fails
-                    if (!intersection) {
-                        const ray = viewer.camera.getPickRay(pick);
-                        intersection = viewer.scene.globe.pick(ray, viewer.scene);
-                        console.log('Method 2 result:', !!intersection); // Debug log
+        function updateCenterCoordinates() {
+            try {
+                // Get center of screen coordinates
+                const canvas = viewer.canvas;
+                const centerX = canvas.clientWidth / 2;
+                const centerY = canvas.clientHeight / 2;
+                const centerPick = new Cesium.Cartesian2(centerX, centerY);
+                
+                // Cast ray from camera through center of screen
+                const ray = viewer.camera.getPickRay(centerPick);
+                let intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                
+                // Fallback to ellipsoid intersection if no terrain intersection
+                if (!intersection) {
+                    const ellipsoidIntersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
+                    if (ellipsoidIntersection) {
+                        intersection = Cesium.Ray.getPoint(ray, ellipsoidIntersection.start);
                     }
+                }
+                
+                if (intersection) {
+                    // Convert to geographic coordinates
+                    const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                    const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                    const longitude = Cesium.Math.toDegrees(cartographic.longitude);
                     
-                    // Method 3: Fallback to camera ray with ellipsoid intersection
-                    if (!intersection) {
-                        const ray = viewer.camera.getPickRay(pick);
-                        intersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
-                        if (intersection) {
-                            intersection = Cesium.Ray.getPoint(ray, intersection.start);
-                        }
-                        console.log('Method 3 result:', !!intersection); // Debug log
-                    }
-                    
-                    if (intersection) {
-                        // Convert Cartesian coordinates to geographic coordinates
-                        const cartographic = Cesium.Cartographic.fromCartesian(intersection);
-                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                        
-                        console.log(`Coordinates found: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`); // Debug log
-                        updateCoordinateDisplay(latitude, longitude);
-                    } else {
-                        // Mouse is not over terrain (e.g., over space)
-                        console.log('No intersection found'); // Debug log
-                        clearCoordinateDisplay();
-                    }
-                } catch (error) {
-                    // Handle any coordinate calculation errors gracefully
-                    console.warn('Coordinate tracking error:', error);
+                    updateCoordinateDisplay(latitude, longitude);
+                } else {
                     clearCoordinateDisplay();
                 }
-            }, COORDINATE_UPDATE_INTERVAL);
+                
+            } catch (error) {
+                console.warn('Center coordinate tracking error:', error);
+                clearCoordinateDisplay();
+            }
         }
 
         /**
@@ -1106,58 +1112,30 @@
          * Attaches mouse move listener and camera change handlers
          */
         function initializeCoordinateTracking() {
-            const canvas = viewer.canvas;
-            
-            // Test coordinate display immediately
-            coordinatesText.textContent = 'Coordinates (°) Testing...';
-            console.log('Testing coordinate display update');
-            
-            // Add mouse move listener for coordinate tracking
-            const mouseHandler = function(event) {
-                console.log('Mouse move detected on canvas'); // Debug log
-                handleMouseMove(event);
-            };
-            
-            canvas.addEventListener('mousemove', mouseHandler);
-            
-            // Also add to the main viewer element for better coverage
-            viewer.container.addEventListener('mousemove', function(event) {
-                console.log('Mouse move detected on container'); // Debug log
-                handleMouseMove(event);
-            });
-            
-            // Clear coordinates when mouse leaves canvas
-            canvas.addEventListener('mouseleave', function() {
-                console.log('Mouse left canvas'); // Debug log
-                clearCoordinateDisplay();
-            });
-            viewer.container.addEventListener('mouseleave', function() {
-                console.log('Mouse left container'); // Debug log
-                clearCoordinateDisplay();
-            });
-            
-            // Add camera change listeners for scale bar and north arrow updates
+            // Add camera change listeners for scale bar, north arrow, and center coordinates
             viewer.camera.changed.addEventListener(function() {
                 updateScaleBar();
                 updateNorthArrow();
+                updateCenterCoordinates();
             });
+            
             viewer.scene.morphComplete.addEventListener(function() {
                 updateScaleBar();
                 updateNorthArrow();
+                updateCenterCoordinates();
+            });
+            
+            // Update coordinates when camera stops moving (end event)
+            viewer.camera.moveEnd.addEventListener(function() {
+                updateCenterCoordinates();
             });
             
             // Initial updates
             updateScaleBar();
             updateNorthArrow();
+            updateCenterCoordinates();
             
-            // Set initial coordinate state after short delay
-            setTimeout(() => {
-                clearCoordinateDisplay();
-                console.log('Initial coordinate display cleared');
-            }, 500);
-            
-            console.log('Live coordinate tracking, scale bar, and north arrow initialized');
-            console.log('Mouse event listeners attached to canvas and container');
+            console.log('Center coordinate tracking, scale bar, and north arrow initialized');
         }
 
         // Initialize coordinate tracking after viewer is ready
