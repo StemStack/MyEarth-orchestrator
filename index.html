@@ -1474,16 +1474,97 @@
                 loadingMessage.textContent = 'Loading 3D model...';
                 document.body.appendChild(loadingMessage);
                 
-                // Load the model using modern CesiumJS API
-                const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(
-                    Cesium.Cartesian3.fromDegrees(longitude, latitude, height)
-                );
+                // Add error handler for CesiumJS rendering errors
+                const originalErrorHandler = viewer.cesiumWidget.onRenderError;
+                let modelLoadFailed = false;
                 
-                // Create model using Entity API for better compatibility
+                viewer.cesiumWidget.onRenderError.addEventListener(function(error) {
+                    if (!modelLoadFailed && error.toString().includes('midpoint')) {
+                        modelLoadFailed = true;
+                        console.warn('CesiumJS model rendering error detected, cleaning up...');
+                        
+                        // Clean up any problematic entities
+                        try {
+                            viewer.entities.removeAll();
+                            viewer.scene.primitives.removeAll();
+                        } catch (cleanupError) {
+                            console.warn('Error during cleanup:', cleanupError);
+                        }
+                        
+                        if (document.body.contains(loadingMessage)) {
+                            document.body.removeChild(loadingMessage);
+                        }
+                        
+                        URL.revokeObjectURL(modelUrl);
+                        
+                        // Show user-friendly error message
+                        const errorDiv = document.createElement('div');
+                        errorDiv.style.cssText = `
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: rgba(255,69,58,0.9);
+                            color: white;
+                            padding: 20px;
+                            border-radius: 8px;
+                            z-index: 10000;
+                            font-family: Arial, sans-serif;
+                            max-width: 400px;
+                            text-align: center;
+                        `;
+                        errorDiv.innerHTML = `
+                            <h3 style="margin: 0 0 10px 0;">3D Model Incompatible</h3>
+                            <p style="margin: 0 0 15px 0;">This GLB/GLTF file is not compatible with CesiumJS viewer. This can happen with:</p>
+                            <ul style="text-align: left; margin: 0 0 15px 0;">
+                                <li>Complex geometry structures</li>
+                                <li>Certain material properties</li>
+                                <li>Non-standard GLTF features</li>
+                            </ul>
+                            <p style="margin: 0 0 15px 0; font-size: 12px;">Try a different model or convert this one using a 3D modeling tool.</p>
+                            <button onclick="this.parentElement.remove()" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
+                        `;
+                        document.body.appendChild(errorDiv);
+                        
+                        // Auto-remove after 10 seconds
+                        setTimeout(function() {
+                            if (document.body.contains(errorDiv)) {
+                                document.body.removeChild(errorDiv);
+                            }
+                        }, 10000);
+                        
+                        return;
+                    }
+                });
+                
+                // Create a simple point marker as fallback visualization
+                const fallbackEntity = viewer.entities.add({
+                    name: `Model Location - ${file.name}`,
+                    position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
+                    point: {
+                        pixelSize: 15,
+                        color: Cesium.Color.YELLOW,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+                    },
+                    label: {
+                        text: `📦 ${file.name}`,
+                        font: '12pt Arial',
+                        fillColor: Cesium.Color.WHITE,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                        pixelOffset: new Cesium.Cartesian2(0, -40),
+                        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+                    }
+                });
+                
+                console.log('Created fallback marker for model location');
+                
+                // Try to load the 3D model
                 try {
-                    console.log('Creating entity with 3D model');
-                    
-                    const entity = viewer.entities.add({
+                    const modelEntity = viewer.entities.add({
                         name: `3D Model - ${file.name}`,
                         position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
                         model: {
@@ -1493,83 +1574,62 @@
                             maximumScale: 1000,
                             runAnimations: false,
                             clampAnimations: true,
-                            silhouetteColor: Cesium.Color.YELLOW,
-                            silhouetteSize: 2.0,
                             heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
                         }
                     });
                     
-                    console.log('Entity created with model, setting up loading handlers');
+                    console.log('Attempting to load 3D model...');
                     
-                    // Set up timeout protection
-                    let timeoutId = setTimeout(function() {
+                    // Set timeout to clean up and show result
+                    setTimeout(function() {
                         if (document.body.contains(loadingMessage)) {
                             document.body.removeChild(loadingMessage);
                         }
-                        console.log('Model loaded (timeout reached)');
                         
-                        // Zoom to the entity position
-                        viewer.camera.setView({
-                            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 200),
-                            orientation: {
-                                heading: 0,
-                                pitch: Cesium.Math.toRadians(-45),
-                                roll: 0
-                            }
-                        });
-                    }, 10000); // 10 second timeout
-                    
-                    // Monitor for successful model loading by checking the model's ready state
-                    const checkModelReady = function() {
-                        try {
-                            if (entity.model && entity.model._model && entity.model._model.ready) {
-                                clearTimeout(timeoutId);
-                                if (document.body.contains(loadingMessage)) {
-                                    document.body.removeChild(loadingMessage);
+                        if (!modelLoadFailed) {
+                            console.log('Model appears to have loaded successfully');
+                            // Remove fallback marker if model loaded
+                            viewer.entities.remove(fallbackEntity);
+                            
+                            // Zoom to the model location
+                            viewer.camera.setView({
+                                destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 200),
+                                orientation: {
+                                    heading: 0,
+                                    pitch: Cesium.Math.toRadians(-45),
+                                    roll: 0
                                 }
-                                console.log(`3D model loaded successfully at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-                                
-                                // Zoom to the entity
-                                viewer.trackedEntity = entity;
-                                setTimeout(function() {
-                                    viewer.trackedEntity = undefined;
-                                    viewer.camera.setView({
-                                        destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 150),
-                                        orientation: {
-                                            heading: 0,
-                                            pitch: Cesium.Math.toRadians(-30),
-                                            roll: 0
-                                        }
-                                    });
-                                }, 2000);
-                                
-                                return true;
-                            }
-                            return false;
-                        } catch (checkError) {
-                            console.warn('Error checking model ready state:', checkError);
-                            return false;
+                            });
+                        } else {
+                            // Keep fallback marker and zoom to it
+                            viewer.camera.setView({
+                                destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 100),
+                                orientation: {
+                                    heading: 0,
+                                    pitch: Cesium.Math.toRadians(-30),
+                                    roll: 0
+                                }
+                            });
                         }
-                    };
+                    }, 5000);
                     
-                    // Poll for model ready state
-                    const pollInterval = setInterval(function() {
-                        if (checkModelReady()) {
-                            clearInterval(pollInterval);
-                        }
-                    }, 500);
-                    
-                    // Clear polling after timeout
-                    setTimeout(function() {
-                        clearInterval(pollInterval);
-                    }, 15000);
-                    
-                } catch (creationError) {
+                } catch (modelError) {
+                    console.error('Error creating model entity:', modelError);
                     if (document.body.contains(loadingMessage)) {
                         document.body.removeChild(loadingMessage);
                     }
-                    console.error('Error creating entity with model:', creationError);
-                    alert('Error creating 3D model entity. The file may not be compatible with CesiumJS.');
+                    
+                    // Show the fallback marker
+                    viewer.camera.setView({
+                        destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 100),
+                        orientation: {
+                            heading: 0,
+                            pitch: Cesium.Math.toRadians(-30),
+                            roll: 0
+                        }
+                    });
+                    
+                    alert('Could not load 3D model, but marked the location on the map.');
                     URL.revokeObjectURL(modelUrl);
                 }
                 
