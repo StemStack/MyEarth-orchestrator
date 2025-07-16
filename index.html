@@ -715,6 +715,17 @@
             display: none;
         }
 
+        /* Info display styling */
+        .info-display {
+            cursor: default !important;
+            font-family: monospace;
+        }
+
+        .info-display:hover {
+            transform: none !important;
+            background: rgba(255,255,255,0.9) !important;
+        }
+
         /* Hide default zoom controls since we have new ones */
         .zoom-controls {
             display: none;
@@ -1939,77 +1950,76 @@
 
     <!-- Right Panel with Tool Icons - MapX Style -->
     <div id="rightPanel">
+        <div class="panel-collapse-btn" onclick="toggleRightPanel()" title="Collapse Panel">⌐</div>
+        
+        <!-- North Arrow Tool - Integrated -->
+        <div class="tool-icon" id="northArrowTool" title="North Arrow - Click to Reset" onclick="resetViewToNorth()">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M12 2L8 8h8z" fill="currentColor"/>
+                <path d="M12 22L16 16H8z" fill="none" stroke="currentColor" stroke-width="1"/>
+            </svg>
+        </div>
+        
+        <!-- Info Display - Coordinates -->
+        <div class="tool-icon info-display" id="infoDisplay" title="Current Coordinates">
+            <span id="compactCoordinates" style="font-size: 9px; text-align: center; line-height: 1.1; font-weight: 500;">
+                45.0°N<br>15.0°E
+            </span>
+        </div>
+        
         <div class="tool-icon" id="zoomInTool" title="Zoom In" onclick="zoomIn()">+</div>
         <div class="tool-icon" id="zoomOutTool" title="Zoom Out" onclick="zoomOut()">−</div>
         <div class="tool-icon" id="resetViewTool" title="Reset View" onclick="resetView()">⟲</div>
         <div class="tool-icon" id="refreshTool" title="Refresh" onclick="refreshMap()">↻</div>
-        <div class="tool-icon" id="northArrowTool" title="North Arrow" onclick="resetViewToNorth()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L13.5 6.5L18 6L13.5 10.5L12 2Z" stroke="currentColor" stroke-width="1"/>
-                <path d="M12 22L10.5 17.5L6 18L10.5 13.5L12 22Z" fill="none" stroke="currentColor" stroke-width="1"/>
-            </svg>
-        </div>
         <div class="tool-icon" id="fullscreenTool" title="Fullscreen" onclick="toggleFullscreen()">⛶</div>
         <div class="tool-icon" id="searchTool" title="Search" onclick="toggleSearchPanel()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
         <div class="tool-icon" id="themeToggleTool" title="Toggle Theme" onclick="toggleTheme()">☾</div>
         <div class="tool-icon" id="baseMapTool" title="Base Maps" onclick="toggleBaseMapPanel()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="3 6 9 1 15 6 21 1 21 18 15 23 9 18 3 23"/>
-                <line x1="9" y1="1" x2="9" y2="18"/>
-                <line x1="15" y1="6" x2="15" y2="23"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <polygon points="3 6 9 1 15 6 21 1 21 18 15 23 9 18 3 23" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="9" y1="1" x2="9" y2="18" stroke="currentColor" stroke-width="2"/>
+                <line x1="15" y1="6" x2="15" y2="23" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
         <div class="tool-icon" id="layerTool" title="Data Layers" onclick="toggleLayerPanel()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
         <div class="tool-icon" id="measurementTool" title="Measurement Tools" onclick="toggleMeasurementTool()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z" fill="none" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
         <div class="tool-icon" id="markerTool" title="Point Markers" onclick="toggleMarkerMode()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="2"/>
+                <circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
         <div class="tool-icon" id="modelTool" title="3D Models" onclick="toggleModelPanel()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/>
-                <path d="M12 22V12"/>
-                <path d="M2 7L12 12L22 7"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 22V12" stroke="currentColor" stroke-width="2"/>
+                <path d="M2 7L12 12L22 7" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
         <div class="tool-icon" id="settingsTool" title="Settings" onclick="toggleSettingsPanel()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"/>
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
     </div>
 
-    <!-- Bottom Information Band -->
-    <div id="bottomBand">
-        <div class="bottom-left">
-            <div id="scaleInfo">Scale: 1:1,000,000</div>
-            <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
-        </div>
-        <div class="bottom-center">
-            <div id="activeLayersInfo">Active Layers: OSM Standard, Protected Areas</div>
-        </div>
-        <div class="bottom-right">
-            <div id="attributionInfo">© OpenStreetMap contributors</div>
-        </div>
-    </div>
+
 
     <!-- Floating menu button (appears when sidebar is collapsed) -->
     <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()">☰</button>
@@ -2020,29 +2030,7 @@
 
 
 
-    <!-- Scale bar and coordinates display -->
-    <div class="bottom-left-panel" id="bottomLeftPanel">
-        <!-- North arrow compass -->
-        <div class="north-arrow-container" id="northArrowContainer">
-            <div class="north-arrow" id="northArrow" onclick="resetViewToNorth()" style="cursor: pointer;" title="Click to reset view orientation to North">
-                <div class="arrow-needle"></div>
-                <div class="arrow-label">N</div>
-            </div>
-        </div>
-        
-        <!-- Scale bar -->
-        <div class="scale-bar-container" id="scaleBarContainer">
-            <div class="scale-bar" id="scaleBar">
-                <div class="scale-line" id="scaleLine"></div>
-                <div class="scale-text" id="scaleText">1 km</div>
-            </div>
-        </div>
-        
-        <!-- Coordinates display -->
-        <div class="coordinates-info" id="coordinatesInfo">
-            <span class="coordinates-text" id="coordinatesText">Coordinates (°) ---.------, ---.------</span>
-        </div>
-    </div>
+
 
 
 
@@ -2316,7 +2304,6 @@
         const scaleLine = document.getElementById('scaleLine');
         const scaleText = document.getElementById('scaleText');
         const coordinatesText = document.getElementById('coordinatesText');
-        const northArrow = document.getElementById('northArrow');
         
         // Autocomplete state
         let searchTimeout;
@@ -2689,14 +2676,18 @@
                     // Calculate the width in pixels for our target distance
                     scaleWidth = (targetDistance / pixelDistance) * 100;
                     
-                    // Update the scale bar
-                    scaleLine.style.width = Math.max(Math.min(scaleWidth, 200), 30) + 'px';
-                    scaleText.textContent = scaleLabel;
+                    // Update the scale bar if elements exist
+                    if (scaleLine && scaleText) {
+                        scaleLine.style.width = Math.max(Math.min(scaleWidth, 200), 30) + 'px';
+                        scaleText.textContent = scaleLabel;
+                    }
                 }
             } catch (error) {
                 console.warn('Scale bar calculation failed, using default');
-                scaleLine.style.width = '60px';
-                scaleText.textContent = '1 km';
+                if (scaleLine && scaleText) {
+                    scaleLine.style.width = '60px';
+                    scaleText.textContent = '1 km';
+                }
             }
         }
 
@@ -2707,14 +2698,18 @@
          */
         function updateCoordinateDisplay(latitude, longitude) {
             try {
-                if (!coordinatesText) {
-                    console.warn('Coordinates text element not found');
+                const compactCoordinates = document.getElementById('compactCoordinates');
+                if (!compactCoordinates) {
+                    console.warn('Compact coordinates element not found');
                     return;
                 }
                 
-                const latText = latitude.toFixed(6);
-                const lonText = longitude.toFixed(6);
-                coordinatesText.textContent = `Coordinates (°) ${latText}, ${lonText}`;
+                const latText = latitude.toFixed(1);
+                const lonText = longitude.toFixed(1);
+                const latDir = latitude >= 0 ? 'N' : 'S';
+                const lonDir = longitude >= 0 ? 'E' : 'W';
+                
+                compactCoordinates.innerHTML = `${Math.abs(latitude).toFixed(1)}°${latDir}<br>${Math.abs(longitude).toFixed(1)}°${lonDir}`;
                 
             } catch (error) {
                 console.warn('Error updating coordinate display:', error);
@@ -2726,11 +2721,12 @@
          */
         function clearCoordinateDisplay() {
             try {
-                if (!coordinatesText) {
-                    console.warn('Coordinates text element not found');
+                const compactCoordinates = document.getElementById('compactCoordinates');
+                if (!compactCoordinates) {
+                    console.warn('Compact coordinates element not found');
                     return;
                 }
-                coordinatesText.textContent = 'Coordinates (°) ---.------, ---.------';
+                compactCoordinates.innerHTML = '--°-<br>--°-';
             } catch (error) {
                 console.warn('Error clearing coordinate display:', error);
             }
@@ -2742,8 +2738,9 @@
          */
         function updateNorthArrow() {
             try {
-                // Ensure northArrow element exists
-                if (!northArrow) {
+                // Check if north arrow tool exists in the right panel
+                const northArrowTool = document.getElementById('northArrowTool');
+                if (!northArrowTool) {
                     return;
                 }
                 
@@ -2758,16 +2755,24 @@
                 // Negative rotation because we want the arrow to point north regardless of camera heading
                 const rotation = -headingDegrees;
                 
-                // Apply rotation transform to the north arrow
-                northArrow.style.transform = `rotate(${rotation}deg)`;
-                
-
+                // Apply rotation transform to the north arrow in the right panel
+                const northArrowTool = document.getElementById('northArrowTool');
+                if (northArrowTool) {
+                    const svg = northArrowTool.querySelector('svg');
+                    if (svg) {
+                        svg.style.transform = `rotate(${rotation}deg)`;
+                    }
+                }
                 
             } catch (error) {
                 console.warn('North arrow update failed:', error);
                 // Reset to default orientation on error
-                if (northArrow) {
-                    northArrow.style.transform = 'rotate(0deg)';
+                const northArrowTool = document.getElementById('northArrowTool');
+                if (northArrowTool) {
+                    const svg = northArrowTool.querySelector('svg');
+                    if (svg) {
+                        svg.style.transform = 'rotate(0deg)';
+                    }
                 }
             }
         }
@@ -5496,6 +5501,17 @@
         }
 
         /**
+         * Toggle Right Panel Visibility
+         */
+        function toggleRightPanel() {
+            const panel = document.getElementById('rightPanel');
+            if (panel) {
+                panel.classList.toggle('collapsed');
+                console.log('Right panel', panel.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+            }
+        }
+
+        /**
          * Night Mode Theme Toggle Functionality
          */
         function toggleTheme() {
@@ -5659,8 +5675,8 @@
                 floatingButton.style.display = 'none';
             }
             
-            // Initialize bottom band updates
-            setInterval(updateBottomBand, 1000);
+            // Bottom band removed - no updates needed
+            // setInterval(updateBottomBand, 1000);
             
             console.log('✓ Menu system initialized - left panel visible, floating button hidden');
         });
@@ -5675,7 +5691,7 @@
             if (viewer && viewer.scene) {
                 // Update coordinates from existing display
                 const coordsText = document.getElementById('coordinatesText');
-                if (coordsText) {
+                if (coordsText && coordinatesInfo) {
                     const coordsMatch = coordsText.textContent.match(/(-?\d+\.\d+).*?(-?\d+\.\d+)/);
                     if (coordsMatch) {
                         coordinatesInfo.textContent = `Lat: ${coordsMatch[1]}° Lon: ${coordsMatch[2]}°`;
@@ -5684,7 +5700,7 @@
                 
                 // Update scale from existing display
                 const scaleText = document.getElementById('scaleText');
-                if (scaleText) {
+                if (scaleText && scaleInfo) {
                     scaleInfo.textContent = `Scale: ${scaleText.textContent}`;
                 }
                 
@@ -5703,11 +5719,13 @@
                 if (document.getElementById('landDegradationWms')?.checked) {
                     activeLayersList.push('Land Degradation');
                 }
-                activeLayersInfo.textContent = `Active Layers: ${activeLayersList.join(', ')}`;
+                if (activeLayersInfo) {
+                    activeLayersInfo.textContent = `Active Layers: ${activeLayersList.join(', ')}`;
+                }
                 
                 // Update attribution
                 const currentAttribution = document.querySelector('.cesium-credit-textContainer');
-                if (currentAttribution) {
+                if (currentAttribution && attributionInfo) {
                     attributionInfo.textContent = currentAttribution.textContent;
                 }
             }
