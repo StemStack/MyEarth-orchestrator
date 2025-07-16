@@ -175,3 +175,17 @@ The CesiumJS globe viewer is now fully functional with:
 - Complete Ion service blocking with override functions to prevent any paid service attempts
 - Explicit logging confirms only free, open-source providers are used (OpenTopoMap, OpenStreetMap, etc.)
 - Zero authentication errors or paid service attempts
+
+## Service Loader System
+
+### Supported Geospatial Data Formats
+- **GeoJSON Data**: Load vector features from public URLs with random colors and click popups
+- **WMS Services**: Web Map Service imagery overlays with configurable layers and formats
+- **TileJSON Services**: Mapbox-style raster tiles for satellite imagery, labels, and hillshade
+
+### Features
+- Modular architecture with separate loader functions for each format
+- Dynamic UI with format-specific input fields
+- Active layers management with visibility toggle and removal
+- Comprehensive error handling with user-friendly messages
+- Integration with existing CesiumJS viewer without conflicts
