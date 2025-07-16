@@ -90,11 +90,6 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Create basic imagery provider
-        const imageryProvider = new Cesium.TileMapServiceImageryProvider({
-            url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
-        });
-
         // Initialize the Cesium viewer without Ion dependencies
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable unnecessary UI widgets for clean appearance
@@ -109,8 +104,10 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
-            // Use basic built-in imagery
-            imageryProvider: imageryProvider,
+            // Use built-in NaturalEarthII imagery
+            imageryProvider: new Cesium.TileMapServiceImageryProvider({
+                url: Cesium.buildModuleUrl('Assets/Textures/NaturalEarthII')
+            }),
             
             // Use ellipsoid terrain (no authentication required)
             terrainProvider: new Cesium.EllipsoidTerrainProvider()
