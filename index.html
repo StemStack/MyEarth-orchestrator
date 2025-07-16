@@ -882,7 +882,8 @@
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                     horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
                     scale: 1.0,
-                    pixelOffset: new Cesium.Cartesian2(0, -10)
+                    pixelOffset: new Cesium.Cartesian2(0, 0), // Remove offset for exact positioning
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
                 },
                 label: {
                     text: label,
@@ -892,7 +893,7 @@
                     outlineWidth: 2,
                     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-                    pixelOffset: new Cesium.Cartesian2(0, -40),
+                    pixelOffset: new Cesium.Cartesian2(0, -36), // Adjust label position relative to marker
                     disableDepthTestDistance: Number.POSITIVE_INFINITY
                 }
             });
@@ -909,7 +910,7 @@
         }
 
         /**
-         * Creates a red marker pin graphic as a canvas-based image
+         * Creates a red marker pin graphic with precise bottom point positioning
          * @returns {HTMLCanvasElement} Canvas element containing the marker graphic
          */
         function createMarkerPin() {
@@ -918,22 +919,22 @@
             canvas.height = 36;
             const ctx = canvas.getContext('2d');
 
-            // Draw red marker pin shape
+            // Draw red marker pin shape with precise positioning
             ctx.fillStyle = '#FF0000';
             ctx.strokeStyle = '#8B0000';
             ctx.lineWidth = 2;
 
-            // Main pin body (circle)
+            // Main pin body (circle) - positioned higher to accommodate point
             ctx.beginPath();
-            ctx.arc(12, 12, 10, 0, 2 * Math.PI);
+            ctx.arc(12, 10, 8, 0, 2 * Math.PI);
             ctx.fill();
             ctx.stroke();
 
-            // Pin point (triangle)
+            // Pin point (triangle) - precise tip at bottom center
             ctx.beginPath();
-            ctx.moveTo(12, 22);
-            ctx.lineTo(8, 30);
-            ctx.lineTo(16, 30);
+            ctx.moveTo(12, 36); // Bottom point (exact click position)
+            ctx.lineTo(6, 18);  // Left side of point
+            ctx.lineTo(18, 18); // Right side of point
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
@@ -941,7 +942,7 @@
             // Inner white dot
             ctx.fillStyle = '#FFFFFF';
             ctx.beginPath();
-            ctx.arc(12, 12, 4, 0, 2 * Math.PI);
+            ctx.arc(12, 10, 3, 0, 2 * Math.PI);
             ctx.fill();
 
             return canvas;
