@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CesiumJS Globe Viewer</title>
+    
+    <!-- CesiumJS CSS -->
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Cesium container takes full viewport */
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        /* Hide Cesium's default credit container for cleaner look */
+        .cesium-widget-credits {
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            background: rgba(0, 0, 0, 0.7) !important;
+            padding: 2px 5px !important;
+            font-size: 10px !important;
+            color: #fff !important;
+            border-radius: 0 3px 0 0 !important;
+        }
+
+        /* Ensure toolbar is positioned correctly */
+        .cesium-viewer-toolbar {
+            position: absolute !important;
+            top: 10px !important;
+            right: 10px !important;
+        }
+
+        /* Style the navigation help button */
+        .cesium-navigation-help-button {
+            background-color: rgba(42, 42, 42, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* Loading indicator styling */
+        .cesium-viewer-loadingIndicator {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+        }
+
+        /* Responsive design for smaller screens */
+        @media (max-width: 768px) {
+            .cesium-viewer-toolbar {
+                top: 5px !important;
+                right: 5px !important;
+            }
+            
+            .cesium-widget-credits {
+                font-size: 8px !important;
+                padding: 1px 3px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main Cesium container -->
+    <div id="cesiumContainer"></div>
+
+    <!-- CesiumJS JavaScript -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
+    
+    <script>
+        // Set a basic Ion token for free features
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiOTMwNDBhMy04MTUyLTQ2NTItOWNjYy05NGUxZjMzOGI4MjciLCJpZCI6MjU5LCJzY29wZXMiOlsiYXNyIiwiZ2MiXSwiaWF0IjoxNzMxMDI2NzYyfQ.QrK2xzpMcCb4I0LVGCJLgwlw7nqUnM3P8rnzKCYDvJ8';
+
+        // Initialize the Cesium viewer with minimal configuration
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            // Disable unnecessary UI widgets for clean appearance
+            animation: false,           // Remove animation controls
+            baseLayerPicker: false,     // Remove base layer picker
+            fullscreenButton: true,     // Keep fullscreen button
+            geocoder: false,            // Remove geocoder search
+            homeButton: true,           // Keep home button for navigation reset
+            infoBox: false,             // Remove info box
+            sceneModePicker: false,     // Remove 2D/3D mode picker
+            selectionIndicator: false,  // Remove selection indicator
+            timeline: false,            // Remove timeline
+            navigationHelpButton: true, // Keep navigation help
+            
+            // Use basic imagery and terrain
+            imageryProvider: new Cesium.OpenStreetMapImageryProvider({
+                url: 'https://a.tile.openstreetmap.org/'
+            }),
+            terrainProvider: new Cesium.EllipsoidTerrainProvider()
+        });
+
+        // Configure scene settings for optimal viewing
+        const scene = viewer.scene;
+        
+        // Enable lighting for better visual quality
+        scene.globe.enableLighting = true;
+        
+        // Set initial camera position for a nice Earth view
+        viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883, 15000000.0),
+            orientation: {
+                heading: 0.0,
+                pitch: -Cesium.Math.PI_OVER_TWO,
+                roll: 0.0
+            }
+        });
+
+        // Configure camera controls for smooth navigation
+        const camera = viewer.camera;
+        
+        // Set camera movement constraints
+        camera.constrainedAxis = undefined; // Allow free rotation
+        
+        // Configure screen space camera controller
+        const controller = scene.screenSpaceCameraController;
+        controller.enableRotate = true;
+        controller.enableTranslate = true;
+        controller.enableZoom = true;
+        controller.enableTilt = true;
+        controller.enableLook = true;
+        
+        // Set zoom limits
+        controller.minimumZoomDistance = 1000.0;
+        controller.maximumZoomDistance = 50000000.0;
+        
+        // Configure inertia for smooth movement
+        controller.inertiaSpin = 0.9;
+        controller.inertiaTranslate = 0.9;
+        controller.inertiaZoom = 0.8;
+        
+        // Touch-specific settings for mobile devices
+        controller.touchEventTypes = {
+            ...controller.touchEventTypes,
+            pinch: Cesium.CameraEventType.WHEEL,
+            twist: Cesium.CameraEventType.LOOK
+        };
+
+        // Handle window resize events for responsiveness
+        window.addEventListener('resize', function() {
+            viewer.resize();
+        }, false);
+
+        // Disable right-click context menu over the viewer
+        viewer.cesiumWidget.canvas.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        }, false);
+
+        // Hide credit container for cleaner look
+        viewer.cesiumWidget.creditContainer.style.display = "none";
+
+        console.log('CesiumJS Globe Viewer initialized successfully');
+    </script>
+</body>
+</html>
