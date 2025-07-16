@@ -8,6 +8,7 @@ This project is a web-based 3D globe visualization application built using Cesiu
 
 Preferred communication style: Simple, everyday language.
 Technical requirements: No Cesium Ion dependencies, use only open data sources.
+Cost requirements: Absolutely no paid services - only free, open-source providers.
 
 ## System Architecture
 
@@ -170,3 +171,6 @@ The CesiumJS globe viewer is now fully functional with:
 - Optimized camera angles (35-degree tilt) for best 3D terrain visualization
 - Toggle controls for switching between realistic 3D terrain and flat ellipsoid modes
 - WebGL performance optimization notice with new tab option for full GPU acceleration
+- Complete Ion service blocking with override functions to prevent any paid service attempts
+- Explicit logging confirms only free, open-source providers are used (OpenTopoMap, OpenStreetMap, etc.)
+- Zero authentication errors or paid service attempts

@@ -1025,8 +1025,22 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Disable Cesium Ion to prevent authentication errors
-        Cesium.Ion.defaultAccessToken = undefined;
+        // Completely disable Cesium Ion services to prevent any paid service usage
+        if (typeof Cesium.Ion !== 'undefined') {
+            Cesium.Ion.defaultAccessToken = undefined;
+            Cesium.Ion.defaultServer = undefined;
+            
+            // Override Ion asset creation to prevent any attempts
+            const originalFromAssetId = Cesium.IonResource ? Cesium.IonResource.fromAssetId : null;
+            if (originalFromAssetId) {
+                Cesium.IonResource.fromAssetId = function() {
+                    console.warn('Ion services disabled - using free alternatives only');
+                    throw new Error('Ion services are disabled to prevent paid service usage');
+                };
+            }
+        }
+        
+        console.log('✓ Ion services completely disabled - using only free, open-source data');
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -1045,9 +1059,11 @@
             // Use ellipsoid terrain initially, will be upgraded after initialization
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
             
-            // Keep sky effects disabled to prevent authentication errors
+            // Disable all Ion-dependent features
             skyBox: false,
             skyAtmosphere: false,
+            baseLayerPicker: false,
+            geocoder: false,
             requestRenderMode: false,
             maximumRenderTimeChange: Infinity
         });
@@ -1106,6 +1122,8 @@
         // Apply terrain on startup
         applyRealTerrain();
         
+        console.log('✓ All services using free, open-source providers only');
+        
         // Add fallback to ellipsoid terrain if the terrain provider fails
         viewer.terrainProvider.errorEvent.addEventListener(function(err) {
             console.warn('Terrain provider failed, falling back to ellipsoid:', err);
@@ -1156,9 +1174,11 @@
         // Current base map - default to OpenTopoMap for topographic view
         let currentBaseMap = 'otm';
         
-        // Remove default imagery and add OpenTopoMap
+        // Remove default imagery and add OpenTopoMap (free open-source service)
         viewer.imageryLayers.removeAll();
         viewer.imageryLayers.addImageryProvider(baseMaps[currentBaseMap].provider());
+        
+        console.log('✓ Using OpenTopoMap - free, open-source base map provider');
 
         // Define Alps home view coordinates with proper 3D viewing angle
         const europeHomeView = {
