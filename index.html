@@ -2337,9 +2337,69 @@
                         </ul>
                     </div>
                 </div>
-                <button onclick="this.parentElement.remove()" style="background: #52c41a; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Find Models</button>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button onclick="openModelSources(); this.parentElement.parentElement.remove();" style="background: #52c41a; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: bold;">Find Models</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;">Close</button>
+                </div>
             `;
             document.body.appendChild(sampleDiv);
+        }
+
+        /**
+         * Open useful 3D model sources in new tabs
+         */
+        function openModelSources() {
+            // Open multiple useful sources for finding compatible 3D models
+            const sources = [
+                'https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0',
+                'https://sketchfab.com/3d-models?features=downloadable&sort_by=-likeCount&file_formats=gltf',
+                'https://polyhaven.com/models',
+                'https://sandcastle.cesium.com/?src=3D%20Models.html'
+            ];
+            
+            // Open first two sources (avoid popup blockers)
+            sources.slice(0, 2).forEach((url, index) => {
+                setTimeout(() => {
+                    window.open(url, '_blank');
+                }, index * 100); // Small delay to avoid popup blocker
+            });
+            
+            // Show message about additional sources
+            setTimeout(() => {
+                const infoDiv = document.createElement('div');
+                infoDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(52, 152, 219, 0.95);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    z-index: 10002;
+                    font-family: Arial, sans-serif;
+                    max-width: 300px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                `;
+                infoDiv.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 8px;">🌐 Model Sources Opened</div>
+                    <div style="font-size: 13px; line-height: 1.4;">
+                        Check your new tabs for:<br>
+                        • Khronos GLTF samples<br>
+                        • Sketchfab downloadable models<br>
+                        <br>
+                        <span style="opacity: 0.9;">Look for small, simple GLB files under 5MB</span>
+                    </div>
+                    <button onclick="this.parentElement.remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 10px;">Got it</button>
+                `;
+                document.body.appendChild(infoDiv);
+                
+                // Auto-remove after 8 seconds
+                setTimeout(() => {
+                    if (document.body.contains(infoDiv)) {
+                        infoDiv.remove();
+                    }
+                }, 8000);
+            }, 500);
         }
 
         /**
