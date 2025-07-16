@@ -577,6 +577,30 @@
         viewer.cesiumWidget.canvas.addEventListener('contextmenu', function(e) {
             e.preventDefault();
         }, false);
+        
+        // Add additional rotation input handlers for immediate north arrow response
+        const canvas = viewer.canvas;
+        let isRotating = false;
+        
+        // Mouse down to detect start of rotation
+        canvas.addEventListener('mousedown', function(e) {
+            if (e.button === 2 || e.ctrlKey) { // Right click or Ctrl+click
+                isRotating = true;
+            }
+        });
+        
+        // Mouse move during rotation
+        canvas.addEventListener('mousemove', function(e) {
+            if (isRotating) {
+                // Immediate north arrow update during rotation
+                setTimeout(updateNorthArrow, 0);
+            }
+        });
+        
+        // Mouse up to end rotation
+        canvas.addEventListener('mouseup', function(e) {
+            isRotating = false;
+        });
 
         // Hide credit container for cleaner look
         viewer.cesiumWidget.creditContainer.style.display = "none";
@@ -1129,9 +1153,15 @@
                 updateCenterCoordinates();
             });
             
-            // Add scene post-render event for continuous updates during movement
+            // Add scene post-render event for continuous updates during any camera changes
+            let lastHeading = viewer.camera.heading;
             viewer.scene.postRender.addEventListener(function() {
-                updateNorthArrow();
+                // Check if heading has changed to update north arrow
+                const currentHeading = viewer.camera.heading;
+                if (Math.abs(currentHeading - lastHeading) > 0.001) {
+                    updateNorthArrow();
+                    lastHeading = currentHeading;
+                }
             });
             
             viewer.scene.morphComplete.addEventListener(function() {
