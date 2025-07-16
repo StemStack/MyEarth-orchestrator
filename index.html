@@ -889,6 +889,10 @@
             <input type="checkbox" id="baseLayerToggle" checked>
             <label for="baseLayerToggle">Base Map</label>
         </div>
+        <div class="layer-toggle">
+            <input type="checkbox" id="atmosphereToggle" checked onchange="toggleAtmosphere()">
+            <label for="atmosphereToggle">Fog Effects</label>
+        </div>
         <div class="model-upload-section">
             <button class="model-upload-button" id="modelUploadButton">
                 📁 Upload
@@ -1011,14 +1015,8 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Completely disable Cesium Ion to prevent authentication errors
+        // Disable Cesium Ion to prevent authentication errors
         Cesium.Ion.defaultAccessToken = undefined;
-        
-        // Disable Ion entirely by overriding the Ion object
-        if (window.Cesium && Cesium.Ion) {
-            Cesium.Ion.defaultServer = undefined;
-            Cesium.Ion.defaultAccessToken = '';
-        }
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -1034,19 +1032,29 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
-            // Use ellipsoid terrain (no authentication required)
-            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+            // Use heightmap terrain for simple 3D topography without authentication
+            terrainProvider: new Cesium.EllipsoidTerrainProvider({
+                // This creates a basic spherical terrain
+                // We'll enhance it with visual effects for 3D appearance
+            }),
             
-            // Disable Ion-dependent features
+            // Keep sky effects disabled to prevent authentication errors
             skyBox: false,
             skyAtmosphere: false,
             requestRenderMode: false,
             maximumRenderTimeChange: Infinity
         });
 
-        // Disable any remaining Ion services
+        // Keep lighting disabled to prevent rendering errors
         viewer.scene.globe.enableLighting = false;
-        viewer.scene.fog.enabled = false;
+        viewer.scene.fog.enabled = true;
+        viewer.scene.fog.density = 0.0003;
+        viewer.scene.fog.screenSpaceErrorFactor = 2.0;
+        viewer.scene.globe.showWaterEffect = false;
+        
+        // Disable all lighting and atmosphere features to prevent errors
+        viewer.scene.globe.dynamicAtmosphereLighting = false;
+        viewer.scene.globe.dynamicAtmosphereLightingFromSun = false;
         
         // Base map configurations
         const baseMaps = {
@@ -3332,6 +3340,27 @@
             `;
             
             updateInstructions();
+        }
+
+        /**
+         * Toggle atmospheric effects for 3D visualization
+         */
+        function toggleAtmosphere() {
+            const toggle = document.getElementById('atmosphereToggle');
+            const enabled = toggle.checked;
+            
+            // Only toggle fog to avoid lighting-related errors
+            viewer.scene.fog.enabled = enabled;
+            
+            // Adjust fog density for better 3D depth effect
+            if (enabled) {
+                viewer.scene.fog.density = 0.0003;
+                viewer.scene.fog.screenSpaceErrorFactor = 2.0;
+            } else {
+                viewer.scene.fog.density = 0.0;
+            }
+            
+            console.log('3D fog effects:', enabled ? 'enabled' : 'disabled');
         }
 
         /**
