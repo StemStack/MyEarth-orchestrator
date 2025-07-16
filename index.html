@@ -853,6 +853,159 @@
         // Initialize coordinate tracking after viewer is ready
         initializeCoordinateTracking();
 
+        /**
+         * Interactive Marker Placement System
+         * 
+         * Enables users to click on the globe to place red markers at specific locations.
+         * Each marker displays a label and can be managed through the marker collection.
+         */
+
+        // Marker management system
+        let markerCounter = 0;
+        const markers = new Map(); // Store markers with unique IDs for potential future management
+
+        /**
+         * Creates a red marker billboard at specified coordinates
+         * @param {number} longitude - Longitude in degrees
+         * @param {number} latitude - Latitude in degrees
+         * @param {string} label - Display label for the marker
+         * @returns {Object} Created marker entity
+         */
+        function createMarker(longitude, latitude, label) {
+            const markerId = `marker_${++markerCounter}`;
+            
+            const marker = viewer.entities.add({
+                id: markerId,
+                position: Cesium.Cartesian3.fromDegrees(longitude, latitude),
+                billboard: {
+                    image: createMarkerPin(), // Custom red pin graphic
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+                    scale: 1.0,
+                    pixelOffset: new Cesium.Cartesian2(0, -10)
+                },
+                label: {
+                    text: label,
+                    font: '12pt sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -40),
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
+                }
+            });
+
+            // Store marker reference for potential future management
+            markers.set(markerId, {
+                entity: marker,
+                coordinates: { longitude, latitude },
+                label: label,
+                timestamp: new Date()
+            });
+
+            return marker;
+        }
+
+        /**
+         * Creates a red marker pin graphic as a canvas-based image
+         * @returns {HTMLCanvasElement} Canvas element containing the marker graphic
+         */
+        function createMarkerPin() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 24;
+            canvas.height = 36;
+            const ctx = canvas.getContext('2d');
+
+            // Draw red marker pin shape
+            ctx.fillStyle = '#FF0000';
+            ctx.strokeStyle = '#8B0000';
+            ctx.lineWidth = 2;
+
+            // Main pin body (circle)
+            ctx.beginPath();
+            ctx.arc(12, 12, 10, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.stroke();
+
+            // Pin point (triangle)
+            ctx.beginPath();
+            ctx.moveTo(12, 22);
+            ctx.lineTo(8, 30);
+            ctx.lineTo(16, 30);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // Inner white dot
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(12, 12, 4, 0, 2 * Math.PI);
+            ctx.fill();
+
+            return canvas;
+        }
+
+        /**
+         * Handles click events on the globe for marker placement
+         * Uses ray casting to determine precise click coordinates
+         * @param {ClickEvent} event - Cesium click event
+         */
+        function handleGlobeClick(event) {
+            try {
+                // Get the clicked position on the globe
+                const pickedPosition = viewer.scene.pickPosition(event.position);
+                
+                if (pickedPosition) {
+                    // Convert Cartesian coordinates to geographic coordinates
+                    const cartographic = Cesium.Cartographic.fromCartesian(pickedPosition);
+                    const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                    const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                    // Create marker with sequential numbering
+                    const label = `Point ${markerCounter + 1}`;
+                    const marker = createMarker(longitude, latitude, label);
+
+                    console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
+                } else {
+                    // Fallback: use camera ray picking if position picking fails
+                    const ray = viewer.camera.getPickRay(event.position);
+                    const intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                    
+                    if (intersection) {
+                        const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+
+                        const label = `Point ${markerCounter + 1}`;
+                        const marker = createMarker(longitude, latitude, label);
+
+                        console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
+                    }
+                }
+            } catch (error) {
+                console.warn('Marker placement error:', error);
+            }
+        }
+
+        /**
+         * Initialize marker placement system
+         * Attaches click event handler to enable marker placement
+         */
+        function initializeMarkerPlacement() {
+            // Enable click events on the viewer
+            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(
+                handleGlobeClick,
+                Cesium.ScreenSpaceEventType.LEFT_CLICK
+            );
+
+            console.log('Marker placement system initialized - click anywhere on the globe to place markers');
+        }
+
+        // Initialize marker placement system
+        initializeMarkerPlacement();
+
         console.log('CesiumJS Globe Viewer initialized successfully');
     </script>
 </body>

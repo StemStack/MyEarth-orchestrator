@@ -111,3 +111,6 @@ The CesiumJS globe viewer is now fully functional with:
 - Live coordinates display showing latitude, longitude, and height under mouse cursor
 - Throttled coordinate updates (50ms intervals) for optimal performance
 - Ray-casting implementation for precise terrain intersection detection
+- Interactive marker placement system with click-to-place functionality
+- Custom red pin graphics with white labels and sequential numbering
+- Marker persistence with coordinate tracking and timestamp logging
