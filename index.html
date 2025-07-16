@@ -5039,10 +5039,9 @@
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/WMSServer',
+                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}',
                 name: 'World Database of Protected Areas',
-                type: 'wms',
-                layers: '0',
+                type: 'tile',
                 format: 'image/png',
                 transparent: true
             }
