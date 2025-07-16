@@ -9,6 +9,9 @@ This project is a web-based 3D globe visualization application built using Cesiu
 Preferred communication style: Simple, everyday language.
 Technical requirements: No Cesium Ion dependencies, use only open data sources.
 Cost requirements: Absolutely no paid services - only free, open-source providers.
+UI preferences: Both left and right panels should be collapsed by default on startup.
+Home view: Centered above Europe/North Africa region, looking straight down (90-degree pitch).
+Bottom panel: Coordinates with cm precision, text stays in right 2/3 area.
 
 ## System Architecture
 
