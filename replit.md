@@ -162,3 +162,4 @@ The CesiumJS globe viewer is now fully functional with:
 - Proper attribution handling and display for all map providers with legal compliance
 - Error handling and fallback to OpenStreetMap for failed provider connections
 - Clean integration with existing UI maintaining consistent styling and positioning
+- Home view centered on Europe (10°E, 54°N) at 4,000 km altitude for optimal European continent viewing
