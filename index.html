@@ -1654,8 +1654,44 @@
                 loadingMessage.textContent = 'Loading 3D model...';
                 document.body.appendChild(loadingMessage);
                 
-                // Set up global error handling for model loading
+                // Set up comprehensive error handling and camera protection
                 let modelLoadFailed = false;
+                let modelEntity = null;
+                let errorRecoveryTimeout = null;
+                
+                // Store current camera state for recovery
+                const cameraBackup = {
+                    position: viewer.camera.position.clone(),
+                    direction: viewer.camera.direction.clone(),
+                    up: viewer.camera.up.clone(),
+                    right: viewer.camera.right.clone()
+                };
+                
+                // Function to restore camera controls and clean up
+                const restoreCameraControls = () => {
+                    try {
+                        // Force enable camera controls
+                        viewer.scene.screenSpaceCameraController.enableRotate = true;
+                        viewer.scene.screenSpaceCameraController.enableTranslate = true;
+                        viewer.scene.screenSpaceCameraController.enableZoom = true;
+                        viewer.scene.screenSpaceCameraController.enableTilt = true;
+                        viewer.scene.screenSpaceCameraController.enableLook = true;
+                        
+                        // Reset camera if needed
+                        if (viewer.camera.position.equals(Cesium.Cartesian3.ZERO)) {
+                            viewer.camera.position = cameraBackup.position;
+                            viewer.camera.direction = cameraBackup.direction;
+                            viewer.camera.up = cameraBackup.up;
+                            viewer.camera.right = cameraBackup.right;
+                        }
+                        
+                        // Force scene update
+                        viewer.scene.requestRender();
+                        console.log('Camera controls restored successfully');
+                    } catch (error) {
+                        console.warn('Camera restoration error:', error);
+                    }
+                };
                 
                 // Override console.error to catch CesiumJS model errors
                 const originalConsoleError = console.error;
@@ -1673,17 +1709,36 @@
                         errorString.includes('To.update') ||
                         errorString.includes('pn.fromCornerPoints') ||
                         errorString.includes('qs.update') ||
-                        errorString.includes('Yl.updateAndExecuteCommands')
+                        errorString.includes('Yl.updateAndExecuteCommands') ||
+                        errorString.includes('AttributeType.SCALAR') ||
+                        errorString.includes('ModelExperimental')
                     )) {
                         modelLoadFailed = true;
                         console.warn('3D model compatibility error detected');
+                        
+                        // Immediate camera control restoration
+                        restoreCameraControls();
                         
                         // Clean up loading indicator
                         if (document.body.contains(loadingMessage)) {
                             document.body.removeChild(loadingMessage);
                         }
                         
+                        // Remove failed model entity if it exists
+                        if (modelEntity) {
+                            try {
+                                viewer.entities.remove(modelEntity);
+                            } catch (e) {
+                                console.warn('Error removing failed model entity:', e);
+                            }
+                        }
+                        
                         URL.revokeObjectURL(modelUrl);
+                        
+                        // Clear any pending timeouts
+                        if (errorRecoveryTimeout) {
+                            clearTimeout(errorRecoveryTimeout);
+                        }
                         
                         // Show compatibility error message
                         const errorDiv = document.createElement('div');
@@ -1700,29 +1755,30 @@
                             font-family: Arial, sans-serif;
                             max-width: 400px;
                             text-align: center;
+                            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
                         `;
                         errorDiv.innerHTML = `
-                            <h3 style="margin: 0 0 10px 0;">3D Model Not Compatible with CesiumJS</h3>
-                            <p style="margin: 0 0 15px 0;">This GLB file contains features that CesiumJS cannot render. Common issues:</p>
-                            <ul style="text-align: left; margin: 0 0 15px 0; font-size: 13px;">
-                                <li>Complex skeletal animations or morphing</li>
-                                <li>Advanced material properties (PBR extensions)</li>
-                                <li>Unsupported GLTF 2.0 extensions</li>
-                                <li>High-poly geometry with complex UV mapping</li>
-                                <li>Non-standard mesh structures</li>
-                            </ul>
-                            <p style="margin: 0 0 15px 0; font-size: 12px;"><strong>Solution:</strong> Use simpler models or export with basic materials for web display.</p>
-                            <div style="text-align: left; font-size: 11px; background: rgba(255,255,255,0.1); padding: 8px; border-radius: 4px; margin-bottom: 15px;">
-                                <strong>Tips for CesiumJS compatibility:</strong><br>
-                                • Export with simplified materials<br>
-                                • Disable animations during export<br>
-                                • Use standard UV mapping<br>
-                                • Keep poly count under 10k triangles<br>
-                                • Try converting to GLTF format instead of GLB
+                            <h3 style="margin: 0 0 10px 0;">🚫 Model Not Compatible</h3>
+                            <p style="margin: 0 0 15px 0; font-size: 14px;">This GLB file has features that cause CesiumJS rendering issues.</p>
+                            <div style="text-align: left; background: rgba(255,255,255,0.1); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                                <strong style="font-size: 13px;">Common Issues:</strong>
+                                <ul style="font-size: 12px; margin: 8px 0 0 0; line-height: 1.4;">
+                                    <li>Complex animations or rigging</li>
+                                    <li>Advanced material shaders</li>
+                                    <li>Unsupported GLTF extensions</li>
+                                    <li>High polygon complexity</li>
+                                </ul>
+                            </div>
+                            <div style="text-align: left; background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                                <strong style="font-size: 13px;">🔧 Quick Fix:</strong>
+                                <div style="font-size: 12px; margin-top: 6px; line-height: 1.4;">
+                                    Export as <strong>basic GLB</strong> with no animations,<br>
+                                    simplified materials, and under 5MB file size.
+                                </div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: center;">
-                                <button onclick="this.parentElement.parentElement.remove()" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">OK</button>
-                                <button onclick="showModelAlternatives()" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Show Alternatives</button>
+                                <button onclick="this.parentElement.parentElement.remove(); restoreCameraControls();" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Got It</button>
+                                <button onclick="showModelAlternatives(); this.parentElement.parentElement.remove();" style="background: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Get Help</button>
                             </div>
                         `;
                         document.body.appendChild(errorDiv);
@@ -1804,7 +1860,7 @@
                 try {
                     console.log('Attempting to load 3D model...');
                     
-                    const modelEntity = viewer.entities.add({
+                    modelEntity = viewer.entities.add({
                         name: `3D Model - ${file.name}`,
                         position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
                         model: {
@@ -1824,89 +1880,131 @@
                         }
                     });
                     
-                    // Monitor model loading with better timing
-                    let loadCheckCount = 0;
-                    const maxLoadChecks = 10;
+                    // Set up monitoring for successful model loading
+                    let loadingTimeout;
+                    let checkModelLoaded = false;
                     
-                    const checkModelLoading = function() {
-                        loadCheckCount++;
+                    const checkIfModelLoaded = () => {
+                        if (modelLoadFailed) return;
                         
-                        if (modelLoadFailed) {
-                            // Model failed, clean up
-                            console.error = originalConsoleError;
-                            if (document.body.contains(loadingMessage)) {
-                                document.body.removeChild(loadingMessage);
-                            }
-                            
-                            console.log('Model loading failed, showing fallback marker');
-                            try {
-                                viewer.entities.remove(modelEntity);
-                            } catch (e) {}
-                            
-                            viewer.camera.setView({
-                                destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 100),
-                                orientation: {
-                                    heading: 0,
-                                    pitch: Cesium.Math.toRadians(-30),
-                                    roll: 0
-                                }
-                            });
-                            return;
-                        }
-                        
-                        // Check if model is actually rendered
                         try {
-                            const modelPrimitive = modelEntity.model;
-                            if (modelPrimitive && modelPrimitive.ready) {
-                                // Model successfully loaded
-                                console.error = originalConsoleError;
-                                if (document.body.contains(loadingMessage)) {
-                                    document.body.removeChild(loadingMessage);
-                                }
-                                
-                                console.log('3D model loaded successfully');
-                                viewer.entities.remove(fallbackEntity);
-                                
-                                viewer.camera.setView({
-                                    destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 200),
-                                    orientation: {
-                                        heading: 0,
-                                        pitch: Cesium.Math.toRadians(-45),
-                                        roll: 0
+                            // Check if model has loaded successfully
+                            if (modelEntity.model && modelEntity.model.readyPromise) {
+                                modelEntity.model.readyPromise.then(() => {
+                                    if (!modelLoadFailed) {
+                                        // Model loaded successfully
+                                        console.log('Model loaded successfully');
+                                        checkModelLoaded = true;
+                                        
+                                        // Remove loading indicator
+                                        if (document.body.contains(loadingMessage)) {
+                                            document.body.removeChild(loadingMessage);
+                                        }
+                                        
+                                        // Remove fallback marker since model loaded
+                                        viewer.entities.remove(fallbackEntity);
+                                        
+                                        // Restore console.error
+                                        console.error = originalConsoleError;
+                                        
+                                        // Clear monitoring timeout
+                                        if (loadingTimeout) {
+                                            clearTimeout(loadingTimeout);
+                                        }
+                                        
+                                        // Fly to model
+                                        viewer.camera.setView({
+                                            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
+                                            orientation: {
+                                                heading: 0,
+                                                pitch: Cesium.Math.toRadians(-30),
+                                                roll: 0
+                                            }
+                                        });
                                     }
-                                });
-                                return;
-                            }
-                        } catch (e) {
-                            // Continue checking
-                        }
-                        
-                        // Continue checking if not ready and not failed
-                        if (loadCheckCount < maxLoadChecks) {
-                            setTimeout(checkModelLoading, 500);
-                        } else {
-                            // Timeout reached, assume success if no error detected
-                            console.error = originalConsoleError;
-                            if (document.body.contains(loadingMessage)) {
-                                document.body.removeChild(loadingMessage);
-                            }
-                            
-                            if (!modelLoadFailed) {
-                                console.log('3D model loading timeout - keeping model and fallback marker');
-                                viewer.camera.setView({
-                                    destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 150),
-                                    orientation: {
-                                        heading: 0,
-                                        pitch: Cesium.Math.toRadians(-35),
-                                        roll: 0
+                                }).catch((error) => {
+                                    if (!modelLoadFailed) {
+                                        console.warn('Model ready promise failed:', error);
+                                        errorHandler(['Model loading failed during ready promise']);
                                     }
                                 });
                             }
+                        } catch (checkError) {
+                            console.warn('Error checking model load status:', checkError);
                         }
                     };
                     
-                    // Start checking after initial delay
-                    setTimeout(checkModelLoading, 1000);
+                    // Start monitoring
+                    setTimeout(checkIfModelLoaded, 500);
+                    
+                    // Fallback timeout for problematic models
+                    loadingTimeout = setTimeout(() => {
+                        if (!checkModelLoaded && !modelLoadFailed) {
+                            console.log('Model loading failed, showing fallback marker');
+                            modelLoadFailed = true;
+                            
+                            // Clean up loading indicator
+                            if (document.body.contains(loadingMessage)) {
+                                document.body.removeChild(loadingMessage);
+                            }
+                            
+                            // Remove model entity
+                            if (modelEntity) {
+                                try {
+                                    viewer.entities.remove(modelEntity);
+                                } catch (e) {
+                                    console.warn('Error removing timeout model entity:', e);
+                                }
+                            }
+                            
+                            // Restore camera controls
+                            restoreCameraControls();
+                            
+                            // Restore console.error
+                            console.error = originalConsoleError;
+                            
+                            URL.revokeObjectURL(modelUrl);
+                            
+                            // Show timeout message
+                            const timeoutDiv = document.createElement('div');
+                            timeoutDiv.style.cssText = `
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                background: rgba(255, 152, 0, 0.9);
+                                color: white;
+                                padding: 20px;
+                                border-radius: 8px;
+                                z-index: 10000;
+                                font-family: Arial, sans-serif;
+                                max-width: 400px;
+                                text-align: center;
+                                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                            `;
+                            timeoutDiv.innerHTML = `
+                                <h3 style="margin: 0 0 10px 0;">⏱️ Model Loading Timeout</h3>
+                                <p style="margin: 0 0 15px 0; font-size: 14px;">The model is taking too long to load. This could indicate compatibility issues.</p>
+                                <div style="text-align: left; background: rgba(255,255,255,0.15); padding: 12px; border-radius: 6px; margin-bottom: 15px;">
+                                    <strong style="font-size: 13px;">💡 Try This:</strong>
+                                    <div style="font-size: 12px; margin-top: 6px; line-height: 1.4;">
+                                        • Use a smaller file (under 5MB)<br>
+                                        • Export with basic materials only<br>
+                                        • Disable animations before export
+                                    </div>
+                                </div>
+                                <button onclick="this.parentElement.remove();" style="background: white; color: #333; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">OK</button>
+                            `;
+                            document.body.appendChild(timeoutDiv);
+                            
+                            // Auto-remove timeout message
+                            setTimeout(() => {
+                                if (document.body.contains(timeoutDiv)) {
+                                    document.body.removeChild(timeoutDiv);
+                                }
+                            }, 6000);
+                        }
+                    }, 8000); // 8 second timeout
                     
                 } catch (modelError) {
                     console.error('Error creating model entity:', modelError);
@@ -1936,6 +2034,23 @@
                 alert('Error processing 3D model file: ' + error.message);
             }
         }
+
+        // Global camera restoration function for emergency recovery
+        window.restoreCameraControls = function() {
+            try {
+                if (viewer && viewer.scene && viewer.scene.screenSpaceCameraController) {
+                    viewer.scene.screenSpaceCameraController.enableRotate = true;
+                    viewer.scene.screenSpaceCameraController.enableTranslate = true;
+                    viewer.scene.screenSpaceCameraController.enableZoom = true;
+                    viewer.scene.screenSpaceCameraController.enableTilt = true;
+                    viewer.scene.screenSpaceCameraController.enableLook = true;
+                    viewer.scene.requestRender();
+                    console.log('Global camera controls restored');
+                }
+            } catch (error) {
+                console.warn('Global camera restoration error:', error);
+            }
+        };
 
         /**
          * Show sample compatible 3D models for testing
