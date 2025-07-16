@@ -1504,21 +1504,52 @@
     
     <script>
         // Completely disable Cesium Ion services to prevent any paid service usage
-        if (typeof Cesium.Ion !== 'undefined') {
-            Cesium.Ion.defaultAccessToken = undefined;
-            Cesium.Ion.defaultServer = undefined;
+        if (typeof Cesium !== 'undefined') {
+            // Disable Ion completely
+            if (Cesium.Ion) {
+                Cesium.Ion.defaultAccessToken = undefined;
+                Cesium.Ion.defaultServer = undefined;
+                
+                // Override Ion resource creation
+                if (Cesium.IonResource) {
+                    Cesium.IonResource.fromAssetId = function() {
+                        console.warn('Ion services disabled - using free alternatives only');
+                        throw new Error('Ion services are disabled to prevent paid service usage');
+                    };
+                }
+            }
             
-            // Override Ion asset creation to prevent any attempts
-            const originalFromAssetId = Cesium.IonResource ? Cesium.IonResource.fromAssetId : null;
-            if (originalFromAssetId) {
-                Cesium.IonResource.fromAssetId = function() {
-                    console.warn('Ion services disabled - using free alternatives only');
-                    throw new Error('Ion services are disabled to prevent paid service usage');
+            // Override any imagery provider that might call Ion services
+            const originalArcGisProvider = Cesium.ArcGisMapServerImageryProvider;
+            if (originalArcGisProvider) {
+                Cesium.ArcGisMapServerImageryProvider = function(options) {
+                    // Ensure no Ion credit checking
+                    if (options.credit && typeof options.credit === 'object' && options.credit.isIon) {
+                        options.credit = typeof options.credit === 'string' ? options.credit : 'ESRI ArcGIS';
+                    }
+                    return new originalArcGisProvider(options);
                 };
+                // Copy all properties
+                Object.setPrototypeOf(Cesium.ArcGisMapServerImageryProvider, originalArcGisProvider);
+                Cesium.ArcGisMapServerImageryProvider.prototype = originalArcGisProvider.prototype;
             }
         }
         
         console.log('✓ Ion services completely disabled - using only free, open-source data');
+        
+        // Additional Ion blocking - override any credit system that checks Ion
+        if (typeof Cesium !== 'undefined' && Cesium.Credit) {
+            const originalCredit = Cesium.Credit;
+            Cesium.Credit = function(html, showOnScreen) {
+                // Remove any Ion detection
+                if (typeof html === 'object' && html.isIon) {
+                    html = html.text || 'Data Provider';
+                }
+                return new originalCredit(html, showOnScreen);
+            };
+            Object.setPrototypeOf(Cesium.Credit, originalCredit);
+            Cesium.Credit.prototype = originalCredit.prototype;
+        }
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
