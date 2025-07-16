@@ -452,14 +452,28 @@
 
         // Function to fly to coordinates with vertical nadir view
         function flyToLocation(lat, lon, altitude = 2000) {
+            // Use setView for immediate positioning, then flyTo for smooth animation
+            const destination = Cesium.Cartesian3.fromDegrees(lon, lat, altitude);
+            
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(lon, lat, altitude), // Default 2km altitude
+                destination: destination,
                 orientation: {
                     heading: 0.0, // North direction
-                    pitch: Cesium.Math.toRadians(-90.0), // Looking straight down (nadir view)
+                    pitch: -Cesium.Math.PI_OVER_TWO, // -90 degrees (straight down)
                     roll: 0.0 // No rotation
                 },
-                duration: 2.0 // 2 second flight animation
+                duration: 2.0,
+                complete: function() {
+                    // Ensure the camera is truly vertical after animation
+                    viewer.camera.setView({
+                        destination: destination,
+                        orientation: {
+                            heading: 0.0,
+                            pitch: -Cesium.Math.PI_OVER_TWO, // -90 degrees
+                            roll: 0.0
+                        }
+                    });
+                }
             });
         }
 
