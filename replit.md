@@ -186,6 +186,10 @@ The CesiumJS globe viewer is now fully functional with:
 - Individual layer removal buttons with X controls for easy management
 - Enhanced WMS loading using UrlTemplateImageryProvider for better compatibility
 - Real-time opacity sliders for each layer with instant visual feedback
+- CartoDB Positron set as default base map for clean, professional appearance
+- UNEP-WCMC World Database of Protected Areas WMS integrated as default enabled layer
+- Proper WMS 1.3.0 protocol implementation for reliable geospatial data loading
+- Auto-loading of protected areas overlay on application startup
 
 ## Service Loader System
 

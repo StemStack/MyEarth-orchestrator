@@ -1268,7 +1268,7 @@
                     </div>
                     
                     <div class="control-item" style="margin-bottom: 8px;">
-                        <input type="checkbox" id="protected_areasWms" onchange="togglePredefinedLayer('protected_areas', this.checked)">
+                        <input type="checkbox" id="protected_areasWms" onchange="togglePredefinedLayer('protected_areas', this.checked)" checked>
                         <label for="protected_areasWms" style="font-size: 11px;">🌳 World Database of Protected Areas</label>
                     </div>
                 </div>
@@ -1609,6 +1609,14 @@
         applyRealTerrain();
         
         console.log('✓ All services using free, open-source providers only');
+        
+        // Auto-enable protected areas layer on startup
+        setTimeout(() => {
+            const protectedAreasCheckbox = document.getElementById('protected_areasWms');
+            if (protectedAreasCheckbox && protectedAreasCheckbox.checked) {
+                togglePredefinedLayer('protected_areas', true);
+            }
+        }, 1000);
         
         // Add fallback to ellipsoid terrain if the terrain provider fails
         viewer.terrainProvider.errorEvent.addEventListener(function(err) {
@@ -5031,9 +5039,10 @@
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/export?dpi=96&transparent=true&format=png8&layers=show:0&bbox={westProjected},{southProjected},{eastProjected},{northProjected}&bboxSR=3857&imageSR=3857&size=256,256&f=image',
+                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/WMSServer',
                 name: 'World Database of Protected Areas',
-                type: 'tile',
+                type: 'wms',
+                layers: '0',
                 format: 'image/png',
                 transparent: true
             }
@@ -5060,8 +5069,8 @@
                             layers: service.layers || '0',
                             parameters: {
                                 format: service.format || 'image/png',
-                                transparent: service.transparent || true,
-                                version: '1.1.1'
+                                transparent: service.transparent !== false,
+                                version: '1.3.0'
                             },
                             credit: service.name
                         });
