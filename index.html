@@ -67,6 +67,41 @@
             transform: translate(-50%, -50%) !important;
         }
 
+        /* Custom zoom controls */
+        .zoom-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .zoom-button {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .zoom-button:hover {
+            background-color: rgba(68, 68, 68, 0.9);
+        }
+
+        .zoom-button:active {
+            background-color: rgba(85, 85, 85, 1);
+        }
+
         /* Responsive design for smaller screens */
         @media (max-width: 768px) {
             .cesium-viewer-toolbar {
@@ -78,6 +113,17 @@
                 font-size: 8px !important;
                 padding: 1px 3px !important;
             }
+
+            .zoom-controls {
+                top: 5px;
+                left: 5px;
+            }
+
+            .zoom-button {
+                width: 35px;
+                height: 35px;
+                font-size: 16px;
+            }
         }
     </style>
 </head>
@@ -85,6 +131,12 @@
 <body>
     <!-- Main Cesium container -->
     <div id="cesiumContainer"></div>
+    
+    <!-- Custom zoom controls -->
+    <div class="zoom-controls">
+        <button class="zoom-button" id="zoomIn" title="Zoom In">+</button>
+        <button class="zoom-button" id="zoomOut" title="Zoom Out">−</button>
+    </div>
 
     <!-- CesiumJS JavaScript -->
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
@@ -136,6 +188,48 @@
 
         // Hide credit container for cleaner look
         viewer.cesiumWidget.creditContainer.style.display = "none";
+
+        // Add zoom button functionality
+        const zoomInButton = document.getElementById('zoomIn');
+        const zoomOutButton = document.getElementById('zoomOut');
+
+        zoomInButton.addEventListener('click', function() {
+            const camera = viewer.camera;
+            const currentHeight = camera.positionCartographic.height;
+            const newHeight = Math.max(currentHeight * 0.5, 1000); // Zoom in by 50%, minimum 1km
+            
+            camera.setView({
+                destination: Cesium.Cartesian3.fromRadians(
+                    camera.positionCartographic.longitude,
+                    camera.positionCartographic.latitude,
+                    newHeight
+                ),
+                orientation: {
+                    heading: camera.heading,
+                    pitch: camera.pitch,
+                    roll: camera.roll
+                }
+            });
+        });
+
+        zoomOutButton.addEventListener('click', function() {
+            const camera = viewer.camera;
+            const currentHeight = camera.positionCartographic.height;
+            const newHeight = Math.min(currentHeight * 2.0, 50000000); // Zoom out by 100%, maximum 50,000km
+            
+            camera.setView({
+                destination: Cesium.Cartesian3.fromRadians(
+                    camera.positionCartographic.longitude,
+                    camera.positionCartographic.latitude,
+                    newHeight
+                ),
+                orientation: {
+                    heading: camera.heading,
+                    pitch: camera.pitch,
+                    roll: camera.roll
+                }
+            });
+        });
 
         console.log('CesiumJS Globe Viewer initialized successfully');
     </script>
