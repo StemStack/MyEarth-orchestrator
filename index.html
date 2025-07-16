@@ -102,26 +102,63 @@
             background-color: rgba(85, 85, 85, 1);
         }
 
-        .fly-to-button {
-            width: 40px;
-            height: 40px;
-            background-color: rgba(42, 42, 42, 0.8);
+
+
+        /* Fly to location form */
+        .fly-to-form {
+            position: absolute;
+            top: 130px;
+            left: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            background-color: rgba(42, 42, 42, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 4px;
+            padding: 10px;
+        }
+
+        .fly-to-form input {
+            width: 80px;
+            height: 30px;
+            background-color: rgba(68, 68, 68, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
             color: #fff;
-            font-size: 16px;
+            font-size: 12px;
+            padding: 0 5px;
+            text-align: center;
+        }
+
+        .fly-to-form input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .fly-to-form input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+            background-color: rgba(85, 85, 85, 0.8);
+        }
+
+        .fly-button {
+            width: 80px;
+            height: 30px;
+            background-color: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             transition: background-color 0.2s ease;
         }
 
-        .fly-to-button:hover {
+        .fly-button:hover {
             background-color: rgba(68, 68, 68, 0.9);
         }
 
-        .fly-to-button:active {
+        .fly-button:active {
             background-color: rgba(85, 85, 85, 1);
         }
 
@@ -148,10 +185,19 @@
                 font-size: 16px;
             }
 
-            .fly-to-button {
-                width: 35px;
-                height: 35px;
-                font-size: 14px;
+
+
+            .fly-to-form {
+                top: 115px;
+                left: 5px;
+                padding: 8px;
+            }
+
+            .fly-to-form input,
+            .fly-button {
+                width: 70px;
+                height: 28px;
+                font-size: 11px;
             }
         }
     </style>
@@ -165,7 +211,13 @@
     <div class="zoom-controls">
         <button class="zoom-button" id="zoomIn" title="Zoom In">+</button>
         <button class="zoom-button" id="zoomOut" title="Zoom Out">−</button>
-        <button class="fly-to-button" id="flyToLocation" title="Fly to Eiffel Tower">🗼</button>
+    </div>
+
+    <!-- Fly to location form -->
+    <div class="fly-to-form">
+        <input type="number" id="latInput" placeholder="Lat" step="any" min="-90" max="90">
+        <input type="number" id="lonInput" placeholder="Lon" step="any" min="-180" max="180">
+        <button class="fly-button" id="flyButton">Fly</button>
     </div>
 
     <!-- CesiumJS JavaScript -->
@@ -222,7 +274,11 @@
         // Add zoom button functionality
         const zoomInButton = document.getElementById('zoomIn');
         const zoomOutButton = document.getElementById('zoomOut');
-        const flyToButton = document.getElementById('flyToLocation');
+        
+        // Add fly-to form elements
+        const latInput = document.getElementById('latInput');
+        const lonInput = document.getElementById('lonInput');
+        const flyButton = document.getElementById('flyButton');
 
         zoomInButton.addEventListener('click', function() {
             const camera = viewer.camera;
@@ -263,16 +319,48 @@
         });
 
         // Add fly to location functionality
-        flyToButton.addEventListener('click', function() {
-            // Eiffel Tower coordinates: 48.8584° N, 2.2945° E
+        flyButton.addEventListener('click', function() {
+            const lat = parseFloat(latInput.value);
+            const lon = parseFloat(lonInput.value);
+            
+            // Validate input values
+            if (isNaN(lat) || isNaN(lon)) {
+                alert('Please enter valid latitude and longitude values');
+                return;
+            }
+            
+            if (lat < -90 || lat > 90) {
+                alert('Latitude must be between -90 and 90 degrees');
+                return;
+            }
+            
+            if (lon < -180 || lon > 180) {
+                alert('Longitude must be between -180 and 180 degrees');
+                return;
+            }
+            
+            // Fly to the specified location
             viewer.camera.flyTo({
-                destination: Cesium.Cartesian3.fromDegrees(2.2945, 48.8584, 1000), // 1km altitude
+                destination: Cesium.Cartesian3.fromDegrees(lon, lat, 3000), // 3km altitude
                 orientation: {
                     heading: Cesium.Math.toRadians(0.0),
                     pitch: Cesium.Math.toRadians(-45.0), // Look down at 45 degrees
                     roll: 0.0
                 },
                 duration: 3.0 // 3 second flight animation
+            });
+            
+            // Clear input fields after flying
+            latInput.value = '';
+            lonInput.value = '';
+        });
+
+        // Allow Enter key to trigger fly
+        [latInput, lonInput].forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    flyButton.click();
+                }
             });
         });
 
