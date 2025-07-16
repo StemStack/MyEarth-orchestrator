@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CesiumJS Globe Viewer</title>
+    <title>Project 0</title>
     
     <!-- CesiumJS CSS -->
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
@@ -1137,16 +1137,29 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-toggle" onclick="toggleSidebar()">☰</div>
         <div class="sidebar-header">
-            🌍 CesiumJS Globe Viewer
+            🌍 Project 0
         </div>
         
-        <!-- Base Layers Section -->
+        <!-- Maps displayed Section -->
         <div class="sidebar-section">
-            <div class="section-header" onclick="toggleSection('baseLayers')">
-                <span>🗺️ Base Layers</span>
+            <div class="section-header" onclick="toggleSection('mapsDisplayed')">
+                <span>🗺️ Maps displayed</span>
                 <span>▼</span>
             </div>
-            <div class="section-content" id="baseLayers">
+            <div class="section-content" id="mapsDisplayed">
+                <!-- Base Map Selection -->
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">Base Map Provider:</label>
+                    <select id="baseMapSelector" onchange="switchBaseMap()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: white;">
+                        <option value="openstreetmap">OpenStreetMap</option>
+                        <option value="opentopomap" selected>OpenTopoMap</option>
+                        <option value="stamen_terrain">Stamen Terrain</option>
+                        <option value="cartodb_positron">CartoDB Positron</option>
+                        <option value="esri_world">ESRI World Imagery</option>
+                    </select>
+                </div>
+                
+                <!-- Layer Visibility Controls -->
                 <div class="control-item">
                     <input type="checkbox" id="baseLayerToggle" checked>
                     <label for="baseLayerToggle">Base Map Visible</label>
@@ -4791,6 +4804,68 @@
         // Show sample models function (placeholder)
         function showSampleModels() {
             alert('Sample 3D models feature - placeholder for future implementation');
+        }
+        
+        // Switch base map provider from integrated selector
+        function switchBaseMap() {
+            const selector = document.getElementById('baseMapSelector');
+            const selectedProvider = selector.value;
+            
+            // Remove current imagery provider
+            if (viewer.imageryLayers.length > 0) {
+                viewer.imageryLayers.removeAll();
+            }
+            
+            // Add new imagery provider based on selection
+            let imageryProvider;
+            
+            switch(selectedProvider) {
+                case 'openstreetmap':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        credit: '© OpenStreetMap contributors'
+                    });
+                    break;
+                    
+                case 'opentopomap':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+                        credit: '© OpenTopoMap (CC-BY-SA)'
+                    });
+                    break;
+                    
+                case 'stamen_terrain':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png',
+                        credit: '© Stamen Design (CC BY 3.0)'
+                    });
+                    break;
+                    
+                case 'cartodb_positron':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
+                        credit: '© CartoDB (CC BY 3.0)'
+                    });
+                    break;
+                    
+                case 'esri_world':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                        credit: '© Esri, Maxar, Earthstar Geographics'
+                    });
+                    break;
+                    
+                default:
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
+                        credit: '© OpenTopoMap (CC-BY-SA)'
+                    });
+            }
+            
+            // Add the new imagery layer
+            viewer.imageryLayers.addImageryProvider(imageryProvider);
+            
+            console.log(`✓ Switched to ${selectedProvider} base map provider`);
         }
         
         console.log('✓ Swiss-style sidebar initialized');

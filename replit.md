@@ -1,4 +1,4 @@
-# CesiumJS Globe Viewer
+# Project 0
 
 ## Overview
 
@@ -200,7 +200,14 @@ The CesiumJS globe viewer is now fully functional with:
 
 ### Sidebar Navigation
 - Toggle button to show/hide sidebar (hamburger menu)
-- Sectioned organization: Base Layers, Data Services, Measurement, 3D Models, Performance
+- Sectioned organization: Maps displayed, Data Services, Measurement, 3D Models, Performance
 - Clickable section headers to expand/collapse content
 - Clean button styling with primary/secondary color schemes
 - Responsive design adapting to different screen sizes
+
+### Integrated Base Map Management
+- **Maps displayed** section with dropdown selector for base map providers
+- Five open-source providers: OpenStreetMap, OpenTopoMap, Stamen Terrain, CartoDB Positron, ESRI World Imagery
+- Real-time base map switching without viewer reload
+- Layer visibility controls for base map, atmosphere, and terrain
+- Professional UI integration maintaining Swiss design standards
