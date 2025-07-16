@@ -2068,7 +2068,13 @@
     <!-- Bottom Information Band -->
     <div id="bottomBand">
         <div class="bottom-left">
-            <div id="scaleInfo">Scale: 1:1,000,000</div>
+            <!-- Integrated Scale Bar -->
+            <div class="scale-bar-container" id="scaleBarContainer">
+                <div class="scale-bar" id="scaleBar">
+                    <div class="scale-line" id="scaleLine"></div>
+                    <div class="scale-text" id="scaleText">1 km</div>
+                </div>
+            </div>
             <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
         </div>
         <div class="bottom-center">
@@ -2766,12 +2772,10 @@
                     compactCoordinates.innerHTML = `${Math.abs(latitude).toFixed(1)}°${latDir}<br>${Math.abs(longitude).toFixed(1)}°${lonDir}`;
                 }
                 
-                // Update full coordinates in bottom left panel
-                const coordinatesText = document.getElementById('coordinatesText');
-                if (coordinatesText) {
-                    const latText = latitude.toFixed(6);
-                    const lonText = longitude.toFixed(6);
-                    coordinatesText.textContent = `Coordinates (°) ${latText}, ${lonText}`;
+                // Update coordinates in bottom band
+                const coordinatesInfo = document.getElementById('coordinatesInfo');
+                if (coordinatesInfo) {
+                    coordinatesInfo.textContent = `Lat: ${latitude.toFixed(3)}° Lon: ${longitude.toFixed(3)}°`;
                 }
                 
             } catch (error) {
@@ -5654,8 +5658,21 @@
 
         function toggleSearchPanel() {
             const searchSection = document.getElementById('searchSection');
+            const searchTool = document.getElementById('searchTool');
+            
             if (searchSection) {
                 searchSection.classList.toggle('collapsed');
+                const arrow = searchSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = searchSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                
+                // Toggle tool activation state
+                if (searchTool) {
+                    searchTool.classList.toggle('active', !searchSection.classList.contains('collapsed'));
+                }
+                
+                console.log('Search panel', searchSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
@@ -5663,41 +5680,111 @@
             const baseMapSection = document.getElementById('baseMapSection');
             if (baseMapSection) {
                 baseMapSection.classList.toggle('collapsed');
+                const arrow = baseMapSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = baseMapSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                console.log('Base map panel', baseMapSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
         function toggleLayerPanel() {
             const layerSection = document.getElementById('layerSection');
+            const layerTool = document.getElementById('layerTool');
+            
             if (layerSection) {
                 layerSection.classList.toggle('collapsed');
+                const arrow = layerSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = layerSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                
+                // Toggle tool activation state
+                if (layerTool) {
+                    layerTool.classList.toggle('active', !layerSection.classList.contains('collapsed'));
+                }
+                
+                console.log('Layer panel', layerSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
         function toggleMeasurementTool() {
             const measurementSection = document.getElementById('measurementSection');
+            const measurementTool = document.getElementById('measurementTool');
+            
             if (measurementSection) {
                 measurementSection.classList.toggle('collapsed');
+                const arrow = measurementSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = measurementSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                
+                // Toggle tool activation state
+                if (measurementTool) {
+                    measurementTool.classList.toggle('active', !measurementSection.classList.contains('collapsed'));
+                }
+                
+                console.log('Measurement panel', measurementSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
         function toggleMarkerMode() {
             const markerSection = document.getElementById('markerSection');
+            const markerTool = document.getElementById('markerTool');
+            
             if (markerSection) {
                 markerSection.classList.toggle('collapsed');
+                const arrow = markerSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = markerSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                
+                // Toggle tool activation state
+                if (markerTool) {
+                    markerTool.classList.toggle('active', !markerSection.classList.contains('collapsed'));
+                }
+                
+                console.log('Marker panel', markerSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
         function toggleModelPanel() {
             const modelSection = document.getElementById('modelSection');
+            const modelTool = document.getElementById('modelTool');
+            
             if (modelSection) {
                 modelSection.classList.toggle('collapsed');
+                const arrow = modelSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = modelSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                
+                // Toggle tool activation state
+                if (modelTool) {
+                    modelTool.classList.toggle('active', !modelSection.classList.contains('collapsed'));
+                }
+                
+                console.log('Model panel', modelSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
         function toggleSettingsPanel() {
             const settingsSection = document.getElementById('settingsSection');
+            const settingsTool = document.getElementById('settingsTool');
+            
             if (settingsSection) {
                 settingsSection.classList.toggle('collapsed');
+                const arrow = settingsSection.previousElementSibling.querySelector('span:last-child');
+                if (arrow) {
+                    arrow.textContent = settingsSection.classList.contains('collapsed') ? '▶' : '▼';
+                }
+                
+                // Toggle tool activation state
+                if (settingsTool) {
+                    settingsTool.classList.toggle('active', !settingsSection.classList.contains('collapsed'));
+                }
+                
+                console.log('Settings panel', settingsSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
             }
         }
 
@@ -5873,25 +5960,38 @@
 
         // Update bottom band information
         function updateBottomBand() {
-            const scaleInfo = document.getElementById('scaleInfo');
             const coordinatesInfo = document.getElementById('coordinatesInfo');
             const activeLayersInfo = document.getElementById('activeLayersInfo');
             const attributionInfo = document.getElementById('attributionInfo');
             
             if (viewer && viewer.scene) {
-                // Update coordinates from existing display
-                const coordsText = document.getElementById('coordinatesText');
-                if (coordsText && coordinatesInfo) {
-                    const coordsMatch = coordsText.textContent.match(/(-?\d+\.\d+).*?(-?\d+\.\d+)/);
-                    if (coordsMatch) {
-                        coordinatesInfo.textContent = `Lat: ${coordsMatch[1]}° Lon: ${coordsMatch[2]}°`;
+                // Update coordinates from center of screen
+                try {
+                    const canvas = viewer.canvas;
+                    const centerX = canvas.clientWidth / 2;
+                    const centerY = canvas.clientHeight / 2;
+                    const centerPick = new Cesium.Cartesian2(centerX, centerY);
+                    
+                    const ray = viewer.camera.getPickRay(centerPick);
+                    let intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                    
+                    if (!intersection) {
+                        const ellipsoidIntersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
+                        if (ellipsoidIntersection) {
+                            intersection = Cesium.Ray.getPoint(ray, ellipsoidIntersection.start);
+                        }
                     }
-                }
-                
-                // Update scale from existing display
-                const scaleText = document.getElementById('scaleText');
-                if (scaleText && scaleInfo) {
-                    scaleInfo.textContent = `Scale: ${scaleText.textContent}`;
+                    
+                    if (intersection && coordinatesInfo) {
+                        const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                        coordinatesInfo.textContent = `Lat: ${latitude.toFixed(3)}° Lon: ${longitude.toFixed(3)}°`;
+                    }
+                } catch (error) {
+                    if (coordinatesInfo) {
+                        coordinatesInfo.textContent = 'Lat: ---.---° Lon: ---.---°';
+                    }
                 }
                 
                 // Update active layers
