@@ -517,10 +517,6 @@
             overflow-y: auto;
         }
 
-        .sidebar.collapsed {
-            transform: translateX(-100%);
-        }
-
         .sidebar-header {
             background: #dc143c;
             color: white;
@@ -533,7 +529,7 @@
         .sidebar-toggle {
             position: absolute;
             top: 15px;
-            right: -40px;
+            right: 15px;
             width: 30px;
             height: 30px;
             background: rgba(255, 255, 255, 0.9);
@@ -549,32 +545,42 @@
             transition: all 0.3s ease;
         }
 
-        /* Floating menu button when sidebar is collapsed */
+        /* Floating menu button when sidebar is collapsed - maps.geo.admin style */
         .floating-menu-button {
             position: fixed;
-            top: 15px;
-            left: 15px;
-            width: 45px;
-            height: 45px;
-            background: rgba(220, 20, 60, 0.95);
-            color: white;
-            border: none;
-            border-radius: 6px;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 18px;
             z-index: 1002;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.2s ease;
+            font-weight: bold;
         }
 
         .floating-menu-button:hover {
-            background: rgba(220, 20, 60, 1);
-            transform: scale(1.05);
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
+        /* Ensure sidebar is visible by default on desktop */
+        .sidebar {
+            transform: translateX(0);
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+        
         /* Start with menu collapsed on mobile */
         @media (max-width: 768px) {
             .sidebar {
@@ -4964,6 +4970,23 @@
             viewer.imageryLayers.addImageryProvider(imageryProvider);
             
             console.log(`✓ Switched to ${selectedProvider} base map provider`);
+        }
+        
+        // Initialize floating menu button state
+        const sidebar = document.getElementById('sidebar');
+        const floatingButton = document.getElementById('floatingMenuButton');
+        
+        // Ensure sidebar starts visible on desktop, collapsed on mobile
+        if (window.innerWidth <= 768) {
+            sidebar.classList.add('collapsed');
+            if (floatingButton) {
+                floatingButton.style.display = 'flex';
+            }
+        } else {
+            sidebar.classList.remove('collapsed');
+            if (floatingButton) {
+                floatingButton.style.display = 'none';
+            }
         }
         
         console.log('✓ Swiss-style sidebar initialized');
