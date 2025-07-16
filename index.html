@@ -1037,7 +1037,6 @@
             try {
                 // Ensure northArrow element exists
                 if (!northArrow) {
-                    console.warn('North arrow element not found');
                     return;
                 }
                 
@@ -1119,14 +1118,25 @@
                 updateCenterCoordinates();
             });
             
-            viewer.scene.morphComplete.addEventListener(function() {
+            // Add camera move events for more responsive updates
+            viewer.camera.moveStart.addEventListener(function() {
+                updateNorthArrow();
+            });
+            
+            viewer.camera.moveEnd.addEventListener(function() {
                 updateScaleBar();
                 updateNorthArrow();
                 updateCenterCoordinates();
             });
             
-            // Update coordinates when camera stops moving (end event)
-            viewer.camera.moveEnd.addEventListener(function() {
+            // Add scene post-render event for continuous updates during movement
+            viewer.scene.postRender.addEventListener(function() {
+                updateNorthArrow();
+            });
+            
+            viewer.scene.morphComplete.addEventListener(function() {
+                updateScaleBar();
+                updateNorthArrow();
                 updateCenterCoordinates();
             });
             
