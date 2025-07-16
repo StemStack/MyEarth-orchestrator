@@ -4914,20 +4914,35 @@
                 try {
                     console.log(`Creating WMS provider for ${service.url} with layers ${service.layers}`);
                     
-                    // Use UrlTemplateImageryProvider for better compatibility
-                    const wmsUrl = `${service.url}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=${service.format}&TRANSPARENT=true&LAYERS=${encodeURIComponent(service.layers)}&CRS=EPSG:4326&STYLES=&WIDTH=256&HEIGHT=256&BBOX={westProjected},{southProjected},{eastProjected},{northProjected}`;
+                    // Use simple working WMS approach for testing
+                    let imageryProvider;
                     
-                    const imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: wmsUrl,
-                        credit: service.name,
-                        tilingScheme: new Cesium.GeographicTilingScheme(),
-                        rectangle: Cesium.Rectangle.fromDegrees(-180.0, -90.0, 180.0, 90.0)
-                    });
+                    if (serviceKey === 'simple_test') {
+                        // Use a working demo WMS for testing
+                        imageryProvider = new Cesium.WebMapServiceImageryProvider({
+                            url: service.url,
+                            layers: service.layers,
+                            parameters: {
+                                format: service.format,
+                                transparent: true
+                            }
+                        });
+                    } else {
+                        // Use UrlTemplateImageryProvider for other services
+                        const wmsUrl = `${service.url}?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&FORMAT=${service.format}&TRANSPARENT=true&LAYERS=${encodeURIComponent(service.layers)}&CRS=EPSG:4326&STYLES=&WIDTH=256&HEIGHT=256&BBOX={westProjected},{southProjected},{eastProjected},{northProjected}`;
+                        
+                        imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                            url: wmsUrl,
+                            credit: service.name,
+                            tilingScheme: new Cesium.GeographicTilingScheme(),
+                            rectangle: Cesium.Rectangle.fromDegrees(-180.0, -90.0, 180.0, 90.0)
+                        });
+                    }
                     
                     const imageryLayer = viewer.imageryLayers.addImageryProvider(imageryProvider);
-                    imageryLayer.alpha = 0.7;
-                    imageryLayer.brightness = 1.1;
-                    imageryLayer.contrast = 1.2;
+                    imageryLayer.alpha = 0.8;
+                    imageryLayer.brightness = 1.2;
+                    imageryLayer.contrast = 1.3;
                     
                     predefinedWmsLayers.set(serviceKey, {
                         layer: imageryLayer,
@@ -4977,7 +4992,7 @@
                 layerItem.dataset.serviceKey = serviceKey;
                 
                 layerItem.innerHTML = `
-                    <div class="layer-drag-handle">⋮⋮</div>
+                    <div class="layer-drag-handle">☰</div>
                     <div class="layer-info">
                         <span class="layer-name">${layerInfo.name}</span>
                         <div class="layer-controls">
