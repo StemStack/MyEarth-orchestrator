@@ -90,7 +90,7 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Initialize the Cesium viewer without Ion dependencies
+        // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable unnecessary UI widgets for clean appearance
             animation: false,           // Remove animation controls
@@ -104,14 +104,15 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
-            // Use OpenStreetMap imagery (no authentication required)
-            imageryProvider: new Cesium.OpenStreetMapImageryProvider({
-                url: 'https://a.tile.openstreetmap.org/'
-            }),
-            
             // Use ellipsoid terrain (no authentication required)
             terrainProvider: new Cesium.EllipsoidTerrainProvider()
         });
+
+        // Remove default imagery and add OpenStreetMap
+        viewer.imageryLayers.removeAll();
+        viewer.imageryLayers.addImageryProvider(new Cesium.OpenStreetMapImageryProvider({
+            url: 'https://tile.openstreetmap.org/'
+        }));
 
         // Set initial camera position for a nice Earth view
         viewer.camera.setView({
