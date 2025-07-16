@@ -1218,9 +1218,9 @@
                     <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">Base Map Provider:</label>
                     <select id="baseMapSelector" onchange="switchBaseMap()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: white;">
                         <option value="openstreetmap">OpenStreetMap</option>
-                        <option value="opentopomap" selected>OpenTopoMap</option>
+                        <option value="opentopomap">OpenTopoMap</option>
                         <option value="stamen_terrain">Stamen Terrain</option>
-                        <option value="cartodb_positron">CartoDB Positron</option>
+                        <option value="cartodb_positron" selected>CartoDB Positron</option>
                         <option value="esri_world">ESRI World Imagery</option>
                     </select>
                 </div>
@@ -1657,14 +1657,20 @@
             }
         };
 
-        // Current base map - default to OpenTopoMap for topographic view
-        let currentBaseMap = 'otm';
+        // Current base map - default to CartoDB Positron for clean appearance
+        let currentBaseMap = 'cartodb-positron';
         
-        // Remove default imagery and add OpenTopoMap (free open-source service)
+        // Remove default imagery and add CartoDB Positron (free open-source service)
         viewer.imageryLayers.removeAll();
         viewer.imageryLayers.addImageryProvider(baseMaps[currentBaseMap].provider());
         
-        console.log('✓ Using OpenTopoMap - free, open-source base map provider');
+        console.log('✓ Using CartoDB Positron - free, open-source base map provider');
+        
+        // Set attribution for CartoDB Positron
+        const attributionElement = document.querySelector('.cesium-credit-textContainer');
+        if (attributionElement) {
+            attributionElement.innerHTML = baseMaps[currentBaseMap].attribution;
+        }
 
         // Define Europe and North Africa overview with vertical perspective
         const europeHomeView = {
