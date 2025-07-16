@@ -552,33 +552,6 @@
             line-height: 1.2;
         }
 
-        .model-placement-options {
-            margin-top: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .placement-option {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.9);
-            cursor: pointer;
-        }
-
-        .placement-option input[type="radio"] {
-            width: 12px;
-            height: 12px;
-            cursor: pointer;
-        }
-
-        .placement-option span {
-            cursor: pointer;
-            user-select: none;
-        }
-
         @media (max-width: 768px) {
             .zoom-controls {
                 top: 55px;
@@ -695,16 +668,6 @@
             </button>
             <div class="model-upload-hint">
                 Or drag GLTF/GLB files anywhere
-            </div>
-            <div class="model-placement-options">
-                <label class="placement-option">
-                    <input type="radio" name="placement" value="camera" checked>
-                    <span>At crosshair</span>
-                </label>
-                <label class="placement-option">
-                    <input type="radio" name="placement" value="zurich">
-                    <span>Zurich center</span>
-                </label>
             </div>
         </div>
     </div>
@@ -1445,11 +1408,10 @@
         }
 
         /**
-         * Load a 3D model at the specified placement location
+         * Load a 3D model at the current camera center position
          * @param {File} file - The GLTF/GLB file to load
-         * @param {string} placement - Placement mode: 'camera' or 'zurich'
          */
-        function loadModelAtLocation(file, placement = 'camera') {
+        function loadModelAtCameraCenter(file) {
             console.log('Loading 3D model:', file.name, 'Size:', file.size, 'bytes');
             
             try {
@@ -1459,45 +1421,35 @@
                     return;
                 }
                 
-                let longitude, latitude, height;
+                // Get center of camera view coordinates
+                const canvas = viewer.canvas;
+                const centerX = canvas.clientWidth / 2;
+                const centerY = canvas.clientHeight / 2;
+                const centerPick = new Cesium.Cartesian2(centerX, centerY);
                 
-                if (placement === 'zurich') {
-                    // Fixed location: Zurich, Switzerland
-                    longitude = 8.55;
-                    latitude = 47.37;
-                    height = 450; // Zurich's approximate elevation + model offset
-                    console.log('Using fixed Zurich location for model placement');
-                } else {
-                    // Get center of camera view coordinates (existing behavior)
-                    const canvas = viewer.canvas;
-                    const centerX = canvas.clientWidth / 2;
-                    const centerY = canvas.clientHeight / 2;
-                    const centerPick = new Cesium.Cartesian2(centerX, centerY);
-                    
-                    // Cast ray to find intersection point
-                    const ray = viewer.camera.getPickRay(centerPick);
-                    let intersection = viewer.scene.globe.pick(ray, viewer.scene);
-                    
-                    // Fallback to ellipsoid intersection if no terrain
-                    if (!intersection) {
-                        const ellipsoidIntersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
-                        if (ellipsoidIntersection) {
-                            intersection = Cesium.Ray.getPoint(ray, ellipsoidIntersection.start);
-                        }
+                // Cast ray to find intersection point
+                const ray = viewer.camera.getPickRay(centerPick);
+                let intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                
+                // Fallback to ellipsoid intersection if no terrain
+                if (!intersection) {
+                    const ellipsoidIntersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
+                    if (ellipsoidIntersection) {
+                        intersection = Cesium.Ray.getPoint(ray, ellipsoidIntersection.start);
                     }
-                    
-                    if (!intersection) {
-                        console.warn('Could not determine model placement position');
-                        alert('Could not determine placement position. Please try from a different view.');
-                        return;
-                    }
-                    
-                    // Convert to geographic coordinates
-                    const cartographic = Cesium.Cartographic.fromCartesian(intersection);
-                    longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                    latitude = Cesium.Math.toDegrees(cartographic.latitude);
-                    height = cartographic.height + 10; // Slightly above ground
                 }
+                
+                if (!intersection) {
+                    console.warn('Could not determine model placement position');
+                    alert('Could not determine placement position. Please try from a different view.');
+                    return;
+                }
+                
+                // Convert to geographic coordinates
+                const cartographic = Cesium.Cartographic.fromCartesian(intersection);
+                const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                const height = cartographic.height + 10; // Slightly above ground
                 
                 console.log(`Placing model at: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}, height: ${height.toFixed(2)}m`);
                 
@@ -1646,21 +1598,17 @@
                 try {
                     console.log('Attempting to load 3D model...');
                     
-                    // Enhanced model loading with improved CesiumJS compatibility
                     const modelEntity = viewer.entities.add({
                         name: `3D Model - ${file.name}`,
                         position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
                         model: {
                             uri: modelUrl,
-                            scale: 2.0, // Increased default scale for better visibility
-                            minimumPixelSize: 64,
-                            maximumScale: 2000,
+                            scale: 1.0,
+                            minimumPixelSize: 32,
+                            maximumScale: 1000,
                             runAnimations: false,
                             clampAnimations: true,
-                            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-                            // Additional properties for better compatibility
-                            incrementallyLoadTextures: false,
-                            shadows: Cesium.ShadowMode.ENABLED
+                            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
                         }
                     });
                     
