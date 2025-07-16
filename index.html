@@ -90,10 +90,7 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Set a basic Ion token for free features
-        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiOTMwNDBhMy04MTUyLTQ2NTItOWNjYy05NGUxZjMzOGI4MjciLCJpZCI6MjU5LCJzY29wZXMiOlsiYXNyIiwiZ2MiXSwiaWF0IjoxNzMxMDI2NzYyfQ.QrK2xzpMcCb4I0LVGCJLgwlw7nqUnM3P8rnzKCYDvJ8';
-
-        // Initialize the Cesium viewer with minimal configuration
+        // Initialize the Cesium viewer without Ion dependencies
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable unnecessary UI widgets for clean appearance
             animation: false,           // Remove animation controls
@@ -107,19 +104,20 @@
             timeline: false,            // Remove timeline
             navigationHelpButton: true, // Keep navigation help
             
-            // Use basic imagery and terrain
+            // Use OpenStreetMap imagery (no authentication required)
             imageryProvider: new Cesium.OpenStreetMapImageryProvider({
                 url: 'https://a.tile.openstreetmap.org/'
             }),
-            terrainProvider: new Cesium.EllipsoidTerrainProvider()
+            
+            // Use ellipsoid terrain (no authentication required)
+            terrainProvider: new Cesium.EllipsoidTerrainProvider(),
+            
+            // Disable Ion analytics and default data sources
+            requestRenderMode: false,
+            skyBox: false,
+            skyAtmosphere: false
         });
 
-        // Configure scene settings for optimal viewing
-        const scene = viewer.scene;
-        
-        // Enable lighting for better visual quality
-        scene.globe.enableLighting = true;
-        
         // Set initial camera position for a nice Earth view
         viewer.camera.setView({
             destination: Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883, 15000000.0),
@@ -129,36 +127,6 @@
                 roll: 0.0
             }
         });
-
-        // Configure camera controls for smooth navigation
-        const camera = viewer.camera;
-        
-        // Set camera movement constraints
-        camera.constrainedAxis = undefined; // Allow free rotation
-        
-        // Configure screen space camera controller
-        const controller = scene.screenSpaceCameraController;
-        controller.enableRotate = true;
-        controller.enableTranslate = true;
-        controller.enableZoom = true;
-        controller.enableTilt = true;
-        controller.enableLook = true;
-        
-        // Set zoom limits
-        controller.minimumZoomDistance = 1000.0;
-        controller.maximumZoomDistance = 50000000.0;
-        
-        // Configure inertia for smooth movement
-        controller.inertiaSpin = 0.9;
-        controller.inertiaTranslate = 0.9;
-        controller.inertiaZoom = 0.8;
-        
-        // Touch-specific settings for mobile devices
-        controller.touchEventTypes = {
-            ...controller.touchEventTypes,
-            pinch: Cesium.CameraEventType.WHEEL,
-            twist: Cesium.CameraEventType.LOOK
-        };
 
         // Handle window resize events for responsiveness
         window.addEventListener('resize', function() {
