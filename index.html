@@ -1412,7 +1412,15 @@
          * @param {File} file - The GLTF/GLB file to load
          */
         function loadModelAtCameraCenter(file) {
+            console.log('Loading 3D model:', file.name, 'Size:', file.size, 'bytes');
+            
             try {
+                // Validate file size (limit to 50MB)
+                if (file.size > 50 * 1024 * 1024) {
+                    alert('File too large. Please use a file smaller than 50MB.');
+                    return;
+                }
+                
                 // Get center of camera view coordinates
                 const canvas = viewer.canvas;
                 const centerX = canvas.clientWidth / 2;
@@ -1433,6 +1441,7 @@
                 
                 if (!intersection) {
                     console.warn('Could not determine model placement position');
+                    alert('Could not determine placement position. Please try from a different view.');
                     return;
                 }
                 
@@ -1442,41 +1451,87 @@
                 const latitude = Cesium.Math.toDegrees(cartographic.latitude);
                 const height = cartographic.height + 10; // Slightly above ground
                 
+                console.log(`Placing model at: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}, height: ${height.toFixed(2)}m`);
+                
                 // Create blob URL for the file
                 const modelUrl = URL.createObjectURL(file);
+                console.log('Created blob URL:', modelUrl);
                 
-                // Load the model
-                const model = viewer.scene.primitives.add(
-                    Cesium.Model.fromGltf({
-                        url: modelUrl,
-                        modelMatrix: Cesium.Transforms.eastNorthUpToFixedFrame(
-                            Cesium.Cartesian3.fromDegrees(longitude, latitude, height)
-                        ),
-                        scale: 1.0,
-                        minimumPixelSize: 64,
-                        maximumScale: 200,
-                        allowPicking: true
-                    })
+                // Show loading indicator
+                const loadingMessage = document.createElement('div');
+                loadingMessage.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0,0,0,0.8);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    z-index: 10000;
+                    font-family: Arial, sans-serif;
+                `;
+                loadingMessage.textContent = 'Loading 3D model...';
+                document.body.appendChild(loadingMessage);
+                
+                // Load the model using modern CesiumJS API
+                const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(
+                    Cesium.Cartesian3.fromDegrees(longitude, latitude, height)
                 );
                 
-                // Handle model loading events
-                model.readyPromise.then(function(model) {
-                    console.log(`3D model loaded successfully at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+                // Use the newer Model.fromGltfAsync method if available, otherwise fallback
+                const modelPromise = Cesium.Model.fromGltfAsync ? 
+                    Cesium.Model.fromGltfAsync({
+                        url: modelUrl,
+                        modelMatrix: modelMatrix,
+                        scale: 1.0,
+                        minimumPixelSize: 32,
+                        maximumScale: 1000
+                    }) :
+                    Promise.resolve(Cesium.Model.fromGltf({
+                        url: modelUrl,
+                        modelMatrix: modelMatrix,
+                        scale: 1.0,
+                        minimumPixelSize: 32,
+                        maximumScale: 1000
+                    }));
+                
+                modelPromise.then(function(model) {
+                    console.log('Model created successfully, adding to scene');
+                    viewer.scene.primitives.add(model);
                     
-                    // Optionally zoom to the model
-                    const boundingSphere = model.boundingSphere;
-                    if (boundingSphere) {
-                        viewer.camera.viewBoundingSphere(boundingSphere, new Cesium.HeadingPitchRange(0, -0.5, boundingSphere.radius * 3));
-                    }
+                    // Handle model ready event
+                    model.readyPromise.then(function(readyModel) {
+                        document.body.removeChild(loadingMessage);
+                        console.log(`3D model loaded successfully at ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+                        
+                        // Zoom to the model
+                        const boundingSphere = readyModel.boundingSphere;
+                        if (boundingSphere) {
+                            viewer.camera.viewBoundingSphere(
+                                boundingSphere, 
+                                new Cesium.HeadingPitchRange(0, -0.3, boundingSphere.radius * 4)
+                            );
+                        }
+                    }).catch(function(error) {
+                        document.body.removeChild(loadingMessage);
+                        console.error('Error in model ready promise:', error);
+                        alert('Error loading 3D model. The file may be corrupted or in an unsupported format.');
+                        URL.revokeObjectURL(modelUrl);
+                    });
+                    
                 }).catch(function(error) {
-                    console.error('Error loading 3D model:', error);
-                    alert('Error loading 3D model. Please check the file format.');
+                    if (document.body.contains(loadingMessage)) {
+                        document.body.removeChild(loadingMessage);
+                    }
+                    console.error('Error creating model from GLTF:', error);
+                    alert('Error loading 3D model. Please ensure the file is a valid GLTF or GLB format.');
                     URL.revokeObjectURL(modelUrl);
                 });
                 
             } catch (error) {
                 console.error('Error in model loading process:', error);
-                alert('Error processing 3D model file.');
+                alert('Error processing 3D model file: ' + error.message);
             }
         }
 
