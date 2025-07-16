@@ -1129,11 +1129,28 @@
                 <span>▼</span>
             </div>
             <div class="section-content" id="dataServices">
+                <!-- Predefined WMS Layers -->
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">WMS Data Layers:</label>
+                    
+                    <div class="control-item" style="margin-bottom: 4px;">
+                        <input type="checkbox" id="openlandmapWms" onchange="togglePredefinedWms('openlandmap', this.checked)">
+                        <label for="openlandmapWms" style="font-size: 11px;">OpenLandMap Soil/Terrain</label>
+                    </div>
+                    
+                    <div class="control-item" style="margin-bottom: 4px;">
+                        <input type="checkbox" id="gbifWms" onchange="togglePredefinedWms('gbif', this.checked)">
+                        <label for="gbifWms" style="font-size: 11px;">GBIF Species Data</label>
+                    </div>
+                    
+                    <div class="control-item" style="margin-bottom: 8px;">
+                        <input type="checkbox" id="gfmWms" onchange="togglePredefinedWms('gfm', this.checked)">
+                        <label for="gfmWms" style="font-size: 11px;">GFM Forest Monitoring</label>
+                    </div>
+                </div>
+                
                 <button class="control-button primary" onclick="toggleServiceLoader()">
                     Load External Data
-                </button>
-                <button class="control-button" onclick="goToBiodiversityHotspot()" style="margin-top: 4px;">
-                    🌍 Find WMS Data
                 </button>
                 <div style="font-size: 11px; color: #666; margin-top: 4px;">
                     Import GeoJSON, WMS, and TileJSON data sources
@@ -4813,32 +4830,72 @@
         
         console.log('✓ Swiss-style sidebar initialized');
         
+        // Predefined WMS services configuration
+        const predefinedWmsServices = {
+            openlandmap: {
+                url: 'https://geoserver.openlandmap.org/geoserver/wms',
+                layers: 'dtm_elevation_250m',
+                name: 'OpenLandMap Elevation',
+                format: 'image/png'
+            },
+            gbif: {
+                url: 'https://geoserver.gbif.org/wms',
+                layers: 'gbif:density_species',
+                name: 'GBIF Species Density',
+                format: 'image/png'
+            },
+            gfm: {
+                url: 'https://geoserver.gfm.eodc.eu/geoserver/gfm/wms',
+                layers: 'gfm:deforestation_alerts',
+                name: 'GFM Forest Monitoring',
+                format: 'image/png'
+            }
+        };
+        
+        // Store predefined WMS layer references
+        const predefinedWmsLayers = new Map();
+        
         /**
-         * Navigate to common biodiversity hotspots to view WMS data
+         * Toggle predefined WMS layers on/off
          */
-        function goToBiodiversityHotspot() {
-            // Common locations where GBIF species density data is typically visible
-            const hotspots = [
-                { name: "Amazon Basin", lon: -60.0, lat: -3.0, height: 1000000 },
-                { name: "Congo Basin", lon: 18.0, lat: 0.0, height: 1000000 },
-                { name: "Southeast Asia", lon: 110.0, lat: 0.0, height: 1500000 },
-                { name: "Madagascar", lon: 47.0, lat: -20.0, height: 800000 },
-                { name: "California Coast", lon: -120.0, lat: 36.0, height: 500000 }
-            ];
+        function togglePredefinedWms(serviceKey, enabled) {
+            const service = predefinedWmsServices[serviceKey];
             
-            // Select a random hotspot
-            const hotspot = hotspots[Math.floor(Math.random() * hotspots.length)];
-            
-            viewer.camera.setView({
-                destination: Cesium.Cartesian3.fromDegrees(hotspot.lon, hotspot.lat, hotspot.height),
-                orientation: {
-                    heading: 0.0,
-                    pitch: Cesium.Math.toRadians(-90),
-                    roll: 0.0
+            if (enabled) {
+                // Add WMS layer
+                try {
+                    const wmsProvider = new Cesium.WebMapServiceImageryProvider({
+                        url: service.url,
+                        layers: service.layers,
+                        parameters: {
+                            format: service.format,
+                            transparent: true,
+                            version: '1.3.0'
+                        },
+                        credit: service.name
+                    });
+                    
+                    const imageryLayer = viewer.imageryLayers.addImageryProvider(wmsProvider);
+                    imageryLayer.alpha = 0.7;
+                    imageryLayer.brightness = 1.0;
+                    imageryLayer.contrast = 1.1;
+                    
+                    predefinedWmsLayers.set(serviceKey, imageryLayer);
+                    console.log(`✓ ${service.name} layer enabled`);
+                    
+                } catch (error) {
+                    console.error(`Failed to load ${service.name}:`, error);
+                    document.getElementById(`${serviceKey}Wms`).checked = false;
                 }
-            });
-            
-            console.log(`✓ Navigated to ${hotspot.name} - look for colored overlays on the map`);
+            } else {
+                // Remove WMS layer
+                const layer = predefinedWmsLayers.get(serviceKey);
+                if (layer) {
+                    viewer.imageryLayers.remove(layer);
+                    predefinedWmsLayers.delete(serviceKey);
+                    console.log(`✓ ${service.name} layer disabled`);
+                }
+            }
         }
         
         /**

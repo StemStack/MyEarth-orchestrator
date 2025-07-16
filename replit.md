@@ -175,6 +175,11 @@ The CesiumJS globe viewer is now fully functional with:
 - Complete Ion service blocking with override functions to prevent any paid service attempts
 - Explicit logging confirms only free, open-source providers are used (OpenTopoMap, OpenStreetMap, etc.)
 - Zero authentication errors or paid service attempts
+- Predefined WMS layer integration with three major geospatial data providers
+- Direct checkbox controls for OpenLandMap, GBIF, and GFM WMS services in Data Services section
+- Enhanced WMS layer visibility with optimized opacity (70%), brightness, and contrast settings
+- Proper WMS layer management with toggle functionality and error handling
+- Removed unreliable "Find WMS Data" random navigation in favor of fixed layer controls
 
 ## Service Loader System
 
