@@ -180,6 +180,12 @@ The CesiumJS globe viewer is now fully functional with:
 - Enhanced WMS layer visibility with optimized opacity (70%), brightness, and contrast settings
 - Proper WMS layer management with toggle functionality and error handling
 - Removed unreliable "Find WMS Data" random navigation in favor of fixed layer controls
+- Comprehensive layer management system with drag-and-drop reordering capability
+- Active layers list showing all loaded WMS overlays with individual opacity controls
+- Layer reordering functionality allowing users to control stacking order (top/bottom)
+- Individual layer removal buttons with X controls for easy management
+- Enhanced WMS loading using UrlTemplateImageryProvider for better compatibility
+- Real-time opacity sliders for each layer with instant visual feedback
 
 ## Service Loader System
 
