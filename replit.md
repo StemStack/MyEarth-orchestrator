@@ -190,6 +190,9 @@ The CesiumJS globe viewer is now fully functional with:
 - UNEP-WCMC World Database of Protected Areas WMS integrated as default enabled layer
 - Proper WMS 1.3.0 protocol implementation for reliable geospatial data loading
 - Auto-loading of protected areas overlay on application startup
+- Dynamic legend system displaying below active layers when World Database of Protected Areas is visible
+- Color-coded legend showing six IUCN protection categories with visual indicators
+- Automatic legend show/hide functionality based on layer visibility status
 
 ## Service Loader System
 

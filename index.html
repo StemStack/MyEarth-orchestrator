@@ -1280,6 +1280,14 @@
                         <div style="font-size: 11px; color: #666; padding: 8px;">No active WMS layers</div>
                     </div>
                 </div>
+
+                <!-- Legend Section -->
+                <div id="legendSection" style="margin-bottom: 12px; display: none;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">Layer Legend:</label>
+                    <div id="legendContainer" style="border: 1px solid #ddd; border-radius: 3px; padding: 8px; background: rgba(255,255,255,0.9); font-size: 10px;">
+                        <!-- Legend content will be populated here -->
+                    </div>
+                </div>
                 
                 <button class="control-button primary" onclick="toggleServiceLoader()">
                     Load External Data
@@ -1615,6 +1623,10 @@
             const protectedAreasCheckbox = document.getElementById('protected_areasWms');
             if (protectedAreasCheckbox && protectedAreasCheckbox.checked) {
                 togglePredefinedLayer('protected_areas', true);
+                // Initialize legend after layer is loaded
+                setTimeout(() => {
+                    updateLegend();
+                }, 500);
             }
         }, 1000);
         
@@ -5094,6 +5106,7 @@
                     
                     console.log(`✓ ${service.name} layer enabled`);
                     updateLayersList();
+                    updateLegend();
                     
                 } catch (error) {
                     console.error(`Failed to load ${service.name}:`, error);
@@ -5108,6 +5121,7 @@
                     predefinedWmsLayers.delete(serviceKey);
                     console.log(`✓ ${layerInfo.name} layer disabled`);
                     updateLayersList();
+                    updateLegend();
                 }
             }
         }
@@ -5228,6 +5242,64 @@
             draggedElement = null;
             dragStartY = 0;
             dragStartX = 0;
+        }
+        
+        /**
+         * Update the legend section based on active layers
+         */
+        function updateLegend() {
+            const legendSection = document.getElementById('legendSection');
+            const legendContainer = document.getElementById('legendContainer');
+            
+            if (!legendSection || !legendContainer) return;
+            
+            // Check if protected areas layer is active
+            const hasProtectedAreas = predefinedWmsLayers.has('protected_areas');
+            
+            if (hasProtectedAreas) {
+                legendSection.style.display = 'block';
+                legendContainer.innerHTML = createProtectedAreasLegend();
+            } else {
+                legendSection.style.display = 'none';
+            }
+        }
+        
+        /**
+         * Create legend HTML for Protected Areas layer
+         */
+        function createProtectedAreasLegend() {
+            return `
+                <div style="font-weight: 600; margin-bottom: 6px; color: #2d5aa0;">🌳 World Database of Protected Areas</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #006400; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Strict Nature Reserves</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #228B22; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>National Parks</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #32CD32; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Natural Monuments</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #7CFC00; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Habitat Management Areas</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #ADFF2F; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Protected Landscapes</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin-bottom: 3px;">
+                        <div style="width: 12px; height: 12px; background: #9AFF9A; border: 1px solid #333; margin-right: 4px; border-radius: 2px;"></div>
+                        <span>Sustainable Use Areas</span>
+                    </div>
+                </div>
+                <div style="margin-top: 6px; font-size: 9px; color: #666; font-style: italic;">
+                    Source: UNEP-WCMC World Database on Protected Areas
+                </div>
+            `;
         }
         
         /**
