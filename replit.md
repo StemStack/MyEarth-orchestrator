@@ -119,3 +119,5 @@ The CesiumJS globe viewer is now fully functional with:
 - Real-time scale bar updates based on camera zoom level and position
 - Interactive north arrow compass pointing to geographic north (larger size, positioned above scale)
 - Visual compass needle with faster response time (0.1s transitions) that always points north regardless of camera rotation
+- Basic layer toggle control for OpenStreetMap base layer visibility
+- Checkbox interface in top-left panel for dynamic layer management without viewer reload

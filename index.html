@@ -477,6 +477,58 @@
             background-color: rgba(255, 255, 255, 0.8);
             border: 1px solid rgba(0, 0, 0, 0.5);
         }
+
+        /* Layer controls styling */
+        .layer-controls {
+            position: absolute;
+            top: 70px;
+            left: 10px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            min-width: 120px;
+        }
+
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+        }
+
+        .layer-toggle:last-child {
+            margin-bottom: 0;
+        }
+
+        .layer-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .layer-toggle label {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: #000;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        @media (max-width: 768px) {
+            .layer-controls {
+                top: 60px;
+                left: 8px;
+                padding: 8px;
+                min-width: 100px;
+            }
+
+            .layer-toggle label {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 
@@ -494,6 +546,14 @@
     <div class="center-crosshair" id="centerCrosshair">
         <div class="crosshair-horizontal"></div>
         <div class="crosshair-vertical"></div>
+    </div>
+
+    <!-- Layer toggle controls -->
+    <div class="layer-controls" id="layerControls">
+        <div class="layer-toggle">
+            <input type="checkbox" id="baseLayerToggle" checked>
+            <label for="baseLayerToggle">Base Map</label>
+        </div>
     </div>
 
     <!-- Universal search bar -->
@@ -614,6 +674,9 @@
         const searchButton = document.getElementById('searchButton');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const suggestionsDropdown = document.getElementById('suggestionsDropdown');
+        
+        // Add layer control elements
+        const baseLayerToggle = document.getElementById('baseLayerToggle');
         
         // Add scale bar and coordinate display elements
         const bottomLeftPanel = document.getElementById('bottomLeftPanel');
@@ -1178,6 +1241,34 @@
             console.log('Center coordinate tracking, scale bar, and north arrow initialized');
         }
 
+        /**
+         * Toggles the base map layer visibility
+         * @param {boolean} visible - Whether to show or hide the base layer
+         */
+        function toggleBaseLayer(visible) {
+            try {
+                if (viewer.imageryLayers.length > 0) {
+                    const baseLayer = viewer.imageryLayers.get(0);
+                    baseLayer.show = visible;
+                    console.log(`Base layer ${visible ? 'enabled' : 'disabled'}`);
+                }
+            } catch (error) {
+                console.warn('Error toggling base layer:', error);
+            }
+        }
+
+        /**
+         * Initialize layer controls
+         */
+        function initializeLayerControls() {
+            // Base layer toggle functionality
+            baseLayerToggle.addEventListener('change', function() {
+                toggleBaseLayer(this.checked);
+            });
+            
+            console.log('Layer controls initialized');
+        }
+
         // Initialize coordinate tracking after viewer is ready
         setTimeout(() => {
             // Verify all elements exist before initializing
@@ -1186,8 +1277,10 @@
             console.log('- coordinatesText:', !!coordinatesText);
             console.log('- scaleLine:', !!scaleLine);
             console.log('- scaleText:', !!scaleText);
+            console.log('- baseLayerToggle:', !!baseLayerToggle);
             
             initializeCoordinateTracking();
+            initializeLayerControls();
         }, 100);
 
         /**
