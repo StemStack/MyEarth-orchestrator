@@ -1493,10 +1493,8 @@
                     <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">Base Map Provider:</label>
                     <select id="baseMapSelector" onchange="switchBaseMap()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: white;">
                         <option value="openstreetmap" selected>OSM Standard</option>
-                        <option value="humanitarian">Humanitarian</option>
-                        <option value="cyclosm">CyclOSM</option>
                         <option value="opentopomap">OpenTopoMap</option>
-                        <option value="monochrome">Monochrome</option>
+                        <option value="monochrome">Monochrome (Light)</option>
                         <option value="dark_mode">Dark Mode</option>
                         <option value="cartodb_positron">CartoDB Positron</option>
                         <option value="esri_world">ESRI World Imagery</option>
@@ -5320,19 +5318,7 @@
                     });
                     break;
                     
-                case 'humanitarian':
-                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-                        credit: '© OpenStreetMap contributors, Humanitarian style'
-                    });
-                    break;
-                    
-                case 'cyclosm':
-                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
-                        credit: '© CyclOSM / OpenStreetMap contributors'
-                    });
-                    break;
+
                     
                 case 'opentopomap':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
@@ -5344,15 +5330,17 @@
                     
                 case 'monochrome':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
-                        credit: '© OpenStreetMap contributors'
+                        url: 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c', 'd'],
+                        credit: '© OpenStreetMap contributors © CARTO'
                     });
                     break;
                     
                 case 'dark_mode':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tiles.stadiamaps.com/tiles/alidade_dark/{z}/{x}/{y}{r}.png',
-                        credit: '© Stadia Maps, OpenStreetMap contributors'
+                        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c', 'd'],
+                        credit: '© OpenStreetMap contributors © CARTO'
                     });
                     break;
                     
@@ -5379,10 +5367,25 @@
                     });
             }
             
-            // Add the new imagery layer
-            viewer.imageryLayers.addImageryProvider(imageryProvider);
-            
-            console.log(`✓ Switched to ${selectedProvider} base map provider`);
+            // Add the new imagery layer with error handling
+            try {
+                viewer.imageryLayers.addImageryProvider(imageryProvider);
+                console.log(`✓ Switched to ${selectedProvider} base map provider`);
+            } catch (error) {
+                console.error(`Failed to load ${selectedProvider} base map:`, error);
+                
+                // Fallback to OpenStreetMap on error
+                const fallbackProvider = new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: ['a', 'b', 'c'],
+                    credit: '© OpenStreetMap contributors'
+                });
+                viewer.imageryLayers.addImageryProvider(fallbackProvider);
+                console.log('✓ Fallback to OpenStreetMap base map');
+                
+                // Reset selector to OpenStreetMap
+                selector.value = 'openstreetmap';
+            }
         }
         
         // Initialize sidebar and floating menu button on page load
