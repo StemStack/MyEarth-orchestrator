@@ -996,40 +996,54 @@
         }
 
         /**
-         * Initialize marker placement system
-         * Attaches click event handler to enable marker placement
+         * Initialize marker placement system with pixel-perfect positioning
+         * Uses multiple coordinate detection methods for maximum accuracy
          */
         function initializeMarkerPlacement() {
-            // Disable default click behavior to avoid conflicts
-            viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            // Add click handler directly to the canvas for most accurate positioning
+            const canvas = viewer.canvas;
             
-            // Enable precise click events on the viewer
-            viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(
-                function(click) {
-                    // Ensure we have the exact click position
-                    const pickedPosition = click.position;
-                    
-                    // Use the most direct ellipsoid intersection method
+            canvas.addEventListener('click', function(event) {
+                // Get exact pixel coordinates relative to canvas
+                const rect = canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+                
+                // Create Cesium screen coordinate
+                const clickPosition = new Cesium.Cartesian2(x, y);
+                
+                // Method 1: Try scene position picking first (most accurate for terrain)
+                let cartesian = viewer.scene.pickPosition(clickPosition);
+                
+                if (!cartesian) {
+                    // Method 2: Fallback to ellipsoid picking
                     const ellipsoid = viewer.scene.globe.ellipsoid;
-                    const cartesian = viewer.camera.pickEllipsoid(pickedPosition, ellipsoid);
-                    
-                    if (cartesian) {
-                        // Convert to geographic coordinates with high precision
-                        const cartographic = ellipsoid.cartesianToCartographic(cartesian);
-                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                    cartesian = viewer.camera.pickEllipsoid(clickPosition, ellipsoid);
+                }
+                
+                if (!cartesian) {
+                    // Method 3: Ray casting as final fallback
+                    const ray = viewer.camera.getPickRay(clickPosition);
+                    cartesian = viewer.scene.globe.pick(ray, viewer.scene);
+                }
+                
+                if (cartesian) {
+                    // Convert to geographic coordinates
+                    const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
+                    const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                    const latitude = Cesium.Math.toDegrees(cartographic.latitude);
 
-                        // Create marker at exact position
-                        const label = `Point ${markerCounter + 1}`;
-                        const marker = createMarker(longitude, latitude, label);
+                    // Create marker at exact position
+                    const label = `Point ${markerCounter + 1}`;
+                    const marker = createMarker(longitude, latitude, label);
 
-                        console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label})`);
-                    }
-                },
-                Cesium.ScreenSpaceEventType.LEFT_CLICK
-            );
+                    console.log(`Marker placed at: ${latitude.toFixed(6)}°, ${longitude.toFixed(6)}° (${label}) - Method: ${cartesian ? 'scene/ellipsoid/ray' : 'unknown'}`);
+                } else {
+                    console.log('Could not determine click position on globe');
+                }
+            });
 
-            console.log('Marker placement system initialized - click anywhere on the globe to place markers');
+            console.log('Marker placement system initialized with pixel-perfect positioning - click anywhere on the globe to place markers');
         }
 
         // Initialize marker placement system
