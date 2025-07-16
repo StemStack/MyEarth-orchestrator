@@ -193,9 +193,10 @@ The CesiumJS globe viewer is now fully functional with:
 - Dynamic legend system displaying below active layers when World Database of Protected Areas is visible
 - Color-coded legend showing six IUCN protection categories with visual indicators
 - Automatic legend show/hide functionality based on layer visibility status
-- Global Land Degradation layer integration from UNEP-GRID GeoServer (Congo Basin forest change 2015-2020)
+- Global Land Degradation layer integration from UNEP-GRID GeoServer (Bare Ground Change 1982-2016)
+- Worldwide land degradation coverage showing 34-year trend analysis of bare ground change
 - Multi-layer legend system supporting both protected areas and land degradation legends simultaneously
-- Color-coded land degradation legend showing forest stability, degradation, deforestation, and regeneration patterns
+- Color-coded land degradation legend showing vegetation recovery, improvement, stable areas, and degradation patterns
 
 ## Service Loader System
 
