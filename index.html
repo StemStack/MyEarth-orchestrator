@@ -519,54 +519,58 @@
 
         /* Model upload section */
         .model-upload-section {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 8px;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .model-upload-button {
             width: 100%;
-            padding: 8px 12px;
-            background-color: rgba(68, 68, 68, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
+            padding: 5px 8px;
+            background-color: rgba(76, 175, 80, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
             color: #fff;
-            font-size: 12px;
+            font-size: 10px;
+            font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 3px;
         }
 
         .model-upload-button:hover {
-            background-color: rgba(85, 85, 85, 1);
+            background-color: rgba(69, 160, 73, 0.9);
         }
 
         .model-upload-hint {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 7px;
+            color: rgba(255, 255, 255, 0.6);
             text-align: center;
-            margin-top: 5px;
-            line-height: 1.2;
+            margin: 2px 0;
+            line-height: 1.1;
         }
 
         .sample-models-button {
             width: 100%;
-            padding: 6px 12px;
-            background-color: rgba(52, 152, 219, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
+            padding: 4px 6px;
+            background-color: rgba(33, 150, 243, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
             color: #fff;
-            font-size: 11px;
+            font-size: 9px;
+            font-weight: 500;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            margin-top: 8px;
+            margin-top: 3px;
         }
 
         .sample-models-button:hover {
-            background-color: rgba(52, 152, 219, 1);
+            background-color: rgba(25, 118, 210, 0.9);
         }
 
         @media (max-width: 768px) {
@@ -681,14 +685,13 @@
         </div>
         <div class="model-upload-section">
             <button class="model-upload-button" id="modelUploadButton">
-                📁 Upload 3D Model
+                📁 Upload
             </button>
             <div class="model-upload-hint">
-                Or drag 3D model files anywhere<br>
-                <span style="font-size: 9px; opacity: 0.8;">Supports: GLB, GLTF, OBJ, FBX, DAE, STL, PLY, LAS, DXF, USDZ</span>
+                Drag files or <span style="opacity: 0.9;">GLB/GLTF only</span>
             </div>
             <button class="sample-models-button" onclick="showSampleModels()">
-                📦 Try Sample Models
+                📦 Samples
             </button>
         </div>
     </div>
