@@ -102,6 +102,29 @@
             background-color: rgba(85, 85, 85, 1);
         }
 
+        .fly-to-button {
+            width: 40px;
+            height: 40px;
+            background-color: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s ease;
+        }
+
+        .fly-to-button:hover {
+            background-color: rgba(68, 68, 68, 0.9);
+        }
+
+        .fly-to-button:active {
+            background-color: rgba(85, 85, 85, 1);
+        }
+
         /* Responsive design for smaller screens */
         @media (max-width: 768px) {
             .cesium-viewer-toolbar {
@@ -124,6 +147,12 @@
                 height: 35px;
                 font-size: 16px;
             }
+
+            .fly-to-button {
+                width: 35px;
+                height: 35px;
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -136,6 +165,7 @@
     <div class="zoom-controls">
         <button class="zoom-button" id="zoomIn" title="Zoom In">+</button>
         <button class="zoom-button" id="zoomOut" title="Zoom Out">−</button>
+        <button class="fly-to-button" id="flyToLocation" title="Fly to Eiffel Tower">🗼</button>
     </div>
 
     <!-- CesiumJS JavaScript -->
@@ -192,6 +222,7 @@
         // Add zoom button functionality
         const zoomInButton = document.getElementById('zoomIn');
         const zoomOutButton = document.getElementById('zoomOut');
+        const flyToButton = document.getElementById('flyToLocation');
 
         zoomInButton.addEventListener('click', function() {
             const camera = viewer.camera;
@@ -228,6 +259,20 @@
                     pitch: camera.pitch,
                     roll: camera.roll
                 }
+            });
+        });
+
+        // Add fly to location functionality
+        flyToButton.addEventListener('click', function() {
+            // Eiffel Tower coordinates: 48.8584° N, 2.2945° E
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(2.2945, 48.8584, 1000), // 1km altitude
+                orientation: {
+                    heading: Cesium.Math.toRadians(0.0),
+                    pitch: Cesium.Math.toRadians(-45.0), // Look down at 45 degrees
+                    roll: 0.0
+                },
+                duration: 3.0 // 3 second flight animation
             });
         });
 
