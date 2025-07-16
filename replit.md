@@ -238,7 +238,8 @@ The CesiumJS globe viewer is now fully functional with:
 
 ### Integrated Base Map Management
 - **Maps displayed** section with dropdown selector for base map providers
-- Five open-source providers: OpenStreetMap, OpenTopoMap, Stamen Terrain, CartoDB Positron, ESRI World Imagery
+- Eight open-source providers: OSM Standard, Humanitarian, CyclOSM, OpenTopoMap, Monochrome, Dark Mode, CartoDB Positron, ESRI World Imagery
 - Real-time base map switching without viewer reload
 - Layer visibility controls for base map, atmosphere, and terrain
 - Professional UI integration maintaining Swiss design standards
+- Enhanced map variety including specialized cycling, humanitarian, and dark mode styles

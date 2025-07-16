@@ -1492,10 +1492,13 @@
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">Base Map Provider:</label>
                     <select id="baseMapSelector" onchange="switchBaseMap()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: white;">
-                        <option value="openstreetmap">OpenStreetMap</option>
+                        <option value="openstreetmap" selected>OSM Standard</option>
+                        <option value="humanitarian">Humanitarian</option>
+                        <option value="cyclosm">CyclOSM</option>
                         <option value="opentopomap">OpenTopoMap</option>
-                        <option value="stamen_terrain">Stamen Terrain</option>
-                        <option value="cartodb_positron" selected>CartoDB Positron</option>
+                        <option value="monochrome">Monochrome</option>
+                        <option value="dark_mode">Dark Mode</option>
+                        <option value="cartodb_positron">CartoDB Positron</option>
                         <option value="esri_world">ESRI World Imagery</option>
                     </select>
                 </div>
@@ -1978,19 +1981,24 @@
             }
         };
 
-        // Current base map - default to CartoDB Positron for clean appearance
-        let currentBaseMap = 'cartodb-positron';
+        // Current base map - default to OSM Standard for clean appearance
+        let currentBaseMap = 'openstreetmap';
         
-        // Remove default imagery and add CartoDB Positron (free open-source service)
+        // Remove default imagery and add OSM Standard (free open-source service)
         viewer.imageryLayers.removeAll();
-        viewer.imageryLayers.addImageryProvider(baseMaps[currentBaseMap].provider());
+        const defaultImageryProvider = new Cesium.UrlTemplateImageryProvider({
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: ['a', 'b', 'c'],
+            credit: '© OpenStreetMap contributors'
+        });
+        viewer.imageryLayers.addImageryProvider(defaultImageryProvider);
         
-        console.log('✓ Using CartoDB Positron - free, open-source base map provider');
+        console.log('✓ Using OSM Standard - free, open-source base map provider');
         
-        // Set attribution for CartoDB Positron
+        // Set attribution for OSM Standard  
         const attributionElement = document.querySelector('.cesium-credit-textContainer');
         if (attributionElement) {
-            attributionElement.innerHTML = baseMaps[currentBaseMap].attribution;
+            attributionElement.innerHTML = '© OpenStreetMap contributors';
         }
 
         // Define Europe and North Africa overview with vertical perspective
@@ -5306,43 +5314,68 @@
             switch(selectedProvider) {
                 case 'openstreetmap':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
                         credit: '© OpenStreetMap contributors'
+                    });
+                    break;
+                    
+                case 'humanitarian':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+                        credit: '© OpenStreetMap contributors, Humanitarian style'
+                    });
+                    break;
+                    
+                case 'cyclosm':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+                        credit: '© CyclOSM / OpenStreetMap contributors'
                     });
                     break;
                     
                 case 'opentopomap':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-                        credit: '© OpenTopoMap (CC-BY-SA)'
+                        url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        credit: '© OpenTopoMap, OpenStreetMap contributors'
                     });
                     break;
                     
-                case 'stamen_terrain':
+                case 'monochrome':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png',
-                        credit: '© Stamen Design (CC BY 3.0)'
+                        url: 'https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png',
+                        credit: '© OpenStreetMap contributors'
+                    });
+                    break;
+                    
+                case 'dark_mode':
+                    imageryProvider = new Cesium.UrlTemplateImageryProvider({
+                        url: 'https://tiles.stadiamaps.com/tiles/alidade_dark/{z}/{x}/{y}{r}.png',
+                        credit: '© Stadia Maps, OpenStreetMap contributors'
                     });
                     break;
                     
                 case 'cartodb_positron':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://cartodb-basemaps-a.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png',
-                        credit: '© CartoDB (CC BY 3.0)'
+                        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c', 'd'],
+                        credit: '© OpenStreetMap contributors © CARTO'
                     });
                     break;
                     
                 case 'esri_world':
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
                         url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                        credit: '© Esri, Maxar, Earthstar Geographics'
+                        credit: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
                     });
                     break;
                     
                 default:
                     imageryProvider = new Cesium.UrlTemplateImageryProvider({
-                        url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png',
-                        credit: '© OpenTopoMap (CC-BY-SA)'
+                        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: ['a', 'b', 'c'],
+                        credit: '© OpenStreetMap contributors'
                     });
             }
             
