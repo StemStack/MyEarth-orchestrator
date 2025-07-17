@@ -2416,6 +2416,45 @@
             }
         `;
         document.head.appendChild(timelineCSS);
+        
+        // Continuous timeline removal - check every 500ms
+        const removeTimelineInterval = setInterval(() => {
+            const timelineElements = document.querySelectorAll(`
+                .cesium-timeline-main,
+                .cesium-timeline-container,
+                .cesium-timeline-bar,
+                .cesium-timeline-tic,
+                .cesium-timeline-scrubber,
+                .cesium-timeline-epoch,
+                .cesium-animation-container,
+                .cesium-animation-svgContainer,
+                .cesium-viewer-timelineContainer,
+                .cesium-viewer-bottom
+            `);
+            
+            timelineElements.forEach(el => {
+                if (el) {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.style.opacity = '0';
+                    el.style.height = '0';
+                    el.style.width = '0';
+                    el.style.overflow = 'hidden';
+                    el.remove();
+                }
+            });
+            
+            // Also check for any bottom containers that might contain timeline
+            const bottomContainers = document.querySelectorAll('[class*="timeline"], [class*="animation"]');
+            bottomContainers.forEach(el => {
+                if (el && (el.className.includes('cesium') || el.className.includes('timeline'))) {
+                    el.remove();
+                }
+            });
+        }, 500);
+        
+        // Stop checking after 10 seconds
+        setTimeout(() => clearInterval(removeTimelineInterval), 10000);
         }, 100);
 
         // Keep lighting disabled to prevent rendering errors
