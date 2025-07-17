@@ -821,10 +821,11 @@
 
         .bottom-center {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start;
             align-items: center;
             overflow: hidden;
-            text-align: center;
+            text-align: left;
+            padding-left: 10px;
         }
 
 
@@ -843,7 +844,7 @@
             #bottomBand {
                 padding: 0 8px;
                 font-size: 9px;
-                grid-template-columns: 0.8fr 1fr 1.2fr;
+                grid-template-columns: 0.6fr 1.2fr 1.2fr;
             }
             
             #coordinatesInfo {
@@ -875,7 +876,7 @@
             #bottomBand {
                 padding: 0 6px;
                 font-size: 8px;
-                grid-template-columns: 0.7fr 1fr 1.3fr;
+                grid-template-columns: 0.5fr 1.2fr 1.3fr;
             }
             
             #coordinatesInfo {
@@ -6536,8 +6537,15 @@
                 // Calculate appropriate scale values that match the map
                 let scaleDistance, scalePixels, scaleLabel;
                 
-                // Get phone viewport width for mobile-friendly scale bar size
-                const maxScaleWidth = Math.min(100, window.innerWidth / 5); // Max 1/5 of screen width or 100px
+                // Get viewport width for mobile-friendly scale bar size
+                let maxScaleWidth;
+                if (window.innerWidth <= 480) {
+                    maxScaleWidth = Math.min(40, window.innerWidth * 0.12); // Much smaller on mobile
+                } else if (window.innerWidth <= 768) {
+                    maxScaleWidth = Math.min(60, window.innerWidth * 0.15); // Medium on tablet
+                } else {
+                    maxScaleWidth = Math.min(100, window.innerWidth / 5); // Standard on desktop
+                } or 100px
                 
                 if (baseDistance >= 1000) {
                     // For kilometers - find the best scale that fits within size limits
@@ -6592,7 +6600,14 @@
                 }
                 
                 // Set the scale bar width to exactly match the real map distance
-                scaleLine.style.width = `${Math.max(10, scalePixels)}px`;
+                // Mobile optimization: ensure scale bar doesn't exceed container
+                let finalWidth = Math.max(10, scalePixels);
+                if (window.innerWidth <= 480) {
+                    finalWidth = Math.min(finalWidth, 40);
+                } else if (window.innerWidth <= 768) {
+                    finalWidth = Math.min(finalWidth, 60);
+                }
+                scaleLine.style.width = `${finalWidth}px`;
                 scaleText.textContent = scaleLabel;
             } catch (error) {
                 scaleText.textContent = 'Scale: N/A';
