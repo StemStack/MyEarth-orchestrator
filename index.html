@@ -1318,6 +1318,21 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
             transform: scale(1.05) !important;
         }
+        
+        /* Make hamburger icon lines visible */
+        #floatingMenuButton svg,
+        .floating-menu-button svg {
+            stroke: #333 !important;
+            stroke-width: 2.5 !important;
+            width: 14px !important;
+            height: 14px !important;
+        }
+        
+        #floatingMenuButton svg line,
+        .floating-menu-button svg line {
+            stroke: #333 !important;
+            stroke-width: 2.5 !important;
+        }
 
         /* Ensure sidebar is visible by default on desktop */
         .sidebar {
@@ -7096,6 +7111,13 @@ Built with CesiumJS`;
                         floatingButton.style.border = 'none';
                         floatingButton.style.borderRadius = '50%';
                         floatingButton.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                        
+                        // Make hamburger lines visible
+                        const svg = floatingButton.querySelector('svg');
+                        if (svg) {
+                            svg.style.stroke = '#333';
+                            svg.style.strokeWidth = '2.5';
+                        }
                     }
                 }, 300);
                 console.log('Sidebar collapsed');
