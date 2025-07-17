@@ -9669,37 +9669,18 @@ Built with CesiumJS`;
         }
 
         function generateQRCode() {
-            const includeQR = document.getElementById('includeQRCode').checked;
+            // QR code functionality removed for simplified export layout
             const qrContainer = document.getElementById('previewQR');
-            
-            if (!includeQR || !qrContainer) return;
-            
-            // Generate URL for current view
-            const currentURL = window.location.href;
-            
-            // For now, show placeholder - in production you'd use a QR library
-            qrContainer.innerHTML = `
-                <div style="width: 30px; height: 30px; background: #000; margin-bottom: 2px;"></div>
-                <div>View online</div>
-            `;
+            if (qrContainer) {
+                qrContainer.style.display = 'none';
+            }
         }
 
         function handleLogoUpload() {
-            const fileInput = document.getElementById('logoUpload');
-            const file = fileInput.files[0];
-            
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    mapExportData.userLogo = e.target.result;
-                    
-                    // Show logo in preview
-                    const logoContainer = document.getElementById('previewLogo');
-                    if (logoContainer) {
-                        logoContainer.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 100%;">`;
-                    }
-                };
-                reader.readAsDataURL(file);
+            // Logo upload functionality removed for simplified export layout
+            const logoContainer = document.getElementById('previewLogo');
+            if (logoContainer) {
+                logoContainer.style.display = 'none';
             }
         }
 
