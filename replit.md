@@ -138,6 +138,7 @@ The CesiumJS globe viewer is now fully functional with:
 - **Export UI Improvements**: Removed visual overload, cleaner format selection (A4/A3 Landscape, A4 Portrait)
 - **Simplified Print Preview**: Minimalist metadata display with coordinates, date, and layers only
 - **2D/3D Mode Fix**: Fixed critical issue where half the globe became invisible when exiting flat mode by properly resetting map projection and imagery layers with correct tiling schemes
+- **Flat Earth Blue Overlay Fix**: Resolved blue overlay covering half the 2D view by simplifying layer reload process and ensuring proper Geographic projection setup
 
 ## Previous Changes (July 16, 2025)
 
