@@ -1101,9 +1101,9 @@
         }
 
         .sidebar-toggle {
-            position: absolute;
+            position: fixed;
             top: 10px;
-            right: 15px;
+            left: 25px;
             width: 30px;
             height: 30px;
             background: rgba(255, 255, 255, 0.9);
@@ -1115,7 +1115,7 @@
             justify-content: center;
             font-size: 14px;
             color: #333;
-            z-index: 1001;
+            z-index: 1003;
             transition: all 0.3s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
@@ -2409,14 +2409,7 @@
 
 
 
-    <!-- Floating toggle button for collapsed left panel -->
-    <button class="collapsed-left-toggle" id="collapsedLeftToggle" onclick="toggleLeftPanel()" style="display: none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </button>
+
 
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
@@ -6664,8 +6657,6 @@
             if (leftPanel) {
                 leftPanel.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
-                const collapsedToggle = document.getElementById('collapsedLeftToggle');
-                if (collapsedToggle) collapsedToggle.style.display = 'flex';
             }
             
             if (rightPanel) {
@@ -6927,19 +6918,16 @@
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
-            const collapsedToggle = document.getElementById('collapsedLeftToggle');
             
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
                 cesiumContainer.classList.add('with-left-panel');
-                if (collapsedToggle) collapsedToggle.style.display = 'none';
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
-                if (collapsedToggle) collapsedToggle.style.display = 'flex';
                 console.log('Left panel collapsed');
             }
         }
