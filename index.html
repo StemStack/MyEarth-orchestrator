@@ -2509,11 +2509,13 @@
         // Set initial camera position centered on Europe
         viewer.camera.setView(europeHomeView);
 
-        // Override the default home button behavior to use European coordinates
-        viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
-            e.cancel = true;
-            viewer.camera.flyTo(europeHomeView);
-        });
+        // Override the default home button behavior to use European coordinates (if exists)
+        if (viewer.homeButton && viewer.homeButton.viewModel) {
+            viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
+                e.cancel = true;
+                viewer.camera.flyTo(europeHomeView);
+            });
+        }
 
         // Handle window resize events for responsiveness
         window.addEventListener('resize', function() {
