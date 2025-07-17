@@ -1430,10 +1430,23 @@
             border-radius: 3px;
             cursor: move;
             font-size: 11px;
+            transition: all 0.2s ease;
         }
         
         .layer-item:hover {
             background: rgba(240, 240, 240, 0.9);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .layer-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        
+        .layer-item.drag-over {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: #3498db;
         }
         
         .layer-drag-handle {
@@ -7235,6 +7248,8 @@
                 // Add drag and drop events
                 layerItem.addEventListener('dragstart', handleLayerDragStart);
                 layerItem.addEventListener('dragover', handleLayerDragOver);
+                layerItem.addEventListener('dragenter', handleLayerDragEnter);
+                layerItem.addEventListener('dragleave', handleLayerDragLeave);
                 layerItem.addEventListener('drop', handleLayerDrop);
                 layerItem.addEventListener('dragend', handleLayerDragEnd);
                 
@@ -7263,48 +7278,52 @@
             }
         }
         
-        // Drag and drop handlers for layer reordering - vertical only
+        // Drag and drop handlers for layer reordering
         let draggedElement = null;
-        let dragStartY = 0;
-        let dragStartX = 0;
         
         function handleLayerDragStart(e) {
             draggedElement = this;
-            dragStartY = e.clientY;
-            dragStartX = e.clientX;
             this.style.opacity = '0.5';
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.outerHTML);
-            // Add CSS to restrict movement
-            this.style.pointerEvents = 'none';
+            e.dataTransfer.setData('text/plain', this.dataset.serviceKey);
+            console.log('Started dragging layer:', this.dataset.serviceKey);
         }
         
         function handleLayerDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            
-            // Restrict drag movement to vertical only
-            if (draggedElement && Math.abs(e.clientX - dragStartX) > 10) {
-                e.dataTransfer.dropEffect = 'none';
-                return false;
-            }
-            
+            e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
-            return false;
+            
+            // Add visual feedback
+            this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+        }
+        
+        function handleLayerDragEnter(e) {
+            e.preventDefault();
+            this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+        }
+        
+        function handleLayerDragLeave(e) {
+            this.style.backgroundColor = '';
         }
         
         function handleLayerDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
+            e.preventDefault();
+            e.stopPropagation();
             
-            if (draggedElement !== this) {
+            // Remove visual feedback
+            this.style.backgroundColor = '';
+            
+            if (draggedElement && draggedElement !== this) {
                 const draggedServiceKey = draggedElement.dataset.serviceKey;
                 const targetServiceKey = this.dataset.serviceKey;
                 
-                // Reorder layers in CesiumJS
+                console.log('Dropping layer:', draggedServiceKey, 'onto:', targetServiceKey);
+                
+                // Reorder layers in CesiumJS and update display
                 reorderImageryLayers(draggedServiceKey, targetServiceKey);
+                
+                // Update the display order
+                updateActiveLayersDisplay();
             }
             
             return false;
@@ -7312,10 +7331,15 @@
         
         function handleLayerDragEnd(e) {
             this.style.opacity = '1';
-            this.style.pointerEvents = 'auto';
+            
+            // Remove visual feedback from all items
+            const layerItems = document.querySelectorAll('.layer-item');
+            layerItems.forEach(item => {
+                item.style.backgroundColor = '';
+            });
+            
             draggedElement = null;
-            dragStartY = 0;
-            dragStartX = 0;
+            console.log('Drag ended');
         }
         
         /**
@@ -7429,29 +7453,39 @@
             const draggedLayerInfo = predefinedWmsLayers.get(draggedKey);
             const targetLayerInfo = predefinedWmsLayers.get(targetKey);
             
-            if (!draggedLayerInfo || !targetLayerInfo) return;
+            if (!draggedLayerInfo || !targetLayerInfo) {
+                console.error('Layer info not found for reordering');
+                return;
+            }
             
             const layers = viewer.imageryLayers;
-            const draggedIndex = layers.indexOf(draggedLayerInfo.layer);
-            const targetIndex = layers.indexOf(targetLayerInfo.layer);
+            const draggedLayer = draggedLayerInfo.layer;
+            const targetLayer = targetLayerInfo.layer;
             
-            if (draggedIndex !== -1 && targetIndex !== -1) {
-                // Move layer to new position
-                if (draggedIndex < targetIndex) {
-                    layers.raiseToTop(draggedLayerInfo.layer);
-                    for (let i = 0; i < (targetIndex - draggedIndex); i++) {
-                        layers.lower(draggedLayerInfo.layer);
-                    }
-                } else {
-                    layers.lowerToBottom(draggedLayerInfo.layer);
-                    for (let i = 0; i < (draggedIndex - targetIndex); i++) {
-                        layers.raise(draggedLayerInfo.layer);
-                    }
-                }
-                
-                console.log(`Reordered ${draggedLayerInfo.name} relative to ${targetLayerInfo.name}`);
-                updateLayersList();
+            // Get current indices
+            let draggedIndex = -1;
+            let targetIndex = -1;
+            
+            for (let i = 0; i < layers.length; i++) {
+                if (layers.get(i) === draggedLayer) draggedIndex = i;
+                if (layers.get(i) === targetLayer) targetIndex = i;
             }
+            
+            if (draggedIndex === -1 || targetIndex === -1) {
+                console.error('Layer indices not found');
+                return;
+            }
+            
+            console.log(`Moving layer from index ${draggedIndex} to ${targetIndex}`);
+            
+            // Remove the dragged layer
+            layers.remove(draggedLayer, false);
+            
+            // Re-add it at the target position
+            layers.add(draggedLayer, targetIndex);
+            
+            console.log(`Successfully reordered layer ${draggedKey} to position of ${targetKey}`);
+            updateLayersList();
         }
         
         /**
