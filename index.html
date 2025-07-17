@@ -8112,11 +8112,10 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://data-gis.unep-wcmc.org/arcgis/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/WMSServer',
+                url: 'https://services.arcgis.com/0p1Ftzeb6EgfZa5e/arcgis/rest/services/World_Database_on_Protected_Areas_WDPA/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson',
                 name: 'World Database of Protected Areas',
-                type: 'wms',
-                layers: '0',
-                format: 'image/png',
+                type: 'geojson',
+                format: 'vector',
                 transparent: true
             },
             land_degradation: {
@@ -8161,6 +8160,31 @@ Built with CesiumJS`;
                             credit: service.name,
                             tilingScheme: tilingScheme
                         });
+                    } else if (service.type === 'geojson') {
+                        // Handle GeoJSON data sources
+                        Cesium.GeoJsonDataSource.load(service.url, {
+                            stroke: Cesium.Color.GREEN.withAlpha(0.8),
+                            fill: Cesium.Color.GREEN.withAlpha(0.3),
+                            strokeWidth: 2
+                        }).then(function(dataSource) {
+                            globalViewer.dataSources.add(dataSource);
+                            
+                            predefinedWmsLayers.set(serviceKey, {
+                                dataSource: dataSource,
+                                name: service.name,
+                                serviceKey: serviceKey,
+                                type: 'geojson'
+                            });
+                            
+                            console.log(`✓ ${service.name} layer enabled`);
+                            updateLayersList();
+                            updateLegend();
+                        }).catch(error => {
+                            console.error(`Failed to load ${service.name}:`, error);
+                            const checkbox = document.getElementById(`${serviceKey}Wms`);
+                            if (checkbox) checkbox.checked = false;
+                        });
+                        return;
                     } else {
                         // Create reliable tile imagery provider for tile services
                         // Tile services typically only support Web Mercator
@@ -8194,7 +8218,11 @@ Built with CesiumJS`;
                 // Remove layer
                 const layerInfo = predefinedWmsLayers.get(serviceKey);
                 if (layerInfo) {
-                    viewer.imageryLayers.remove(layerInfo.layer);
+                    if (layerInfo.type === 'geojson' && layerInfo.dataSource) {
+                        globalViewer.dataSources.remove(layerInfo.dataSource);
+                    } else if (layerInfo.layer) {
+                        viewer.imageryLayers.remove(layerInfo.layer);
+                    }
                     predefinedWmsLayers.delete(serviceKey);
                     console.log(`✓ ${layerInfo.name} layer disabled`);
                     updateLayersList();
