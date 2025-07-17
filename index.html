@@ -2370,6 +2370,10 @@
                 '.cesium-timeline-main',
                 '.cesium-timeline-container',
                 '.cesium-timeline-bar',
+                '.cesium-timeline-tic',
+                '.cesium-timeline-scrubber',
+                '.cesium-timeline-epoch',
+                '.cesium-animation-svgContainer',
                 '.cesium-fullscreenButton',
                 '.cesium-vrButton',
                 '.cesium-widget-toolbar',
@@ -2389,6 +2393,29 @@
             });
             
             console.log('✓ All CesiumJS UI elements forcibly removed');
+        
+        // Additional aggressive timeline removal with CSS
+        const timelineCSS = document.createElement('style');
+        timelineCSS.textContent = `
+            .cesium-timeline-main,
+            .cesium-timeline-container,
+            .cesium-timeline-bar,
+            .cesium-timeline-tic,
+            .cesium-timeline-scrubber,
+            .cesium-timeline-epoch,
+            .cesium-animation-container,
+            .cesium-animation-svgContainer,
+            .cesium-home-button,
+            .cesium-navigation-help-button {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                width: 0 !important;
+                height: 0 !important;
+                overflow: hidden !important;
+            }
+        `;
+        document.head.appendChild(timelineCSS);
         }, 100);
 
         // Keep lighting disabled to prevent rendering errors
