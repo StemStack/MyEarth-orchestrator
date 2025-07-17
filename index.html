@@ -8931,11 +8931,103 @@ Built with CesiumJS`;
             // Update coordinates and zoom level
             updateMapMetadata();
             
-            // Capture map image
-            captureMapImage();
+            // Initialize preview canvas
+            initializePreviewCanvas();
+            
+            // Capture map image with retry mechanism
+            captureMapImageWithRetry();
             
             // Generate QR code if enabled
             generateQRCode();
+            
+            // Update legend and scale
+            generateLegend();
+            calculateScaleBar();
+        }
+
+        function initializePreviewCanvas() {
+            const mapArea = document.getElementById('previewMapArea');
+            const previewCanvas = document.getElementById('previewMapCanvas');
+            
+            if (mapArea && previewCanvas) {
+                // Set canvas size to match container
+                previewCanvas.width = mapArea.offsetWidth - 2;
+                previewCanvas.height = mapArea.offsetHeight - 2;
+                previewCanvas.style.width = '100%';
+                previewCanvas.style.height = '100%';
+                previewCanvas.style.display = 'block';
+            }
+        }
+
+        function captureMapImageWithRetry(retryCount = 0) {
+            const maxRetries = 3;
+            
+            if (retryCount >= maxRetries) {
+                console.warn('Max retries reached for map capture');
+                showMapPlaceholder();
+                return;
+            }
+            
+            if (!viewer || !viewer.scene) {
+                setTimeout(() => captureMapImageWithRetry(retryCount + 1), 1000);
+                return;
+            }
+            
+            // Ensure scene is fully rendered
+            viewer.scene.requestRender();
+            
+            // Wait for render completion and try capture
+            setTimeout(() => {
+                const success = attemptMapCapture();
+                if (!success && retryCount < maxRetries) {
+                    console.log(`Map capture attempt ${retryCount + 1} failed, retrying...`);
+                    setTimeout(() => captureMapImageWithRetry(retryCount + 1), 1000);
+                }
+            }, 800);
+        }
+
+        function attemptMapCapture() {
+            try {
+                const canvas = viewer.scene.canvas;
+                const previewCanvas = document.getElementById('previewMapCanvas');
+                
+                if (!canvas || !previewCanvas) {
+                    console.warn('Canvas elements not available');
+                    return false;
+                }
+                
+                const ctx = previewCanvas.getContext('2d');
+                
+                // Clear previous content
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                
+                // Try to draw the Cesium canvas
+                ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                
+                // Check if we actually drew something (not just black)
+                const imageData = ctx.getImageData(0, 0, Math.min(previewCanvas.width, 50), Math.min(previewCanvas.height, 50));
+                const pixels = imageData.data;
+                let hasNonBlackPixels = false;
+                
+                for (let i = 0; i < pixels.length; i += 4) {
+                    if (pixels[i] > 10 || pixels[i + 1] > 10 || pixels[i + 2] > 10) {
+                        hasNonBlackPixels = true;
+                        break;
+                    }
+                }
+                
+                if (hasNonBlackPixels) {
+                    console.log('Map successfully captured in preview');
+                    return true;
+                } else {
+                    console.warn('Captured image appears to be black/empty');
+                    return false;
+                }
+                
+            } catch (error) {
+                console.warn('Error during map capture:', error);
+                return false;
+            }
         }
 
         function updatePrintPreview() {
@@ -8988,32 +9080,83 @@ Built with CesiumJS`;
             if (!viewer) return;
             
             try {
-                // Force render
+                // Force render and wait for completion
                 viewer.scene.requestRender();
                 
-                // Capture canvas after a short delay to ensure rendering
+                // Use a longer delay and ensure WebGL context is preserved
                 setTimeout(() => {
                     const canvas = viewer.scene.canvas;
                     const mapArea = document.getElementById('previewMapArea');
                     const previewCanvas = document.getElementById('previewMapCanvas');
                     
-                    if (canvas && previewCanvas) {
+                    if (canvas && previewCanvas && mapArea) {
                         const ctx = previewCanvas.getContext('2d');
                         previewCanvas.width = mapArea.offsetWidth - 2;
                         previewCanvas.height = mapArea.offsetHeight - 2;
                         
-                        // Draw the Cesium canvas to our preview canvas
-                        ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                        try {
+                            // Method 1: Try direct canvas copy with WebGL preservation
+                            ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                            console.log('Map image captured successfully');
+                        } catch (webglError) {
+                            console.warn('Direct canvas copy failed, trying alternative method:', webglError);
+                            
+                            // Method 2: Use canvas.toDataURL() approach
+                            try {
+                                const dataURL = canvas.toDataURL('image/png');
+                                const img = new Image();
+                                img.onload = function() {
+                                    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                                    ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                                    console.log('Map image captured via dataURL');
+                                };
+                                img.onerror = function() {
+                                    console.warn('Failed to load image from dataURL');
+                                    showMapPlaceholder();
+                                };
+                                img.src = dataURL;
+                            } catch (dataURLError) {
+                                console.warn('toDataURL method failed:', dataURLError);
+                                showMapPlaceholder();
+                            }
+                        }
+                    } else {
+                        console.warn('Canvas elements not found');
+                        showMapPlaceholder();
                     }
-                }, 100);
+                }, 500); // Increased delay for better WebGL stability
             } catch (error) {
                 console.warn('Failed to capture map image:', error);
-                // Show placeholder
-                const mapArea = document.getElementById('previewMapArea');
-                if (mapArea) {
-                    mapArea.innerHTML = '<div style="color: #999; font-size: 12px;">Map Preview<br>(Click Export to generate)</div>';
-                }
+                showMapPlaceholder();
             }
+        }
+
+        function showMapPlaceholder() {
+            const mapArea = document.getElementById('previewMapArea');
+            if (mapArea) {
+                mapArea.innerHTML = `
+                    <div style="color: #666; font-size: 14px; text-align: center; padding: 20px;">
+                        <div style="margin-bottom: 10px;">📍 Live Map View</div>
+                        <div style="font-size: 11px; color: #999;">
+                            Current view: ${getCurrentViewDescription()}<br>
+                            Map will be captured during export
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function getCurrentViewDescription() {
+            if (!viewer || !viewer.camera) return 'Loading...';
+            
+            const cartographic = viewer.camera.positionCartographic;
+            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+            const height = cartographic.height;
+            
+            const zoomLevel = Math.round(Math.log2(156543.03392 * Math.cos(latitude * Math.PI / 180) / height * 256));
+            
+            return `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}° (Zoom ${Math.max(0, zoomLevel)})`;
         }
 
         function calculateScaleBar() {
@@ -9136,13 +9279,50 @@ Built with CesiumJS`;
         }
 
         function exportAsPDF() {
-            alert('PDF export functionality would require a PDF library like jsPDF or html2pdf.js');
-            // Implementation would use a library like jsPDF or html2pdf.js
+            // First ensure we have a fresh map capture
+            captureMapImageWithRetry();
+            
+            setTimeout(() => {
+                alert('PDF export functionality would require a PDF library like jsPDF or html2pdf.js\n\nFor production use, install: npm install jspdf html2canvas');
+                // Production implementation would be:
+                // const { jsPDF } = window.jspdf;
+                // const pdf = new jsPDF();
+                // html2canvas(document.getElementById('previewPage')).then(canvas => {
+                //     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0);
+                //     pdf.save('map-export.pdf');
+                // });
+            }, 1000);
         }
 
         function exportAsPNG() {
-            alert('PNG export functionality would require a library like html2canvas or dom-to-image');
-            // Implementation would use a library like html2canvas
+            // First ensure we have a fresh map capture
+            captureMapImageWithRetry();
+            
+            setTimeout(() => {
+                // Try to export the preview canvas directly
+                const previewCanvas = document.getElementById('previewMapCanvas');
+                if (previewCanvas) {
+                    try {
+                        const link = document.createElement('a');
+                        link.download = `map-export-${new Date().toISOString().split('T')[0]}.png`;
+                        link.href = previewCanvas.toDataURL('image/png');
+                        link.click();
+                        console.log('Map exported as PNG');
+                    } catch (error) {
+                        console.warn('Direct PNG export failed:', error);
+                        alert('PNG export functionality would require a library like html2canvas or dom-to-image\n\nFor production use, install: npm install html2canvas');
+                        // Production implementation would be:
+                        // html2canvas(document.getElementById('previewPage')).then(canvas => {
+                        //     const link = document.createElement('a');
+                        //     link.download = 'map-export.png';
+                        //     link.href = canvas.toDataURL();
+                        //     link.click();
+                        // });
+                    }
+                } else {
+                    alert('No map preview available to export');
+                }
+            }, 1000);
         }
         
     </script>

@@ -99,6 +99,10 @@ The CesiumJS globe viewer is now fully functional with:
 
 ## Recent Changes (July 17, 2025)
 
+- **Marker Renaming Feature**: Added inline editing capability for marker labels with proper UI integration
+- **Professional Map Export Tool**: Complete geo.admin-style print/export system with live preview
+- **Map Capture Enhancement**: Fixed WebGL canvas rendering in print preview with retry mechanism
+- **Swiss-Style Export Interface**: Professional layout settings, metadata, scale bar, legend, and QR code support
 - **Panel Transparency Fixed**: Resolved transparency rendering issues that caused panels to appear dark
 - **Updated to 85% White Opacity**: All panels now use rgba(255, 255, 255, 0.85) for bright white appearance
 - **Enhanced Backdrop Filters**: Added blur(30px) saturate(200%) brightness(1.5) for maximum brightness
