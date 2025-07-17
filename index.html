@@ -665,12 +665,7 @@
             grid-template-columns: 1fr;
         }
         
-        /* Force right panel to always be visible */
-        #rightPanel {
-            display: grid !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
+
 
         /* Panel toggle button - consistent with left panel */
         .panel-toggle-btn {
@@ -2166,8 +2161,7 @@
     </div>
 
     <!-- Right Panel with Tool Icons - MapX Style -->
-    <div id="rightPanel" style="position: fixed !important; top: 10px !important; right: 10px !important; width: 200px !important; height: 300px !important; background: red !important; z-index: 99999 !important; display: block !important; visibility: visible !important; opacity: 1 !important;">
-        <div style="color: white; font-size: 24px; padding: 20px;">RIGHT PANEL TEST</div>
+    <div id="rightPanel">
         <div class="panel-toggle-btn" onclick="toggleRightPanel()" title="Collapse Panel">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -6395,22 +6389,6 @@
             setInterval(updateBottomBand, 1000);
             
             console.log('✓ Menu system initialized - left panel collapsed, right panel visible by default');
-            
-            // Create a test element to debug visibility issues
-            const testDiv = document.createElement('div');
-            testDiv.id = 'debugTest';
-            testDiv.innerHTML = 'DEBUG TEST VISIBLE';
-            testDiv.style.cssText = 'position: fixed !important; top: 50px !important; right: 50px !important; width: 200px !important; height: 100px !important; background: lime !important; color: black !important; font-size: 20px !important; z-index: 999999 !important; display: block !important; border: 5px solid purple !important; padding: 10px !important;';
-            document.body.appendChild(testDiv);
-            console.log('DEBUG: Test element created and added to body');
-            
-            // Check if rightPanel exists (reuse variable from above)
-            console.log('DEBUG: rightPanel found:', !!rightPanel);
-            if (rightPanel) {
-                console.log('DEBUG: rightPanel display:', window.getComputedStyle(rightPanel).display);
-                console.log('DEBUG: rightPanel visibility:', window.getComputedStyle(rightPanel).visibility);
-                console.log('DEBUG: rightPanel position:', window.getComputedStyle(rightPanel).position);
-            }
         });
 
         // Update bottom band information
