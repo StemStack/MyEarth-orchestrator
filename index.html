@@ -2175,6 +2175,69 @@
             opacity: 1 !important;
         }
 
+        /* Viewer-Integrated Print Mask - geo.admin.ch style */
+        .print-mask-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+        }
+        
+        .print-mask-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(64, 64, 64, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .print-mask-inner {
+            background: transparent;
+            box-shadow: inset 0 0 0 2px #fff, 0 0 50px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            position: relative;
+        }
+        
+        /* A4 Landscape default */
+        .print-mask-inner {
+            width: 297mm;
+            height: 210mm;
+            max-width: 90vw;
+            max-height: 80vh;
+        }
+        
+        .print-mask-inner.portrait {
+            width: 210mm;
+            height: 297mm;
+        }
+        
+        .print-mask-inner.a3 {
+            width: 420mm;
+            height: 297mm;
+        }
+        
+        .print-mask-inner.a3.portrait {
+            width: 297mm;
+            height: 420mm;
+        }
+        
+        .print-mask-inner.a5 {
+            width: 210mm;
+            height: 148mm;
+        }
+        
+        .print-mask-inner.a5.portrait {
+            width: 148mm;
+            height: 210mm;
+        }
+
         /* Map Export Tool Styles */
         .map-export-overlay {
             position: fixed;
@@ -2849,6 +2912,13 @@
     <!-- Color Picker Dropdown -->
     <div class="color-picker-dropdown" id="colorPickerDropdown">
         <!-- Color options will be dynamically inserted here -->
+    </div>
+
+    <!-- Viewer-Integrated Print Mask -->
+    <div id="printMaskOverlay" class="print-mask-overlay" style="display: none;">
+        <div class="print-mask-frame">
+            <div class="print-mask-inner"></div>
+        </div>
     </div>
 
     <!-- Map Export Tool Interface -->
@@ -8952,11 +9022,27 @@ Built with CesiumJS`;
         let mapExportData = {
             userLogo: null
         };
+        
+        // Set default A4 landscape
+        window.addEventListener('DOMContentLoaded', () => {
+            const paperSize = document.getElementById('paperSize');
+            const orientation = document.getElementById('orientation');
+            if (paperSize) paperSize.value = 'A4';
+            if (orientation) orientation.value = 'landscape';
+        });
 
         function openMapExportTool() {
             const overlay = document.getElementById('mapExportOverlay');
+            const printMask = document.getElementById('printMaskOverlay');
+            
             if (overlay) {
                 overlay.style.display = 'flex';
+                
+                // Show print mask on viewer
+                if (printMask) {
+                    printMask.style.display = 'block';
+                    updatePrintMaskSize();
+                }
                 
                 // Enable flat earth mode for clean export if not already enabled
                 if (!flatEarthMode && globalViewer) {
@@ -8969,11 +9055,41 @@ Built with CesiumJS`;
                 }, 100);
             }
         }
+        
+        function updatePrintMaskSize() {
+            const printMaskInner = document.querySelector('.print-mask-inner');
+            if (!printMaskInner) return;
+            
+            const paperSize = document.getElementById('paperSize')?.value || 'A4';
+            const orientation = document.getElementById('orientation')?.value || 'landscape';
+            
+            // Remove all size classes
+            printMaskInner.className = 'print-mask-inner';
+            
+            // Add size class
+            if (paperSize === 'A3') {
+                printMaskInner.classList.add('a3');
+            } else if (paperSize === 'A5') {
+                printMaskInner.classList.add('a5');
+            }
+            
+            // Add orientation
+            if (orientation === 'portrait') {
+                printMaskInner.classList.add('portrait');
+            }
+        }
 
         function closeMapExportTool() {
             const overlay = document.getElementById('mapExportOverlay');
+            const printMask = document.getElementById('printMaskOverlay');
+            
             if (overlay) {
                 overlay.style.display = 'none';
+            }
+            
+            // Hide print mask
+            if (printMask) {
+                printMask.style.display = 'none';
             }
             
             // Stop live preview updates
@@ -9174,6 +9290,14 @@ Built with CesiumJS`;
             if (orientation === 'landscape') {
                 previewPage.classList.add('landscape');
             }
+            if (paperSize === 'A3') {
+                previewPage.classList.add('a3');
+            } else if (paperSize === 'A5') {
+                previewPage.classList.add('a5');
+            }
+            
+            // Update print mask on viewer
+            updatePrintMaskSize();
             
             // Update title
             document.getElementById('previewTitle').textContent = title;
