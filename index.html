@@ -655,8 +655,8 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
-            max-height: 100vh;
-            overflow-y: visible;
+            max-height: none;
+            overflow: visible;
             transition: all 0.3s ease;
             padding: 10px;
             box-sizing: border-box;
@@ -2437,32 +2437,29 @@
             // Stop the interval after 5 seconds
             setTimeout(() => clearInterval(removeTimelineInterval2), 5000);
             
-            // Inject aggressive CSS to hide timeline
+            // Inject targeted CSS to hide only timeline elements
             const hideTimelineStyle = document.createElement('style');
             hideTimelineStyle.innerHTML = `
+                /* Only hide specific timeline containers */
                 .cesium-viewer-bottom,
                 .cesium-viewer-timelineContainer,
                 .cesium-timeline-main,
-                [class*="timeline"],
-                [class*="animation"],
-                #cesiumContainer > div > div:last-child,
-                .cesium-widget > div:last-child {
+                .cesium-timeline-container,
+                .cesium-animation-container,
+                .cesium-viewer-animationContainer {
                     display: none !important;
                     visibility: hidden !important;
                     height: 0 !important;
                     opacity: 0 !important;
-                    position: absolute !important;
-                    top: -9999px !important;
-                    left: -9999px !important;
-                    pointer-events: none !important;
-                    overflow: hidden !important;
                 }
                 
-                /* Ensure the viewer takes full height without timeline */
-                #cesiumContainer,
-                .cesium-viewer,
-                .cesium-widget {
-                    height: 100vh !important;
+                /* Ensure the main viewer canvas is visible */
+                .cesium-viewer-cesiumWidgetContainer,
+                .cesium-widget,
+                canvas.cesium-widget-canvas {
+                    display: block !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
                 }
                 
                 /* Fix right panel to show all tools */
