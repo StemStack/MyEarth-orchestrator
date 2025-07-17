@@ -1433,6 +1433,10 @@
             transition: all 0.2s ease;
         }
         
+        .layer-item[draggable="true"] {
+            cursor: grab;
+        }
+        
         .layer-item:hover {
             background: rgba(240, 240, 240, 0.9);
             transform: translateY(-1px);
@@ -1489,10 +1493,18 @@
             align-items: center;
             gap: 8px;
             pointer-events: auto;
+            -webkit-user-drag: none;
+            -moz-user-drag: none;
+            -ms-user-drag: none;
+            user-drag: none;
         }
         
         .layer-controls * {
             pointer-events: auto;
+            -webkit-user-drag: none;
+            -moz-user-drag: none;
+            -ms-user-drag: none;
+            user-drag: none;
         }
         
         .opacity-slider {
@@ -7301,9 +7313,9 @@
                     <div class="layer-drag-area">
                         <span class="layer-name">${layerInfo.name}</span>
                     </div>
-                    <div class="layer-controls">
-                        <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" draggable="false">
-                        <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" draggable="false">×</button>
+                    <div class="layer-controls" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">
+                        <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" draggable="false" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">
+                        <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" draggable="false" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">×</button>
                     </div>
                 `;
                 
@@ -7314,6 +7326,19 @@
                 layerItem.addEventListener('dragleave', handleLayerDragLeave);
                 layerItem.addEventListener('drop', handleLayerDrop);
                 layerItem.addEventListener('dragend', handleLayerDragEnd);
+                
+                // Prevent drag on controls
+                const controls = layerItem.querySelector('.layer-controls');
+                if (controls) {
+                    controls.addEventListener('dragstart', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    });
+                    controls.addEventListener('mousedown', function(e) {
+                        e.stopPropagation();
+                    });
+                }
                 
                 layersContainer.appendChild(layerItem);
             });
