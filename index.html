@@ -6497,20 +6497,32 @@
                     const pixelDistance = width * 0.2; // 20% of screen width
                     const metersPerPixel = distance / pixelDistance;
                     
-                    // Calculate appropriate scale for 100px base line
-                    const basePixels = 100;
-                    const baseDistance = metersPerPixel * basePixels;
+                    // Calculate appropriate scale for different base line sizes to get better scale values
+                    let basePixels = 100;
+                    let baseDistance = metersPerPixel * basePixels;
+                    
+                    // If the base distance would result in very large values, try different pixel bases
+                    if (baseDistance > 100000) { // > 100km
+                        basePixels = 50; // Use smaller base for very large scales
+                        baseDistance = metersPerPixel * basePixels;
+                    }
                     
                     // Round to nice scale values
                     let scaleDistance, scalePixels, scaleLabel;
                     
                     if (baseDistance >= 1000) {
-                        // For kilometers, use round numbers: 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000
+                        // For kilometers, use expanded range including 2000, 5000, 10000, 20000, 50000
                         const kmDistance = baseDistance / 1000;
                         const roundedKm = getRoundScaleValue(kmDistance);
                         scaleDistance = roundedKm * 1000;
                         scalePixels = (scaleDistance / metersPerPixel);
-                        scaleLabel = `${roundedKm} km`;
+                        
+                        // Format large numbers appropriately
+                        if (roundedKm >= 1000) {
+                            scaleLabel = `${roundedKm.toLocaleString()} km`;
+                        } else {
+                            scaleLabel = `${roundedKm} km`;
+                        }
                     } else {
                         // For meters, use round numbers: 1, 2, 5, 10, 20, 50, 100, 200, 500
                         const roundedM = getRoundScaleValue(baseDistance);
