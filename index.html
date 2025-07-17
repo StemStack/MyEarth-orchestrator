@@ -644,16 +644,16 @@
             overflow-y: auto;
         }
 
-        /* Right Panel Styles - MapX Style */
+        /* Right Panel Styles - Single Vertical Column */
         #rightPanel {
             position: fixed !important;
             top: 10px !important;
             right: 10px !important;
-            width: 70px;
+            width: 40px;
             background: transparent !important;
             z-index: 999;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 4px;
             max-height: calc(100vh - 200px);
             overflow-y: auto;
@@ -661,8 +661,9 @@
         }
 
         #rightPanel.collapsed {
-            width: 35px;
-            grid-template-columns: 1fr;
+            width: 0px;
+            opacity: 0;
+            visibility: hidden;
         }
         
 
