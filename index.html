@@ -2380,14 +2380,8 @@
 
 
 
-    <!-- Floating menu button for collapsed left panel -->
-    <div class="floating-toggle" id="floatingToggle" onclick="toggleLeftPanel()" style="display: none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </div>
+
+
 
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
@@ -6631,13 +6625,10 @@
             const leftPanel = document.getElementById('leftPanel');
             const rightPanel = document.getElementById('rightPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
-            const floatingToggle = document.getElementById('floatingToggle');
-            
             // Start with both panels collapsed by default
             if (leftPanel) {
                 leftPanel.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
-                if (floatingToggle) floatingToggle.style.display = 'flex';
             }
             
             if (rightPanel) {
@@ -6647,15 +6638,7 @@
             // Initialize bottom band updates
             setInterval(updateBottomBand, 1000);
             
-            // Toggle functions for panel controls
-        function toggleLeftPanel() {
-            const leftPanel = document.getElementById('leftPanel');
-            if (leftPanel) {
-                leftPanel.classList.toggle('collapsed');
-                const isCollapsed = leftPanel.classList.contains('collapsed');
-                console.log(isCollapsed ? 'Left panel collapsed' : 'Left panel expanded');
-            }
-        }
+            // Toggle functions for panel controls are defined later
         
         function toggleRightPanel() {
             const rightPanel = document.getElementById('rightPanel');
@@ -6907,19 +6890,16 @@
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
-            const floatingToggle = document.getElementById('floatingToggle');
             
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
                 cesiumContainer.classList.add('with-left-panel');
-                if (floatingToggle) floatingToggle.style.display = 'none';
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
-                if (floatingToggle) floatingToggle.style.display = 'flex';
                 console.log('Left panel collapsed');
             }
         }
