@@ -674,7 +674,7 @@
         #rightPanel.collapsed .panel-toggle-btn {
             display: flex !important;
             position: absolute !important;
-            left: 25px !important;
+            right: -15px !important;
             top: 10px !important;
             margin: 0 !important;
             width: 30px !important;
@@ -692,7 +692,7 @@
         /* Panel toggle button - exactly same as left panel */
         .panel-toggle-btn {
             position: absolute;
-            top: 15px;
+            top: 10px;
             right: -15px;
             width: 30px;
             height: 30px;
@@ -706,6 +706,7 @@
             color: #666;
             z-index: 1001;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
 
@@ -803,7 +804,7 @@
         
         .sidebar.collapsed .sidebar-toggle {
             position: absolute !important;
-            left: 25px !important;
+            right: 15px !important;
             top: 10px !important;
             margin: 0 !important;
             display: flex !important;
@@ -1099,13 +1100,13 @@
 
         .sidebar-toggle {
             position: absolute;
-            top: 15px;
+            top: 10px;
             right: 15px;
             width: 30px;
             height: 30px;
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid #ddd;
-            border-radius: 3px;
+            border-radius: 50%;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -1114,6 +1115,7 @@
             color: #333;
             z-index: 1001;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         /* Floating menu button when sidebar is collapsed - maps.geo.admin style */
@@ -2383,14 +2385,7 @@
 
 
 
-    <!-- Floating menu button for collapsed left panel -->
-    <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()" style="display: none;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </button>
+
 
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
@@ -6638,8 +6633,6 @@
             if (leftPanel) {
                 leftPanel.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
-                const floatingButton = document.getElementById('floatingMenuButton');
-                if (floatingButton) floatingButton.style.display = 'flex';
             }
             
             if (rightPanel) {
@@ -6901,19 +6894,16 @@
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
-            const floatingButton = document.getElementById('floatingMenuButton');
             
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
                 cesiumContainer.classList.add('with-left-panel');
-                if (floatingButton) floatingButton.style.display = 'none';
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
-                if (floatingButton) floatingButton.style.display = 'flex';
                 console.log('Left panel collapsed');
             }
         }
