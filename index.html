@@ -649,7 +649,7 @@
             position: fixed !important;
             top: 10px !important;
             right: 10px !important;
-            width: 80px;
+            width: 70px;
             background: transparent !important;
             z-index: 999;
             display: grid;
@@ -661,7 +661,7 @@
         }
 
         #rightPanel.collapsed {
-            width: 40px;
+            width: 35px;
             grid-template-columns: 1fr;
         }
         
@@ -694,8 +694,8 @@
 
         /* MapX Style Tool Icons - Smaller, No Frame */
         .tool-icon {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: rgba(255,255,255,0.9);
             border: none;
@@ -2445,12 +2445,24 @@
             });
             
             // Also check for any bottom containers that might contain timeline
-            const bottomContainers = document.querySelectorAll('[class*="timeline"], [class*="animation"]');
+            const bottomContainers = document.querySelectorAll('[class*="timeline"], [class*="animation"], [class*="bottom"]');
             bottomContainers.forEach(el => {
-                if (el && (el.className.includes('cesium') || el.className.includes('timeline'))) {
+                if (el && (el.className.includes('cesium') || el.className.includes('timeline') || el.className.includes('animation'))) {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.style.opacity = '0';
+                    el.style.height = '0';
+                    el.style.width = '0';
                     el.remove();
                 }
             });
+            
+            // Force hide the bottom container specifically
+            const bottomContainer = document.querySelector('.cesium-viewer-bottom');
+            if (bottomContainer) {
+                bottomContainer.style.display = 'none !important';
+                bottomContainer.remove();
+            }
         }, 500);
         
         // Stop checking after 10 seconds
