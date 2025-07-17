@@ -663,8 +663,8 @@
         }
 
         #rightPanel.collapsed {
-            width: 20px;
-            padding: 5px;
+            width: 50px;
+            padding: 10px;
         }
         
         #rightPanel.collapsed .tool-icon {
@@ -673,10 +673,18 @@
         
         #rightPanel.collapsed .panel-toggle-btn {
             display: flex !important;
-            position: relative;
-            top: 0;
-            right: 0;
-            margin: 0;
+            position: absolute !important;
+            left: 15px !important;
+            top: 10px !important;
+            margin: 0 !important;
+            width: 30px !important;
+            height: 30px !important;
+            background: rgba(255,255,255,0.9) !important;
+            border: 1px solid #ddd !important;
+            border-radius: 50% !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         }
         
 
@@ -700,21 +708,7 @@
             transition: all 0.2s ease;
         }
         
-        #rightPanel.collapsed .panel-toggle-btn {
-            position: absolute !important;
-            left: 15px !important;
-            top: 10px !important;
-            margin: 0 !important;
-            display: flex !important;
-            width: 30px !important;
-            height: 30px !important;
-            background: rgba(255,255,255,0.9) !important;
-            border: 1px solid #ddd !important;
-            border-radius: 50% !important;
-            align-items: center !important;
-            justify-content: center !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-        }
+
         
         /* No rotation needed for hamburger menus - they stay the same */
 
