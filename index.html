@@ -832,6 +832,109 @@
             bottom: 0 !important;
             height: 100% !important;
         }
+
+        /* Top Panel Styling */
+        .top-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 2000;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+
+        .top-panel-left {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .app-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .top-panel-middle {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 4px 8px;
+            min-width: 300px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 6px 12px;
+            font-size: 14px;
+            border-radius: 20px;
+        }
+
+        .search-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .search-button:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: #333;
+        }
+
+        .top-panel-right {
+            flex: 1;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .contact-info {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .contact-info a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* Adjust main container to account for top panel */
+        #cesiumContainer {
+            top: 40px !important;
+            height: calc(100vh - 40px) !important;
+        }
         
         /* Target specific timeline elements more precisely */
         .cesium-viewer .cesium-viewer-bottom,
@@ -1996,6 +2099,27 @@
 </head>
 
 <body>
+    <!-- Top Panel -->
+    <div class="top-panel">
+        <div class="top-panel-left">
+            <span class="app-title">My Earth</span>
+        </div>
+        <div class="top-panel-middle">
+            <div class="search-container">
+                <input type="text" id="topSearchInput" placeholder="Search locations..." class="search-input">
+                <button id="topSearchButton" class="search-button">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/>
+                        <path d="m21 21-4.35-4.35"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <div class="top-panel-right">
+            <span class="contact-info">Contact: <a href="mailto:support@myearth.app">support@myearth.app</a></span>
+        </div>
+    </div>
+
     <!-- Main Cesium container -->
     <div id="cesiumContainer"></div>
     
@@ -3053,13 +3177,16 @@
         }
 
         // Universal search functionality
-        async function performSearch() {
-            const query = searchInput.value.trim();
+        async function performSearch(queryOverride = null) {
+            const query = queryOverride || searchInput.value.trim();
             if (!query) return;
 
             // Show loading spinner
-            loadingSpinner.style.display = 'block';
-            searchButton.disabled = true;
+            const spinner = loadingSpinner;
+            const button = searchButton;
+            
+            if (spinner) spinner.style.display = 'block';
+            if (button) button.disabled = true;
 
             try {
                 // Check if input is coordinates
@@ -3072,7 +3199,9 @@
                     const result = await geocodeLocation(query);
                     if (result) {
                         flyToLocation(result.lat, result.lon);
-                        searchInput.value = '';
+                        if (searchInput) searchInput.value = '';
+                        const topSearchInput = document.getElementById('topSearchInput');
+                        if (topSearchInput) topSearchInput.value = '';
                     } else {
                         alert('Location not found. Please try a different search term.');
                     }
@@ -3081,8 +3210,8 @@
                 alert('Search failed. Please check your internet connection and try again.');
             } finally {
                 // Hide loading spinner
-                loadingSpinner.style.display = 'none';
-                searchButton.disabled = false;
+                if (spinner) spinner.style.display = 'none';
+                if (button) button.disabled = false;
             }
         }
 
@@ -3196,7 +3325,27 @@
         }
 
         // Add search event listeners
-        searchButton.addEventListener('click', performSearch);
+        if (searchButton) {
+            searchButton.addEventListener('click', performSearch);
+        }
+        
+        // Add top search event listeners
+        const topSearchInput = document.getElementById('topSearchInput');
+        const topSearchButton = document.getElementById('topSearchButton');
+        
+        if (topSearchButton) {
+            topSearchButton.addEventListener('click', function() {
+                performSearch(topSearchInput.value.trim());
+            });
+        }
+        
+        if (topSearchInput) {
+            topSearchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    performSearch(topSearchInput.value.trim());
+                }
+            });
+        }
         
         // Enhanced input event listeners
         searchInput.addEventListener('input', handleInputChange);
