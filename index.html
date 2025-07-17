@@ -663,7 +663,7 @@
         }
 
         #rightPanel.collapsed {
-            width: 50px;
+            width: 80px;
             padding: 10px;
         }
         
@@ -674,7 +674,7 @@
         #rightPanel.collapsed .panel-toggle-btn {
             display: flex !important;
             position: absolute !important;
-            left: 15px !important;
+            left: 25px !important;
             top: 10px !important;
             margin: 0 !important;
             width: 30px !important;
@@ -715,6 +715,31 @@
         .panel-toggle-btn:hover {
             background: white;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Floating toggle button for collapsed left panel */
+        .floating-toggle {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.95);
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1002;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s ease;
+        }
+
+        .floating-toggle:hover {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: scale(1.05);
         }
 
         /* Single Column Tool Icons */
@@ -2353,14 +2378,16 @@
 
 
 
-    <!-- Floating menu button (appears when sidebar is collapsed) -->
-    <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()">
+
+
+    <!-- Floating menu button for collapsed left panel -->
+    <div class="floating-toggle" id="floatingToggle" onclick="toggleLeftPanel()" style="display: none;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
-    </button>
+    </div>
 
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
@@ -6603,21 +6630,18 @@
         document.addEventListener('DOMContentLoaded', function() {
             const leftPanel = document.getElementById('leftPanel');
             const rightPanel = document.getElementById('rightPanel');
-            const floatingButton = document.getElementById('floatingMenuButton');
             const cesiumContainer = document.getElementById('cesiumContainer');
+            const floatingToggle = document.getElementById('floatingToggle');
             
             // Start with both panels collapsed by default
             if (leftPanel) {
                 leftPanel.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
+                if (floatingToggle) floatingToggle.style.display = 'flex';
             }
             
             if (rightPanel) {
                 rightPanel.classList.remove('collapsed');
-            }
-            
-            if (floatingButton) {
-                floatingButton.style.display = 'flex';
             }
             
             // Initialize bottom band updates
@@ -6883,27 +6907,19 @@
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
-            const floatingButton = document.getElementById('floatingMenuButton');
+            const floatingToggle = document.getElementById('floatingToggle');
             
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
-                leftPanelElement.style.transform = ''; // Remove inline style to use CSS
                 cesiumContainer.classList.add('with-left-panel');
-                if (floatingButton) {
-                    floatingButton.style.display = 'none';
-                }
+                if (floatingToggle) floatingToggle.style.display = 'none';
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
-                leftPanelElement.style.transform = ''; // Remove inline style to use CSS
                 cesiumContainer.classList.remove('with-left-panel');
-                setTimeout(() => {
-                    if (floatingButton) {
-                        floatingButton.style.display = 'flex';
-                    }
-                }, 300);
+                if (floatingToggle) floatingToggle.style.display = 'flex';
                 console.log('Left panel collapsed');
             }
         }
