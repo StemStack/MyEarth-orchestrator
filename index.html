@@ -6717,7 +6717,7 @@ Built with CesiumJS`;
             const label = `Marker ${markerCount}`;
             
             const marker = createMarker(longitude, latitude, label, color);
-            updateMarkersList();
+            updatePointsUI(); // Update the correct UI
         }
 
         function updateMarkersList() {
@@ -6746,7 +6746,7 @@ Built with CesiumJS`;
             if (marker) {
                 viewer.entities.remove(marker.entity);
                 markers.delete(markerId);
-                updateMarkersList();
+                updatePointsUI(); // Update the correct UI
             }
         }
 
