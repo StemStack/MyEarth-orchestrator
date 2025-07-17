@@ -3016,8 +3016,19 @@
                 <polygon points="12,22 8,12 12,14 16,12" fill="white" stroke="black" stroke-width="1"/>
             </svg>
         </div>
+        
+        <!-- 2. Flat Earth Mode Toggle -->
+        <div class="tool-icon" id="flatEarthTool" title="Toggle Flat Earth Mode" onclick="toggleFlatEarthMode()">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+                <rect x="2" y="6" width="20" height="12" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+                <line x1="7" y1="6" x2="7" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+                <line x1="12" y1="6" x2="12" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+                <line x1="17" y1="6" x2="17" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+            </svg>
+        </div>
 
-        <!-- 2. Home Tool -->
+        <!-- 3. Home Tool -->
         <div class="tool-icon" id="resetViewTool" title="Home View" onclick="resetView()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3025,7 +3036,7 @@
             </svg>
         </div>
 
-        <!-- 3. Zoom In "+" Tool -->
+        <!-- 4. Zoom In "+" Tool -->
         <div class="tool-icon" id="zoomInTool" title="Zoom In" onclick="zoomIn()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3035,7 +3046,7 @@
             </svg>
         </div>
 
-        <!-- 4. Zoom Out "-" Tool -->
+        <!-- 5. Zoom Out "-" Tool -->
         <div class="tool-icon" id="zoomOutTool" title="Zoom Out" onclick="zoomOut()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3119,6 +3130,10 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
+        // Global state variables
+        let flatEarthMode = false;
+        let globalViewer = null;
+        
         // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
         if (typeof Cesium !== 'undefined') {
             // Disable Ion access tokens and servers
@@ -3173,6 +3188,9 @@
             creditsElement.style.display = 'none';
         }
 
+        // Store viewer globally for access from other functions
+        globalViewer = viewer;
+        
         // Aggressively remove ALL remaining CesiumJS UI elements
         setTimeout(() => {
             const elementsToHide = [
@@ -8921,6 +8939,12 @@ Built with CesiumJS`;
             const overlay = document.getElementById('mapExportOverlay');
             if (overlay) {
                 overlay.style.display = 'flex';
+                
+                // Enable flat earth mode for clean export if not already enabled
+                if (!flatEarthMode && globalViewer) {
+                    toggleFlatEarthMode();
+                }
+                
                 // Delay initialization to ensure DOM is ready
                 setTimeout(() => {
                     initializePrintPreview();
@@ -9487,6 +9511,97 @@ Built with CesiumJS`;
                     console.error('Direct test error:', error);
                     ctx.fillStyle = 'red';
                     ctx.fillText('Error: ' + error.message, 10, 50);
+                }
+            }, 100);
+        }
+
+        // Toggle between 3D globe and 2D flat Earth mode
+        function toggleFlatEarthMode() {
+            if (!globalViewer) {
+                console.warn('Viewer not initialized');
+                return;
+            }
+            
+            // Store current camera position
+            const camera = globalViewer.camera;
+            const position = camera.position.clone();
+            const heading = camera.heading;
+            const pitch = camera.pitch;
+            const roll = camera.roll;
+            
+            // Toggle mode
+            flatEarthMode = !flatEarthMode;
+            
+            if (flatEarthMode) {
+                // Switch to 2D mode
+                globalViewer.scene.mode = Cesium.SceneMode.SCENE2D;
+                
+                // Disable terrain and shadows for clean 2D view
+                globalViewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
+                globalViewer.scene.globe.enableLighting = false;
+                globalViewer.scene.sun.show = false;
+                globalViewer.scene.moon.show = false;
+                globalViewer.scene.skyAtmosphere.show = false;
+                
+                console.log('Switched to Flat Earth Mode (2D)');
+            } else {
+                // Switch back to 3D mode
+                globalViewer.scene.mode = Cesium.SceneMode.SCENE3D;
+                
+                // Re-enable terrain if it was enabled before
+                if (terrainEnabled) {
+                    globalViewer.terrainProvider = Cesium.createWorldTerrain({
+                        requestWaterMask: false,
+                        requestVertexNormals: true
+                    });
+                }
+                
+                // Re-enable atmosphere and lighting
+                globalViewer.scene.globe.enableLighting = true;
+                globalViewer.scene.sun.show = true;
+                globalViewer.scene.moon.show = true;
+                globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
+                
+                console.log('Switched to Globe Mode (3D)');
+            }
+            
+            // Update tool icon appearance
+            const flatEarthTool = document.getElementById('flatEarthTool');
+            if (flatEarthTool) {
+                if (flatEarthMode) {
+                    flatEarthTool.classList.add('active');
+                } else {
+                    flatEarthTool.classList.remove('active');
+                }
+            }
+            
+            // Try to preserve camera view after mode switch
+            setTimeout(() => {
+                try {
+                    if (flatEarthMode) {
+                        // In 2D mode, set a reasonable view
+                        const center = Cesium.Cartographic.fromCartesian(position);
+                        globalViewer.scene.camera.setView({
+                            destination: Cesium.Rectangle.fromDegrees(
+                                Cesium.Math.toDegrees(center.longitude) - 20,
+                                Cesium.Math.toDegrees(center.latitude) - 20,
+                                Cesium.Math.toDegrees(center.longitude) + 20,
+                                Cesium.Math.toDegrees(center.latitude) + 20
+                            )
+                        });
+                    } else {
+                        // Restore 3D view
+                        camera.setView({
+                            destination: position,
+                            orientation: {
+                                heading: heading,
+                                pitch: pitch,
+                                roll: roll
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.warn('Could not restore camera position:', error);
                 }
             }, 100);
         }
