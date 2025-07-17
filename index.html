@@ -8142,8 +8142,8 @@ Built with CesiumJS`;
             console.log('Precise marker placement system initialized');
         }
 
-        // Initialize marker placement system
-        initializeMarkerPlacement();
+        // Don't initialize marker placement on page load - only when marker panel is activated
+        // initializeMarkerPlacement();
 
         console.log('CesiumJS Globe Viewer initialized successfully');
         /**
