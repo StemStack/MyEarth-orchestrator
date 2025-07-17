@@ -6516,6 +6516,9 @@
                 let basePixels = 100;
                 let baseDistance = metersPerPixel * basePixels;
                 
+                // Debug logging to understand the issue
+                console.log(`Scale debug: baseDistance=${Math.round(baseDistance/1000)}km, metersPerPixel=${Math.round(metersPerPixel)}`);
+                
                 // For very large scales, use smaller pixel base to get appropriate scale values
                 if (baseDistance > 500000) { // > 500km
                     basePixels = 20;
@@ -6535,6 +6538,8 @@
                     scaleDistance = roundedKm * 1000;
                     scalePixels = (scaleDistance / metersPerPixel);
                     
+                    console.log(`Scale result: ${roundedKm}km from ${Math.round(kmDistance)}km input`);
+                    
                     // Format large numbers appropriately
                     if (roundedKm >= 1000) {
                         scaleLabel = `${roundedKm.toLocaleString()} km`;
@@ -6547,6 +6552,7 @@
                     scaleDistance = roundedM;
                     scalePixels = (scaleDistance / metersPerPixel);
                     scaleLabel = `${roundedM} m`;
+                    console.log(`Scale result: ${roundedM}m from ${Math.round(baseDistance)}m input`);
                 }
                 
                 scaleLine.style.width = `${Math.max(20, Math.min(150, scalePixels))}px`;
