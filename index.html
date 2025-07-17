@@ -648,23 +648,25 @@
         #rightPanel {
             position: fixed !important;
             top: 10px !important;
-            right: 5px !important;
-            width: 42px;
+            right: 15px !important;
+            width: 50px;
             background: transparent !important;
             z-index: 999;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
             max-height: calc(100vh - 200px);
             overflow-y: auto;
             transition: all 0.3s ease;
+            padding: 5px;
         }
 
         #rightPanel.collapsed {
             width: 0px;
             opacity: 0;
             visibility: hidden;
-            margin-right: -50px;
+            margin-right: -70px;
+            padding: 0;
         }
         
 
@@ -696,8 +698,8 @@
 
         /* Single Column Tool Icons */
         .tool-icon {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             background: rgba(255,255,255,0.9);
             border: none;
@@ -710,6 +712,7 @@
             color: #333;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             font-weight: 400;
+            margin: 0 auto;
         }
 
         .tool-icon:hover {
@@ -2411,6 +2414,26 @@
                     el.remove(); // Completely remove from DOM
                 });
             });
+            
+            // Additional aggressive timeline and animation removal
+            const removeTimelineInterval = setInterval(() => {
+                const timelineElements = document.querySelectorAll('[class*="cesium-timeline"], [class*="cesium-animation"], [class*="cesium-viewer-bottom"]');
+                if (timelineElements.length > 0) {
+                    timelineElements.forEach(el => {
+                        el.style.display = 'none !important';
+                        el.style.visibility = 'hidden !important';
+                        el.style.height = '0 !important';
+                        el.style.width = '0 !important';
+                        el.style.position = 'absolute !important';
+                        el.style.top = '-9999px !important';
+                        el.style.left = '-9999px !important';
+                        el.remove();
+                    });
+                }
+            }, 100);
+            
+            // Stop the interval after 5 seconds
+            setTimeout(() => clearInterval(removeTimelineInterval), 5000);
             
             console.log('✓ All CesiumJS UI elements forcibly removed');
         
