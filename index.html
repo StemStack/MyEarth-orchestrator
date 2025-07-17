@@ -1428,7 +1428,7 @@
             background: rgba(255, 255, 255, 0.9);
             border: 1px solid #ddd;
             border-radius: 3px;
-            cursor: move;
+            cursor: default;
             font-size: 11px;
             transition: all 0.2s ease;
         }
@@ -1452,8 +1452,19 @@
         .layer-drag-handle {
             color: #999;
             margin-right: 6px;
-            cursor: ns-resize;
+            cursor: grab;
             user-select: none;
+            padding: 2px;
+            border-radius: 2px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .layer-drag-handle:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        .layer-drag-handle:active {
+            cursor: grabbing;
         }
 
         .layer-info {
@@ -7239,7 +7250,7 @@
                 layerItem.style.cursor = 'move';
                 
                 layerItem.innerHTML = `
-                    <div class="layer-drag-handle">
+                    <div class="layer-drag-handle" title="Drag to reorder layers">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="3" y1="6" x2="21" y2="6"/>
                             <line x1="3" y1="12" x2="21" y2="12"/>
@@ -7249,7 +7260,7 @@
                     <div class="layer-info">
                         <span class="layer-name">${layerInfo.name}</span>
                         <div class="layer-controls">
-                            <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)">
+                            <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" onclick="event.stopPropagation()">
                             <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')">×</button>
                         </div>
                     </div>
@@ -7292,6 +7303,12 @@
         let draggedElement = null;
         
         function handleLayerDragStart(e) {
+            // Only allow drag from the drag handle
+            if (!e.target.closest('.layer-drag-handle')) {
+                e.preventDefault();
+                return false;
+            }
+            
             draggedElement = this;
             this.style.opacity = '0.5';
             e.dataTransfer.effectAllowed = 'move';
