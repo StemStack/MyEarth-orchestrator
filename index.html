@@ -708,14 +708,7 @@
             margin: 0 auto;
         }
         
-        /* Rotate arrow icons when panels are collapsed */
-        .sidebar.collapsed .sidebar-toggle svg {
-            transform: rotate(180deg);
-        }
-        
-        #rightPanel.collapsed .panel-toggle-btn svg {
-            transform: rotate(180deg);
-        }
+        /* No rotation needed for hamburger menus - they stay the same */
 
         .panel-toggle-btn:hover {
             background: white;
@@ -771,7 +764,7 @@
 
         /* Left Panel Collapse State */
         .sidebar.collapsed {
-            transform: translateX(-240px) !important;
+            transform: translateX(-230px) !important;
             width: 50px !important;
         }
         
@@ -1911,7 +1904,9 @@
     <div class="sidebar" id="leftPanel">
         <div class="sidebar-toggle" onclick="toggleLeftPanel()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="15,18 9,12 15,6"></polyline>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </div>
         <div class="sidebar-header">
@@ -2264,7 +2259,9 @@
     <div id="rightPanel">
         <div class="panel-toggle-btn" onclick="toggleRightPanel()" title="Collapse Panel">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="9,18 15,12 9,6"></polyline>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </div>
         
