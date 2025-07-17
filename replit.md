@@ -109,6 +109,9 @@ The CesiumJS globe viewer is now fully functional with:
 - **Right Panel Frame Removed**: Made right panel background transparent - tools now float without frame
 - **Mobile Sidebar Fix**: Fixed Performance section accessibility by adjusting height calculation and adding proper spacing
 - **Professional Visual Effect**: Clean white transparency with blur effects for modern UI appearance
+- **EPSG:4326 Projection Fix**: Implemented proper Equirectangular (Geographic) projection for 2D Flat Earth Mode
+- **WMS Layer Projection Support**: Added dynamic tilingScheme switching for WMS layers based on projection mode
+- **Protected Areas Layer Fix**: Converted from tile service to WMS for proper Geographic projection support
 
 ## Previous Changes (July 16, 2025)
 

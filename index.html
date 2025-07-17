@@ -3587,17 +3587,30 @@
         viewer.imageryLayers.removeAll();
         
         // Function to load base map with appropriate projection
-        function loadBaseMapWithProjection(url, subdomains, credit) {
-            const tilingScheme = flatEarthMode ? 
-                new Cesium.GeographicTilingScheme() : 
-                new Cesium.WebMercatorTilingScheme();
-                
-            return new Cesium.UrlTemplateImageryProvider({
-                url: url,
-                subdomains: subdomains,
-                credit: credit,
-                tilingScheme: tilingScheme
-            });
+        function loadBaseMapWithProjection(url, subdomains, credit, useGeographicTiles = false) {
+            // For 2D mode with Geographic projection, we need special handling
+            if (flatEarthMode && !useGeographicTiles) {
+                // Most tile servers use Web Mercator tiles even in Geographic projection
+                // We'll let Cesium handle the reprojection
+                return new Cesium.UrlTemplateImageryProvider({
+                    url: url,
+                    subdomains: subdomains,
+                    credit: credit,
+                    tilingScheme: new Cesium.WebMercatorTilingScheme()
+                });
+            } else {
+                // Standard tile loading
+                const tilingScheme = useGeographicTiles ? 
+                    new Cesium.GeographicTilingScheme() : 
+                    new Cesium.WebMercatorTilingScheme();
+                    
+                return new Cesium.UrlTemplateImageryProvider({
+                    url: url,
+                    subdomains: subdomains,
+                    credit: credit,
+                    tilingScheme: tilingScheme
+                });
+            }
         }
         
         // Add default OSM base map
@@ -8099,9 +8112,10 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}',
+                url: 'https://data-gis.unep-wcmc.org/arcgis/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/WMSServer',
                 name: 'World Database of Protected Areas',
-                type: 'tile',
+                type: 'wms',
+                layers: '0',
                 format: 'image/png',
                 transparent: true
             },
@@ -8131,18 +8145,25 @@ Built with CesiumJS`;
                     
                     if (service.type === 'wms') {
                         // Create WMS imagery provider for proper WMS services
+                        // Most WMS servers support both projections, so we can use Geographic in 2D mode
+                        const tilingScheme = flatEarthMode && globalViewer.scene.mode === Cesium.SceneMode.SCENE2D ?
+                            new Cesium.GeographicTilingScheme() : new Cesium.WebMercatorTilingScheme();
+                            
                         imageryProvider = new Cesium.WebMapServiceImageryProvider({
                             url: service.url,
                             layers: service.layers || '0',
                             parameters: {
                                 format: service.format || 'image/png',
                                 transparent: service.transparent !== false,
-                                version: '1.3.0'
+                                version: '1.3.0',
+                                crs: flatEarthMode ? 'EPSG:4326' : 'EPSG:3857'
                             },
-                            credit: service.name
+                            credit: service.name,
+                            tilingScheme: tilingScheme
                         });
                     } else {
                         // Create reliable tile imagery provider for tile services
+                        // Tile services typically only support Web Mercator
                         imageryProvider = new Cesium.UrlTemplateImageryProvider({
                             url: service.url,
                             credit: service.name
@@ -9824,10 +9845,7 @@ Built with CesiumJS`;
                 const currentView = globalViewer.camera.positionCartographic;
                 
                 // Switch to 2D mode with Geographic projection
-                globalViewer.scene.morphTo2D(0); // Instant morph
-                
-                // Force the projection change
-                globalViewer.scene.mapProjection = geographicProjection;
+                globalViewer.scene.mode = Cesium.SceneMode.SCENE2D;
                 
                 // Disable terrain and shadows for clean 2D view
                 globalViewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
@@ -9840,30 +9858,11 @@ Built with CesiumJS`;
                 globalViewer.scene.screenSpaceCameraController.enableRotate = false;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = false;
                 
-                // Wait a moment for mode switch to complete
-                setTimeout(() => {
-                    // Reload base map with Geographic tiling scheme
-                    const currentImagery = globalViewer.imageryLayers.get(0);
-                    if (currentImagery) {
-                        const provider = currentImagery.imageryProvider;
-                        globalViewer.imageryLayers.remove(currentImagery);
-                        
-                        // Re-add with Geographic tiling scheme
-                        const newProvider = loadBaseMapWithProjection(
-                            provider._url || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            provider._subdomains || ['a', 'b', 'c'],
-                            provider._credit || '© OpenStreetMap contributors'
-                        );
-                        globalViewer.imageryLayers.addImageryProvider(newProvider);
-                    }
-                    
-                    // Force re-render with new projection
-                    globalViewer.scene.requestRender();
-                    console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection (EPSG:4326)');
-                }, 100);
+                // Configure 2D view properly
+                console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection (EPSG:4326)');
             } else {
                 // Switch back to 3D mode
-                globalViewer.scene.morphTo3D(0); // Instant morph
+                globalViewer.scene.mode = Cesium.SceneMode.SCENE3D;
                 
                 // Re-enable terrain if it was enabled before
                 if (terrainEnabled) {
@@ -9882,25 +9881,7 @@ Built with CesiumJS`;
                 globalViewer.scene.screenSpaceCameraController.enableRotate = true;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = true;
                 
-                // Wait for mode switch
-                setTimeout(() => {
-                    // Reload base map with Web Mercator tiling scheme
-                    const currentImagery = globalViewer.imageryLayers.get(0);
-                    if (currentImagery) {
-                        const provider = currentImagery.imageryProvider;
-                        globalViewer.imageryLayers.remove(currentImagery);
-                        
-                        // Re-add with Web Mercator tiling scheme
-                        const newProvider = loadBaseMapWithProjection(
-                            provider._url || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            provider._subdomains || ['a', 'b', 'c'],
-                            provider._credit || '© OpenStreetMap contributors'
-                        );
-                        globalViewer.imageryLayers.addImageryProvider(newProvider);
-                    }
-                    
-                    console.log('Switched to Globe Mode (3D)');
-                }, 100);
+                console.log('Switched to Globe Mode (3D)');
             }
             
             // Update tool icon appearance
