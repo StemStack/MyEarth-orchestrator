@@ -6487,55 +6487,70 @@
                 const leftRay = viewer.camera.getPickRay(left);
                 const rightRay = viewer.camera.getPickRay(right);
                 
-                const leftIntersection = viewer.scene.globe.pick(leftRay, viewer.scene);
-                const rightIntersection = viewer.scene.globe.pick(rightRay, viewer.scene);
+                let leftIntersection = viewer.scene.globe.pick(leftRay, viewer.scene);
+                let rightIntersection = viewer.scene.globe.pick(rightRay, viewer.scene);
+                
+                let metersPerPixel;
                 
                 if (leftIntersection && rightIntersection) {
+                    // Standard calculation for low to medium altitudes
                     const distance = Cesium.Cartesian3.distance(leftIntersection, rightIntersection);
-                    
-                    // Scale the visual line proportionally
                     const pixelDistance = width * 0.2; // 20% of screen width
-                    const metersPerPixel = distance / pixelDistance;
-                    
-                    // Calculate appropriate scale for different base line sizes to get better scale values
-                    let basePixels = 100;
-                    let baseDistance = metersPerPixel * basePixels;
-                    
-                    // If the base distance would result in very large values, try different pixel bases
-                    if (baseDistance > 100000) { // > 100km
-                        basePixels = 50; // Use smaller base for very large scales
-                        baseDistance = metersPerPixel * basePixels;
-                    }
-                    
-                    // Round to nice scale values
-                    let scaleDistance, scalePixels, scaleLabel;
-                    
-                    if (baseDistance >= 1000) {
-                        // For kilometers, use expanded range including 2000, 5000, 10000, 20000, 50000
-                        const kmDistance = baseDistance / 1000;
-                        const roundedKm = getRoundScaleValue(kmDistance);
-                        scaleDistance = roundedKm * 1000;
-                        scalePixels = (scaleDistance / metersPerPixel);
-                        
-                        // Format large numbers appropriately
-                        if (roundedKm >= 1000) {
-                            scaleLabel = `${roundedKm.toLocaleString()} km`;
-                        } else {
-                            scaleLabel = `${roundedKm} km`;
-                        }
-                    } else {
-                        // For meters, use round numbers: 1, 2, 5, 10, 20, 50, 100, 200, 500
-                        const roundedM = getRoundScaleValue(baseDistance);
-                        scaleDistance = roundedM;
-                        scalePixels = (scaleDistance / metersPerPixel);
-                        scaleLabel = `${roundedM} m`;
-                    }
-                    
-                    scaleLine.style.width = `${Math.max(20, Math.min(150, scalePixels))}px`;
-                    scaleText.textContent = scaleLabel;
+                    metersPerPixel = distance / pixelDistance;
                 } else {
-                    scaleText.textContent = 'Scale: N/A';
+                    // Fallback calculation for very high altitudes using camera height
+                    const cameraPosition = viewer.camera.position;
+                    const cameraCartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(cameraPosition);
+                    const cameraHeight = cameraCartographic.height;
+                    
+                    // Approximate calculation based on camera height and field of view
+                    const fovy = viewer.camera.frustum.fovy;
+                    const pixelDistance = width * 0.2;
+                    
+                    // Calculate ground distance based on camera height and viewing angle
+                    const groundDistance = 2 * cameraHeight * Math.tan(fovy / 2) * (pixelDistance / width);
+                    metersPerPixel = groundDistance / pixelDistance;
                 }
+                
+                // Calculate appropriate scale for different base line sizes to get better scale values
+                let basePixels = 100;
+                let baseDistance = metersPerPixel * basePixels;
+                
+                // For very large scales, use smaller pixel base to get appropriate scale values
+                if (baseDistance > 500000) { // > 500km
+                    basePixels = 20;
+                    baseDistance = metersPerPixel * basePixels;
+                } else if (baseDistance > 100000) { // > 100km
+                    basePixels = 50;
+                    baseDistance = metersPerPixel * basePixels;
+                }
+                
+                // Round to nice scale values
+                let scaleDistance, scalePixels, scaleLabel;
+                
+                if (baseDistance >= 1000) {
+                    // For kilometers, use expanded range including 2000, 5000, 10000, 20000, 50000
+                    const kmDistance = baseDistance / 1000;
+                    const roundedKm = getRoundScaleValue(kmDistance);
+                    scaleDistance = roundedKm * 1000;
+                    scalePixels = (scaleDistance / metersPerPixel);
+                    
+                    // Format large numbers appropriately
+                    if (roundedKm >= 1000) {
+                        scaleLabel = `${roundedKm.toLocaleString()} km`;
+                    } else {
+                        scaleLabel = `${roundedKm} km`;
+                    }
+                } else {
+                    // For meters, use round numbers: 1, 2, 5, 10, 20, 50, 100, 200, 500
+                    const roundedM = getRoundScaleValue(baseDistance);
+                    scaleDistance = roundedM;
+                    scalePixels = (scaleDistance / metersPerPixel);
+                    scaleLabel = `${roundedM} m`;
+                }
+                
+                scaleLine.style.width = `${Math.max(20, Math.min(150, scalePixels))}px`;
+                scaleText.textContent = scaleLabel;
             } catch (error) {
                 scaleText.textContent = 'Scale: N/A';
             }
