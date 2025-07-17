@@ -871,31 +871,38 @@
             align-items: center;
         }
 
-        .search-container {
-            display: flex;
-            align-items: center;
+        .top-search-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .top-search-wrapper {
+            position: relative;
             background: white;
             border: 1px solid #ddd;
             border-radius: 20px;
             padding: 4px 8px;
-            min-width: 300px;
+            display: flex;
+            align-items: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .search-input {
+        .top-search-input {
             flex: 1;
             border: none;
             outline: none;
-            padding: 6px 12px;
+            padding: 8px 12px;
             font-size: 14px;
             border-radius: 20px;
+            background: transparent;
         }
 
-        .search-button {
+        .top-search-button {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 6px;
+            padding: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -904,9 +911,50 @@
             transition: all 0.2s ease;
         }
 
-        .search-button:hover {
+        .top-search-button:hover {
             background: rgba(0, 0, 0, 0.1);
             color: #333;
+        }
+
+        .top-loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #dc143c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        .top-suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .top-suggestion-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+        }
+
+        .top-suggestion-item:hover,
+        .top-suggestion-item.selected {
+            background: #f8f9fa;
+        }
+
+        .top-suggestion-item:last-child {
+            border-bottom: none;
         }
 
         .top-panel-right {
@@ -2105,14 +2153,18 @@
             <span class="app-title">My Earth</span>
         </div>
         <div class="top-panel-middle">
-            <div class="search-container">
-                <input type="text" id="topSearchInput" placeholder="Search locations..." class="search-input">
-                <button id="topSearchButton" class="search-button">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/>
-                        <path d="m21 21-4.35-4.35"/>
-                    </svg>
-                </button>
+            <div class="top-search-container">
+                <div class="top-search-wrapper">
+                    <input type="text" id="topSearchInput" placeholder="Search address, place, or coordinates..." autocomplete="off" class="top-search-input">
+                    <button class="top-search-button" id="topSearchButton">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="m21 21-4.35-4.35"/>
+                        </svg>
+                    </button>
+                    <div class="top-loading-spinner" id="topLoadingSpinner" style="display: none;"></div>
+                </div>
+                <div class="top-suggestions-dropdown" id="topSuggestionsDropdown" style="display: none;"></div>
             </div>
         </div>
         <div class="top-panel-right">
@@ -2148,32 +2200,9 @@
 
     <!-- Left Panel -->
     <div class="sidebar" id="leftPanel">
-        <div class="sidebar-header">
-            Project 0
-        </div>
+
         
-        <!-- Search Section - Top Position -->
-        <div class="sidebar-section">
-            <div class="section-header" onclick="toggleSection('searchSection')">
-                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/></svg>Search & Navigation</span>
-                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
-            </div>
-            <div class="section-content" id="searchSection">
-                <div class="sidebar-search-container">
-                    <div class="sidebar-search-wrapper">
-                        <input type="text" id="searchInput" placeholder="Search address, place, or coordinates..." autocomplete="off">
-                        <button class="sidebar-search-button" id="searchButton">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="11" cy="11" r="8"/>
-                                <path d="m21 21-4.35-4.35"/>
-                            </svg>
-                        </button>
-                        <div class="loading-spinner" id="loadingSpinner" style="display: none;"></div>
-                    </div>
-                    <div class="suggestions-dropdown" id="suggestionsDropdown" style="display: none;"></div>
-                </div>
-            </div>
-        </div>
+
         
 
         
@@ -3178,12 +3207,13 @@
 
         // Universal search functionality
         async function performSearch(queryOverride = null) {
-            const query = queryOverride || searchInput.value.trim();
+            const topSearchInput = document.getElementById('topSearchInput');
+            const query = queryOverride || (topSearchInput ? topSearchInput.value.trim() : '');
             if (!query) return;
 
             // Show loading spinner
-            const spinner = loadingSpinner;
-            const button = searchButton;
+            const spinner = document.getElementById('topLoadingSpinner');
+            const button = document.getElementById('topSearchButton');
             
             if (spinner) spinner.style.display = 'block';
             if (button) button.disabled = true;
@@ -3199,9 +3229,9 @@
                     const result = await geocodeLocation(query);
                     if (result) {
                         flyToLocation(result.lat, result.lon);
-                        if (searchInput) searchInput.value = '';
                         const topSearchInput = document.getElementById('topSearchInput');
                         if (topSearchInput) topSearchInput.value = '';
+                        hideSuggestions();
                     } else {
                         alert('Location not found. Please try a different search term.');
                     }
@@ -3225,22 +3255,23 @@
                 return;
             }
             
+            const dropdown = document.getElementById('topSuggestionsDropdown');
             const html = suggestions.map((suggestion, index) => {
                 const name = suggestion.name || 'Unknown';
                 const details = formatSuggestionDetails(suggestion);
                 return `
-                    <div class="suggestion-item" data-index="${index}">
+                    <div class="top-suggestion-item" data-index="${index}">
                         <div class="suggestion-name">${escapeHtml(name)}</div>
                         <div class="suggestion-details">${escapeHtml(details)}</div>
                     </div>
                 `;
             }).join('');
             
-            suggestionsDropdown.innerHTML = html;
-            suggestionsDropdown.style.display = 'block';
+            dropdown.innerHTML = html;
+            dropdown.style.display = 'block';
             
             // Add click event listeners to suggestions
-            suggestionsDropdown.querySelectorAll('.suggestion-item').forEach((item, index) => {
+            dropdown.querySelectorAll('.top-suggestion-item').forEach((item, index) => {
                 item.addEventListener('click', () => selectSuggestion(index));
             });
         }
@@ -3265,7 +3296,10 @@
 
         // Function to hide suggestions
         function hideSuggestions() {
-            suggestionsDropdown.style.display = 'none';
+            const dropdown = document.getElementById('topSuggestionsDropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
             currentSuggestions = [];
             selectedSuggestionIndex = -1;
         }
@@ -3275,20 +3309,24 @@
             if (index >= 0 && index < currentSuggestions.length) {
                 const suggestion = currentSuggestions[index];
                 flyToLocation(suggestion.lat, suggestion.lon);
-                searchInput.value = '';
+                const topSearchInput = document.getElementById('topSearchInput');
+                if (topSearchInput) topSearchInput.value = '';
                 hideSuggestions();
             }
         }
 
         // Function to highlight selected suggestion
         function updateSelectedSuggestion() {
-            suggestionsDropdown.querySelectorAll('.suggestion-item').forEach((item, index) => {
-                if (index === selectedSuggestionIndex) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
-            });
+            const dropdown = document.getElementById('topSuggestionsDropdown');
+            if (dropdown) {
+                dropdown.querySelectorAll('.top-suggestion-item').forEach((item, index) => {
+                    if (index === selectedSuggestionIndex) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
         }
 
         // Debounced autocomplete function
@@ -3324,14 +3362,11 @@
             }, 300); // 300ms debounce
         }
 
-        // Add search event listeners
-        if (searchButton) {
-            searchButton.addEventListener('click', performSearch);
-        }
-        
         // Add top search event listeners
         const topSearchInput = document.getElementById('topSearchInput');
         const topSearchButton = document.getElementById('topSearchButton');
+        const topLoadingSpinner = document.getElementById('topLoadingSpinner');
+        const topSuggestionsDropdown = document.getElementById('topSuggestionsDropdown');
         
         if (topSearchButton) {
             topSearchButton.addEventListener('click', function() {
@@ -3347,42 +3382,79 @@
             });
         }
         
-        // Enhanced input event listeners
-        searchInput.addEventListener('input', handleInputChange);
-        
-        searchInput.addEventListener('keydown', function(e) {
-            if (suggestionsDropdown.style.display === 'block' && currentSuggestions.length > 0) {
-                switch (e.key) {
-                    case 'ArrowDown':
-                        e.preventDefault();
-                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, currentSuggestions.length - 1);
-                        updateSelectedSuggestion();
-                        break;
-                    case 'ArrowUp':
-                        e.preventDefault();
-                        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
-                        updateSelectedSuggestion();
-                        break;
-                    case 'Enter':
-                        e.preventDefault();
-                        if (selectedSuggestionIndex >= 0) {
-                            selectSuggestion(selectedSuggestionIndex);
-                        } else {
-                            performSearch();
-                        }
-                        break;
-                    case 'Escape':
-                        hideSuggestions();
-                        break;
-                }
-            } else if (e.key === 'Enter') {
-                performSearch();
+        // Handle input changes with debouncing for top search
+        function handleTopInputChange() {
+            const topSearchInput = document.getElementById('topSearchInput');
+            const query = topSearchInput.value.trim();
+            
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
             }
-        });
+            
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+            
+            // Don't autocomplete if input looks like coordinates
+            if (isCoordinates(query)) {
+                hideSuggestions();
+                return;
+            }
+            
+            // Set new timeout for debouncing
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const suggestions = await getAutocompleteSuggestions(query);
+                    displaySuggestions(suggestions);
+                } catch (error) {
+                    console.error('Autocomplete failed:', error);
+                    hideSuggestions();
+                }
+            }, 300); // 300ms debounce
+        }
+
+        // Enhanced input event listeners for top search
+        if (topSearchInput) {
+            topSearchInput.addEventListener('input', handleTopInputChange);
+        }
+        
+        if (topSearchInput) {
+            topSearchInput.addEventListener('keydown', function(e) {
+                if (topSuggestionsDropdown.style.display === 'block' && currentSuggestions.length > 0) {
+                    switch (e.key) {
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, currentSuggestions.length - 1);
+                            updateSelectedSuggestion();
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                            updateSelectedSuggestion();
+                            break;
+                        case 'Enter':
+                            e.preventDefault();
+                            if (selectedSuggestionIndex >= 0) {
+                                selectSuggestion(selectedSuggestionIndex);
+                            } else {
+                                performSearch();
+                            }
+                            break;
+                        case 'Escape':
+                            hideSuggestions();
+                            break;
+                    }
+                } else if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+        }
 
         // Hide suggestions when clicking outside
         document.addEventListener('click', function(e) {
-            if (!e.target.closest('.search-container')) {
+            if (!e.target.closest('.top-search-container')) {
                 hideSuggestions();
             }
         });
