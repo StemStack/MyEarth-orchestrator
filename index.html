@@ -8118,11 +8118,12 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://services.arcgis.com/vCwrJcc6rDutMEpT/arcgis/rest/services/Protected_Areas_of_the_World/FeatureServer/0',
+                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 name: 'World Database of Protected Areas',
-                type: 'geojson',
-                format: 'vector',
-                transparent: true
+                type: 'tile',
+                format: 'raster',
+                transparent: false,
+                note: 'Using OSM as placeholder - WDPA service unavailable'
             },
             land_degradation: {
                 url: 'https://datacore.unepgrid.ch/geoserver/MapX_UNDP/ows',
