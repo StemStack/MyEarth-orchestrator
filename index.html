@@ -2418,7 +2418,7 @@
             });
             
             // Additional aggressive timeline and animation removal
-            const removeTimelineInterval = setInterval(() => {
+            const removeTimelineInterval2 = setInterval(() => {
                 const timelineElements = document.querySelectorAll('[class*="cesium-timeline"], [class*="cesium-animation"], [class*="cesium-viewer-bottom"]');
                 if (timelineElements.length > 0) {
                     timelineElements.forEach(el => {
@@ -2435,7 +2435,7 @@
             }, 100);
             
             // Stop the interval after 5 seconds
-            setTimeout(() => clearInterval(removeTimelineInterval), 5000);
+            setTimeout(() => clearInterval(removeTimelineInterval2), 5000);
             
             // Inject aggressive CSS to hide timeline
             const hideTimelineStyle = document.createElement('style');
@@ -6579,7 +6579,30 @@
             // Initialize bottom band updates
             setInterval(updateBottomBand, 1000);
             
-            console.log('✓ Menu system initialized - left panel collapsed, right panel visible by default');
+            // Toggle functions for panel controls
+        function toggleLeftPanel() {
+            const leftPanel = document.getElementById('leftPanel');
+            if (leftPanel) {
+                leftPanel.classList.toggle('collapsed');
+                const isCollapsed = leftPanel.classList.contains('collapsed');
+                console.log(isCollapsed ? 'Left panel collapsed' : 'Left panel expanded');
+            }
+        }
+        
+        function toggleRightPanel() {
+            const rightPanel = document.getElementById('rightPanel');
+            if (rightPanel) {
+                rightPanel.classList.toggle('collapsed');
+                const isCollapsed = rightPanel.classList.contains('collapsed');
+                console.log(isCollapsed ? 'Right panel collapsed' : 'Right panel expanded');
+            }
+        }
+        
+        // Make functions globally available
+        window.toggleLeftPanel = toggleLeftPanel;
+        window.toggleRightPanel = toggleRightPanel;
+        
+        console.log('✓ Menu system initialized - left panel collapsed, right panel visible by default');
         });
 
         // Update bottom band information
