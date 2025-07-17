@@ -2071,7 +2071,7 @@
     <!-- Point Marker Controls -->
     <div class="marker-controls" id="markerControls" style="display: none;">
         <div class="measurement-header">
-            <div class="measurement-title">📍 Point Markers</div>
+            <div class="measurement-title">Point Markers</div>
             <button onclick="toggleMarkerPanel()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
         </div>
         
@@ -2093,7 +2093,15 @@
 
     <div class="drag-drop-overlay" id="dragDropOverlay" style="display: none;">
         <div class="drag-drop-content">
-            <div class="drag-drop-icon">📁</div>
+            <div class="drag-drop-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10,9 9,9 8,9"/>
+                </svg>
+            </div>
             <div class="drag-drop-text">Drop 3D Model Here</div>
             <div class="drag-drop-subtext">Supported: GLB, GLTF, OBJ, FBX, DAE, STL, PLY, LAS, DXF, USDZ</div>
         </div>
@@ -2117,12 +2125,7 @@
             </svg>
         </div>
         
-        <!-- Info Display - Coordinates -->
-        <div class="tool-icon info-display" id="infoDisplay" title="Current Coordinates">
-            <span id="compactCoordinates" style="font-size: 9px; text-align: center; line-height: 1.1; font-weight: 500;">
-                45.0°N<br>15.0°E
-            </span>
-        </div>
+
         
         <div class="tool-icon" id="zoomInTool" title="Zoom In" onclick="zoomIn()">
             <svg width="16" height="16" viewBox="0 0 24 24">
@@ -2915,13 +2918,7 @@
          */
         function updateCoordinateDisplay(latitude, longitude) {
             try {
-                // Update compact coordinates in right panel
-                const compactCoordinates = document.getElementById('compactCoordinates');
-                if (compactCoordinates) {
-                    const latDir = latitude >= 0 ? 'N' : 'S';
-                    const lonDir = longitude >= 0 ? 'E' : 'W';
-                    compactCoordinates.innerHTML = `${Math.abs(latitude).toFixed(1)}°${latDir}<br>${Math.abs(longitude).toFixed(1)}°${lonDir}`;
-                }
+                // Compact coordinates display removed
                 
                 // Update coordinates in bottom band with cm precision
                 const coordinatesInfo = document.getElementById('coordinatesInfo');
@@ -2939,11 +2936,7 @@
          */
         function clearCoordinateDisplay() {
             try {
-                // Clear compact coordinates in right panel
-                const compactCoordinates = document.getElementById('compactCoordinates');
-                if (compactCoordinates) {
-                    compactCoordinates.innerHTML = '--°-<br>--°-';
-                }
+                // Compact coordinates display removed
                 
                 // Clear coordinates in bottom panel
                 const coordinatesInfo = document.getElementById('coordinatesInfo');
@@ -6067,10 +6060,10 @@
                             </ul>
                             <p><strong>Right Panel Tools:</strong></p>
                             <ul>
-                                <li>🧭 North arrow - Click to reset north</li>
-                                <li>🔍 Search - Find locations</li>
-                                <li>📏 Measurement - Measure distances</li>
-                                <li>📍 Markers - Place point markers</li>
+                                <li>North arrow - Click to reset north</li>
+                                <li>Search - Find locations</li>
+                                <li>Measurement - Measure distances</li>
+                                <li>Markers - Place point markers</li>
                                 <li>Home - Return to global view</li>
                             </ul>
                             <p><strong>Base Maps:</strong> Switch between different map styles</p>
