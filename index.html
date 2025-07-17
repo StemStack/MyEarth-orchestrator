@@ -5175,7 +5175,7 @@ Built with CesiumJS`;
                     new Cesium.Cartesian3()
                 );
                 
-                const distance = formatDistance(measurementTool.results.direct || measurementTool.results.vertical);
+                const distance = formatDistance(measurementTool.results.direct || 0);
                 
                 const labelEntity = viewer.entities.add({
                     position: midpoint,
