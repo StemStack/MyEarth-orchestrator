@@ -663,11 +663,20 @@
         }
 
         #rightPanel.collapsed {
-            width: 0px;
-            opacity: 0;
-            visibility: hidden;
-            margin-right: -90px;
-            padding: 0;
+            width: 20px;
+            padding: 5px;
+        }
+        
+        #rightPanel.collapsed .tool-icon {
+            display: none;
+        }
+        
+        #rightPanel.collapsed .panel-toggle-btn {
+            display: flex !important;
+            position: relative;
+            top: 0;
+            right: 0;
+            margin: 0;
         }
         
 
@@ -690,6 +699,13 @@
             color: #666;
             z-index: 1001;
             transition: all 0.2s ease;
+        }
+        
+        #rightPanel.collapsed .panel-toggle-btn {
+            position: relative;
+            top: 0;
+            right: 0;
+            margin: 0 auto;
         }
 
         .panel-toggle-btn:hover {
@@ -744,6 +760,20 @@
             stroke: white;
         }
 
+        /* Hide sidebar content when collapsed but keep toggle visible */
+        .sidebar.collapsed .sidebar-header,
+        .sidebar.collapsed .sidebar-section {
+            display: none;
+        }
+        
+        .sidebar.collapsed .sidebar-toggle {
+            position: relative;
+            left: 0;
+            top: 0;
+            margin: 10px auto;
+            display: flex;
+        }
+        
         /* Hide all tools when collapsed */
         #rightPanel.collapsed .tool-icon {
             display: none;
