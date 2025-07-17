@@ -98,7 +98,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
-        /* Completely hide ALL CesiumJS UI elements */
+        /* Completely hide ALL CesiumJS UI elements including compass */
         .cesium-viewer-toolbar,
         .cesium-viewer-navigationContainer,
         .cesium-navigation-help-button,
@@ -113,9 +113,19 @@
         .cesium-button,
         .cesium-toolbar-button,
         .cesium-compass,
-        .cesium-compass-wrapper {
+        .cesium-compass-wrapper,
+        .cesium-compass-outerRing,
+        .cesium-compass-rotation-marker,
+        .cesium-compass-gyro,
+        .cesium-sceneModePicker-dropDown-icon,
+        .cesium-navigationHelp-button,
+        .cesium-viewer-cesium3DTilesInspectorContainer,
+        .cesium-viewer-animationContainer,
+        .cesium-viewer-bottomContainer,
+        .cesium-viewer-timelineContainer {
             display: none !important;
             visibility: hidden !important;
+            opacity: 0 !important;
         }
 
         /* Loading indicator styling */
@@ -629,7 +639,7 @@
         /* Right Panel Styles - MapX Style */
         #rightPanel {
             position: fixed;
-            bottom: 60px;
+            top: 90px;
             right: 10px;
             width: 80px;
             background: transparent;
