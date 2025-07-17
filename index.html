@@ -2427,19 +2427,7 @@
         
         console.log('✓ All services using free, open-source providers only');
         
-        // Auto-enable protected areas layer on startup (delayed to ensure WMS services are defined)
-        setTimeout(() => {
-            const protectedAreasCheckbox = document.getElementById('protected_areasWms');
-            if (protectedAreasCheckbox && protectedAreasCheckbox.checked) {
-                if (typeof togglePredefinedLayer !== 'undefined' && typeof predefinedWmsServices !== 'undefined') {
-                    togglePredefinedLayer('protected_areas', true);
-                    // Initialize legend after layer is loaded
-                    setTimeout(() => {
-                        updateLegend();
-                    }, 500);
-                }
-            }
-        }, 2000);
+        // WMS layer initialization will be handled later after services are defined
         
         // Add fallback to ellipsoid terrain if the terrain provider fails
         viewer.terrainProvider.errorEvent.addEventListener(function(err) {
@@ -7186,6 +7174,15 @@
             initializeCoordinateTracking();
             initializeLayerControls();
             initializeDragAndDrop();
+            
+            // Enable World Database of Protected Areas by default after all initialization
+            setTimeout(() => {
+                const protectedAreasCheckbox = document.getElementById('protected_areasWms');
+                if (protectedAreasCheckbox && protectedAreasCheckbox.checked) {
+                    console.log('Attempting to enable World Database of Protected Areas');
+                    togglePredefinedLayer('protected_areas', true);
+                }
+            }, 1000);
         }, 100);
 
         /**
