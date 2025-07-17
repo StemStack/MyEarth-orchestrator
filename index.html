@@ -8112,10 +8112,10 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://services.arcgis.com/0p1Ftzeb6EgfZa5e/arcgis/rest/services/World_Database_on_Protected_Areas_WDPA/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson',
+                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}',
                 name: 'World Database of Protected Areas',
-                type: 'geojson',
-                format: 'vector',
+                type: 'tile',
+                format: 'image/png',
                 transparent: true
             },
             land_degradation: {
