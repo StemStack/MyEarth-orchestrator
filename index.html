@@ -336,7 +336,8 @@
 
         /* Scale bar styling */
         .scale-bar-container {
-            background-color: var(--panel-bg);
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px) brightness(1.2);
             border: 1px solid var(--input-border);
             border-radius: 3px;
             padding: 8px 12px;
@@ -385,7 +386,8 @@
 
         /* Coordinates info styling */
         .coordinates-info {
-            background-color: var(--panel-bg);
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px) brightness(1.2);
             border: 1px solid var(--input-border);
             border-radius: 3px;
             padding: 6px 12px;
@@ -402,7 +404,7 @@
 
         /* North arrow compass styling */
         .north-arrow-container {
-            background-color: var(--panel-bg);
+            background-color: rgba(255, 255, 255, 0.5);
             border: 1px solid var(--input-border);
             border-radius: 6px;
             padding: 12px;
@@ -612,8 +614,8 @@
             left: 0;
             width: 280px;
             height: calc(100vh - 40px);
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px) brightness(1.2);
             color: #333;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 13px;
@@ -630,8 +632,8 @@
             top: 50px !important;
             right: 20px !important;
             width: 50px;
-            background: rgba(255, 255, 255, 0.5) !important;
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.7) !important;
+            backdrop-filter: blur(10px) brightness(1.2) !important;
             z-index: 999;
             display: flex;
             flex-direction: column;
@@ -998,7 +1000,8 @@
             left: 0;
             right: 0;
             height: 40px;
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px) brightness(1.2);
             border-top: 1px solid #ddd;
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
