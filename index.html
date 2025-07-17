@@ -9657,10 +9657,9 @@ Built with CesiumJS`;
                 
                 // Re-enable terrain if it was enabled before
                 if (terrainEnabled) {
-                    globalViewer.terrainProvider = Cesium.createWorldTerrain({
-                        requestWaterMask: false,
-                        requestVertexNormals: true
-                    });
+                    // Use enhanced terrain (free alternative to Cesium World Terrain)
+                    globalViewer.scene.terrainExaggeration = 1.5;
+                    globalViewer.scene.globe.enableLighting = true;
                 }
                 
                 // Re-enable atmosphere and lighting
