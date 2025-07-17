@@ -2829,52 +2829,81 @@
                 const leftPosition = viewer.camera.pickEllipsoid(left, ellipsoid);
                 const rightPosition = viewer.camera.pickEllipsoid(right, ellipsoid);
                 
+                let pixelDistance;
+                
                 if (leftPosition && rightPosition) {
-                    // Convert to cartographic coordinates
+                    // Low altitude - use precise ellipsoid picking
                     const leftCartographic = ellipsoid.cartesianToCartographic(leftPosition);
                     const rightCartographic = ellipsoid.cartesianToCartographic(rightPosition);
                     
                     // Calculate geodesic distance between the two points
                     const geodesic = new Cesium.EllipsoidGeodesic(leftCartographic, rightCartographic);
-                    const pixelDistance = geodesic.surfaceDistance; // Distance in meters for 100 pixels
+                    pixelDistance = geodesic.surfaceDistance; // Distance in meters for 100 pixels
+                } else {
+                    // High altitude - calculate scale based on camera height and perspective
+                    const cameraPosition = viewer.camera.position;
+                    const cameraCartographic = ellipsoid.cartesianToCartographic(cameraPosition);
+                    const cameraHeight = cameraCartographic.height;
                     
-                    // Determine appropriate scale values
-                    let targetDistance, scaleWidth, scaleLabel;
+                    // Use camera's field of view and height to estimate ground distance per pixel
+                    const camera = viewer.camera;
+                    const frustum = camera.frustum;
                     
-                    if (pixelDistance >= 100000) {
-                        // For very large scales, use 100km intervals
-                        targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
-                        if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
-                        else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
-                        scaleLabel = (targetDistance / 1000) + ' km';
-                    } else if (pixelDistance >= 1000) {
-                        // For medium scales, use km
-                        targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
-                        if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
-                        else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
-                        scaleLabel = (targetDistance >= 1000) ? (targetDistance / 1000) + ' km' : targetDistance + ' m';
-                    } else {
-                        // For small scales, use meters
-                        targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
-                        if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
-                        else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
-                        scaleLabel = targetDistance + ' m';
-                    }
+                    // Calculate the angular width of 100 pixels at screen center
+                    const fovRadians = frustum.fov || (Math.PI / 3); // Default 60 degrees if undefined
+                    const pixelAngle = fovRadians / canvas.clientHeight * 100; // 100 pixels worth of angle
                     
-                    // Calculate the width in pixels for our target distance
-                    scaleWidth = (targetDistance / pixelDistance) * 100;
+                    // At high altitude, approximate ground distance using camera height and angle
+                    pixelDistance = 2 * cameraHeight * Math.tan(pixelAngle / 2);
                     
-                    // Update the scale bar if elements exist
-                    if (scaleLine && scaleText) {
-                        scaleLine.style.width = Math.max(Math.min(scaleWidth, 200), 30) + 'px';
-                        scaleText.textContent = scaleLabel;
+                    // Ensure reasonable bounds for very high altitudes
+                    if (pixelDistance > 50000000) { // 50,000 km limit
+                        pixelDistance = 50000000;
                     }
                 }
+                
+                // Determine appropriate scale values
+                let targetDistance, scaleWidth, scaleLabel;
+                
+                if (pixelDistance >= 1000000) {
+                    // For very large scales (>1000km), use nice round values
+                    const scaleOptions = [1000000, 2000000, 5000000, 10000000, 20000000, 50000000]; // 1000km, 2000km, 5000km, etc.
+                    targetDistance = scaleOptions.find(scale => scale <= pixelDistance) || 1000000;
+                    scaleLabel = (targetDistance / 1000000).toFixed(0) + ',000 km';
+                } else if (pixelDistance >= 100000) {
+                    // For large scales, use 100km intervals
+                    targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
+                    if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
+                    else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
+                    scaleLabel = (targetDistance / 1000) + ' km';
+                } else if (pixelDistance >= 1000) {
+                    // For medium scales, use km
+                    targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
+                    if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
+                    else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
+                    scaleLabel = (targetDistance >= 1000) ? (targetDistance / 1000) + ' km' : targetDistance + ' m';
+                } else {
+                    // For small scales, use meters
+                    targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
+                    if (targetDistance * 5 <= pixelDistance) targetDistance *= 5;
+                    else if (targetDistance * 2 <= pixelDistance) targetDistance *= 2;
+                    scaleLabel = targetDistance + ' m';
+                }
+                
+                // Calculate the width in pixels for our target distance
+                scaleWidth = (targetDistance / pixelDistance) * 100;
+                
+                // Update the scale bar if elements exist
+                if (scaleLine && scaleText) {
+                    scaleLine.style.width = Math.max(Math.min(scaleWidth, 200), 30) + 'px';
+                    scaleText.textContent = scaleLabel;
+                }
+                
             } catch (error) {
-                console.warn('Scale bar calculation failed, using default');
+                console.warn('Scale bar calculation failed:', error);
                 if (scaleLine && scaleText) {
                     scaleLine.style.width = '60px';
-                    scaleText.textContent = '1 km';
+                    scaleText.textContent = 'Scale: N/A';
                 }
             }
         }
