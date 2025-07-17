@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project 0 - Updated</title>
+    <title>Project 0</title>
     
     <!-- CesiumJS CSS -->
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
@@ -288,7 +288,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4) !important;
+            background: rgba(255, 255, 255, 0.3);
             border: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
             align-items: center;
@@ -316,7 +316,7 @@
 
         /* Dark theme adjustments for toggle button */
         [data-theme="dark"] .theme-toggle-button {
-            background: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
@@ -668,7 +668,7 @@
             margin: 0 !important;
             width: 30px !important;
             height: 30px !important;
-            background: rgba(255,255,255,0.4) !important;
+            background: rgba(255,255,255,0.3) !important;
             border: 1px solid #ddd !important;
             border-radius: 50% !important;
             align-items: center !important;
@@ -684,7 +684,7 @@
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.3);
             border: 1px solid #ddd;
             cursor: pointer;
             display: flex;
@@ -713,7 +713,7 @@
             left: 20px;
             width: 40px;
             height: 40px;
-            background: rgba(255,255,255,0.4) !important;
+            background: rgba(255,255,255,0.3);
             border: 1px solid #ddd;
             border-radius: 50%;
             display: flex;
@@ -726,7 +726,7 @@
         }
 
         .floating-toggle:hover {
-            background: rgba(255,255,255,0.5) !important;
+            background: rgba(255,255,255,0.5);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             transform: scale(1.05);
         }
@@ -736,7 +736,7 @@
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.3);
             border: none;
             display: flex;
             align-items: center;
@@ -981,7 +981,7 @@
             right: 150px;
             width: 40px;
             height: 40px;
-            background: rgba(255, 255, 255, 0.4) !important;
+            background: rgba(255, 255, 255, 0.95);
             border: 1px solid #ddd;
             border-radius: 50%;
             cursor: pointer;
@@ -996,7 +996,7 @@
         }
 
         .theme-toggle-button:hover {
-            background: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 1);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
@@ -1254,26 +1254,26 @@
             color: #333;
         }
 
-        /* Floating menu button when sidebar is collapsed - match right panel icons exactly */
+        /* Floating menu button when sidebar is collapsed - maps.geo.admin style */
         .floating-menu-button {
             position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 30px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.4) !important;
+            top: 50px;
+            left: 10px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.95);
             color: #333;
-            border: none !important;
-            border-radius: 50% !important;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
+            font-size: 18px;
             z-index: 1002;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             transition: all 0.2s ease;
-            font-weight: 400;
+            font-weight: bold;
         }
 
         /* Collapsed left panel toggle button */
@@ -1297,48 +1297,8 @@
         }
 
         .floating-menu-button:hover {
-            background: rgba(255, 255, 255, 0.5) !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            transform: scale(1.05);
-        }
-        
-        /* Target floating menu button by ID with maximum specificity - match right panel */
-        #floatingMenuButton {
-            position: fixed !important;
-            top: 20px !important;
-            left: 20px !important;
-            width: 30px !important;
-            height: 30px !important;
-            background: rgba(255, 255, 255, 0.4) !important;
-            border: none !important;
-            border-radius: 50% !important;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-            opacity: 1 !important;
-            z-index: 1002 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }
-        
-        #floatingMenuButton:hover {
-            background: rgba(255, 255, 255, 0.5) !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
-            transform: scale(1.05) !important;
-        }
-        
-        /* Make hamburger icon lines visible */
-        #floatingMenuButton svg,
-        .floating-menu-button svg {
-            stroke: #333 !important;
-            stroke-width: 2.5 !important;
-            width: 14px !important;
-            height: 14px !important;
-        }
-        
-        #floatingMenuButton svg line,
-        .floating-menu-button svg line {
-            stroke: #333 !important;
-            stroke-width: 2.5 !important;
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         /* Ensure sidebar is visible by default on desktop */
@@ -2659,15 +2619,6 @@
     <!-- Left Panel Toggle Button (outside sidebar) -->
     <div class="sidebar-toggle" id="leftPanelToggle" onclick="toggleLeftPanel()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </div>
-
-    <!-- Floating Menu Button (shown when sidebar is collapsed) -->
-    <div class="floating-menu-button" id="floatingMenuButton" onclick="toggleSidebar()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2.5">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -7120,20 +7071,6 @@ Built with CesiumJS`;
                 setTimeout(() => {
                     if (floatingButton) {
                         floatingButton.style.display = 'flex';
-                        // Apply inline styles to match right panel icons
-                        floatingButton.style.width = '30px';
-                        floatingButton.style.height = '30px';
-                        floatingButton.style.background = 'rgba(255, 255, 255, 0.4)';
-                        floatingButton.style.border = 'none';
-                        floatingButton.style.borderRadius = '50%';
-                        floatingButton.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-                        
-                        // Make hamburger lines visible
-                        const svg = floatingButton.querySelector('svg');
-                        if (svg) {
-                            svg.style.stroke = '#333';
-                            svg.style.strokeWidth = '2.5';
-                        }
                     }
                 }, 300);
                 console.log('Sidebar collapsed');
