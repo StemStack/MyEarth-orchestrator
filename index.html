@@ -1487,7 +1487,48 @@
         .layer-controls {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            pointer-events: auto;
+        }
+        
+        .layer-controls * {
+            pointer-events: auto;
+        }
+        
+        .opacity-slider {
+            width: 60px;
+            pointer-events: auto;
+        }
+        
+        .remove-layer-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+        
+        .remove-layer-btn:hover {
+            background: #c0392b;
+        }
+        
+        .layer-drag-area {
+            flex: 1;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            min-height: 20px;
+        }
+        
+        .layer-drag-area:active {
+            cursor: grabbing;
         }
         
         .opacity-slider {
@@ -7257,12 +7298,12 @@
                             <line x1="3" y1="18" x2="21" y2="18"/>
                         </svg>
                     </div>
-                    <div class="layer-info">
+                    <div class="layer-drag-area">
                         <span class="layer-name">${layerInfo.name}</span>
-                        <div class="layer-controls">
-                            <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
-                            <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" onmousedown="event.stopPropagation()">×</button>
-                        </div>
+                    </div>
+                    <div class="layer-controls">
+                        <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" draggable="false">
+                        <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" draggable="false">×</button>
                     </div>
                 `;
                 
@@ -7303,8 +7344,8 @@
         let draggedElement = null;
         
         function handleLayerDragStart(e) {
-            // Prevent drag if clicking on slider or button
-            if (e.target.matches('.opacity-slider, .remove-layer-btn')) {
+            // Prevent drag if clicking on controls area
+            if (e.target.closest('.layer-controls') || e.target.matches('.opacity-slider, .remove-layer-btn, input[type="range"]')) {
                 e.preventDefault();
                 return false;
             }
