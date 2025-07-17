@@ -2871,8 +2871,28 @@
                 if (pixelDistance >= 1000000) {
                     // For very large scales (>1000km), use nice round values
                     const scaleOptions = [1000000, 2000000, 5000000, 10000000, 20000000, 50000000]; // 1000km, 2000km, 5000km, etc.
-                    targetDistance = scaleOptions.find(scale => scale <= pixelDistance) || 1000000;
-                    scaleLabel = (targetDistance / 1000000).toFixed(0) + ',000 km';
+                    
+                    // Find the largest scale option that's smaller than pixelDistance
+                    targetDistance = 1000000; // Default fallback
+                    for (let i = scaleOptions.length - 1; i >= 0; i--) {
+                        if (scaleOptions[i] <= pixelDistance) {
+                            targetDistance = scaleOptions[i];
+                            break;
+                        }
+                    }
+                    
+                    // If pixelDistance is larger than our largest option, use the largest
+                    if (pixelDistance > 50000000) {
+                        targetDistance = 50000000;
+                    }
+                    
+                    // Format the label appropriately
+                    const kmValue = targetDistance / 1000;
+                    if (kmValue >= 1000) {
+                        scaleLabel = `${(kmValue/1000).toFixed(0)},000 km`;
+                    } else {
+                        scaleLabel = `${kmValue.toFixed(0)} km`;
+                    }
                 } else if (pixelDistance >= 100000) {
                     // For large scales, use 100km intervals
                     targetDistance = Math.pow(10, Math.floor(Math.log10(pixelDistance)));
@@ -2904,9 +2924,36 @@
                 
             } catch (error) {
                 console.warn('Scale bar calculation failed:', error);
-                if (scaleLine && scaleText) {
-                    scaleLine.style.width = '60px';
-                    scaleText.textContent = 'Scale: N/A';
+                // Still try to show something useful based on camera height
+                try {
+                    const cameraPosition = viewer.camera.position;
+                    const cameraCartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(cameraPosition);
+                    const cameraHeight = cameraCartographic.height;
+                    
+                    let fallbackScale, fallbackLabel;
+                    if (cameraHeight > 50000000) { // 50,000 km
+                        fallbackScale = '50,000 km';
+                    } else if (cameraHeight > 20000000) { // 20,000 km  
+                        fallbackScale = '20,000 km';
+                    } else if (cameraHeight > 10000000) { // 10,000 km
+                        fallbackScale = '10,000 km';
+                    } else if (cameraHeight > 5000000) { // 5,000 km
+                        fallbackScale = '5,000 km';
+                    } else if (cameraHeight > 2000000) { // 2,000 km
+                        fallbackScale = '2,000 km';
+                    } else {
+                        fallbackScale = '1,000 km';
+                    }
+                    
+                    if (scaleLine && scaleText) {
+                        scaleLine.style.width = '100px';
+                        scaleText.textContent = fallbackScale;
+                    }
+                } catch (fallbackError) {
+                    if (scaleLine && scaleText) {
+                        scaleLine.style.width = '60px';
+                        scaleText.textContent = '1 km';
+                    }
                 }
             }
         }
