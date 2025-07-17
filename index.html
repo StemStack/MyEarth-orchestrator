@@ -98,17 +98,24 @@
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
-        /* Ensure toolbar is positioned correctly */
-        .cesium-viewer-toolbar {
-            position: absolute !important;
-            top: 10px !important;
-            right: 10px !important;
-        }
-
-        /* Style the navigation help button */
-        .cesium-navigation-help-button {
-            background-color: rgba(42, 42, 42, 0.8) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        /* Completely hide ALL CesiumJS UI elements */
+        .cesium-viewer-toolbar,
+        .cesium-viewer-navigationContainer,
+        .cesium-navigation-help-button,
+        .cesium-home-button,
+        .cesium-sceneModePicker-wrapper,
+        .cesium-baseLayerPicker-dropDown,
+        .cesium-animation-container,
+        .cesium-timeline-main,
+        .cesium-fullscreenButton,
+        .cesium-vrButton,
+        .cesium-widget-toolbar,
+        .cesium-button,
+        .cesium-toolbar-button,
+        .cesium-compass,
+        .cesium-compass-wrapper {
+            display: none !important;
+            visibility: hidden !important;
         }
 
         /* Loading indicator styling */
@@ -2311,6 +2318,38 @@
         if (creditsElement) {
             creditsElement.style.display = 'none';
         }
+
+        // Aggressively remove ALL remaining CesiumJS UI elements
+        setTimeout(() => {
+            const elementsToHide = [
+                '.cesium-viewer-toolbar',
+                '.cesium-viewer-navigationContainer', 
+                '.cesium-navigation-help-button',
+                '.cesium-home-button',
+                '.cesium-sceneModePicker-wrapper',
+                '.cesium-baseLayerPicker-dropDown',
+                '.cesium-animation-container',
+                '.cesium-timeline-main',
+                '.cesium-fullscreenButton',
+                '.cesium-vrButton',
+                '.cesium-widget-toolbar',
+                '.cesium-button',
+                '.cesium-toolbar-button',
+                '.cesium-compass',
+                '.cesium-compass-wrapper'
+            ];
+            
+            elementsToHide.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    el.style.display = 'none';
+                    el.style.visibility = 'hidden';
+                    el.remove(); // Completely remove from DOM
+                });
+            });
+            
+            console.log('✓ All CesiumJS UI elements forcibly removed');
+        }, 100);
 
         // Keep lighting disabled to prevent rendering errors
         viewer.scene.globe.enableLighting = false;
