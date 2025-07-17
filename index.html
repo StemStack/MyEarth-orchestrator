@@ -8275,7 +8275,23 @@ Built with CesiumJS`;
             if (confirm(`Delete all ${markers.size} point markers?`)) {
                 // Remove all markers from viewer
                 markers.forEach(markerData => {
-                    viewer.entities.remove(markerData.entity);
+                    if (markerData.entity) {
+                        viewer.entities.remove(markerData.entity);
+                    }
+                });
+                
+                // Force remove any remaining entities that might match marker pattern
+                const entitiesToRemove = [];
+                viewer.entities.values.forEach(entity => {
+                    if (entity.billboard && entity.billboard.image && 
+                        entity.billboard.image.getValue && 
+                        entity.billboard.image.getValue().indexOf('data:image/svg+xml') === 0) {
+                        entitiesToRemove.push(entity);
+                    }
+                });
+                
+                entitiesToRemove.forEach(entity => {
+                    viewer.entities.remove(entity);
                 });
                 
                 // Clear data store
@@ -8284,6 +8300,9 @@ Built with CesiumJS`;
                 
                 // Update UI
                 updatePointsUI();
+                
+                // Force scene update
+                viewer.scene.requestRender();
                 
                 console.log('All point markers cleared');
             }
