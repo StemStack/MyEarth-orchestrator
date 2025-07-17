@@ -1458,9 +1458,12 @@
             margin-right: 6px;
             cursor: grab;
             user-select: none;
-            padding: 2px;
+            padding: 4px;
             border-radius: 2px;
             transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .layer-drag-handle:hover {
@@ -1531,16 +1534,12 @@
             background: #c0392b;
         }
         
-        .layer-drag-area {
+        .layer-info-area {
             flex: 1;
-            cursor: grab;
             display: flex;
             align-items: center;
             min-height: 20px;
-        }
-        
-        .layer-drag-area:active {
-            cursor: grabbing;
+            pointer-events: none;
         }
         
         .opacity-slider {
@@ -7298,47 +7297,38 @@
             layerArray.forEach(([serviceKey, layerInfo]) => {
                 const layerItem = document.createElement('div');
                 layerItem.className = 'layer-item';
-                layerItem.draggable = true;
+                layerItem.draggable = false;
                 layerItem.dataset.serviceKey = serviceKey;
-                layerItem.style.cursor = 'move';
                 
                 layerItem.innerHTML = `
-                    <div class="layer-drag-handle" title="Drag to reorder layers">
+                    <div class="layer-drag-handle" title="Drag to reorder layers" draggable="true">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="3" y1="6" x2="21" y2="6"/>
                             <line x1="3" y1="12" x2="21" y2="12"/>
                             <line x1="3" y1="18" x2="21" y2="18"/>
                         </svg>
                     </div>
-                    <div class="layer-drag-area">
+                    <div class="layer-info-area">
                         <span class="layer-name">${layerInfo.name}</span>
                     </div>
-                    <div class="layer-controls" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">
-                        <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" draggable="false" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">
-                        <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" draggable="false" onmousedown="event.stopPropagation()" ondragstart="event.preventDefault()">×</button>
+                    <div class="layer-controls">
+                        <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" draggable="false">
+                        <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" draggable="false">×</button>
                     </div>
                 `;
                 
-                // Add drag and drop events
-                layerItem.addEventListener('dragstart', handleLayerDragStart);
+                // Add drag and drop events only to the drag handle
+                const dragHandle = layerItem.querySelector('.layer-drag-handle');
+                if (dragHandle) {
+                    dragHandle.addEventListener('dragstart', handleLayerDragStart);
+                    dragHandle.addEventListener('dragend', handleLayerDragEnd);
+                }
+                
+                // Add drop zone events to the layer item
                 layerItem.addEventListener('dragover', handleLayerDragOver);
                 layerItem.addEventListener('dragenter', handleLayerDragEnter);
                 layerItem.addEventListener('dragleave', handleLayerDragLeave);
                 layerItem.addEventListener('drop', handleLayerDrop);
-                layerItem.addEventListener('dragend', handleLayerDragEnd);
-                
-                // Prevent drag on controls
-                const controls = layerItem.querySelector('.layer-controls');
-                if (controls) {
-                    controls.addEventListener('dragstart', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        return false;
-                    });
-                    controls.addEventListener('mousedown', function(e) {
-                        e.stopPropagation();
-                    });
-                }
                 
                 layersContainer.appendChild(layerItem);
             });
@@ -7369,17 +7359,15 @@
         let draggedElement = null;
         
         function handleLayerDragStart(e) {
-            // Prevent drag if clicking on controls area
-            if (e.target.closest('.layer-controls') || e.target.matches('.opacity-slider, .remove-layer-btn, input[type="range"]')) {
-                e.preventDefault();
-                return false;
-            }
+            // Find the parent layer item
+            const layerItem = e.target.closest('.layer-item');
+            if (!layerItem) return false;
             
-            draggedElement = this;
-            this.style.opacity = '0.5';
+            draggedElement = layerItem;
+            layerItem.style.opacity = '0.5';
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', this.dataset.serviceKey);
-            console.log('Started dragging layer:', this.dataset.serviceKey);
+            e.dataTransfer.setData('text/plain', layerItem.dataset.serviceKey);
+            console.log('Started dragging layer:', layerItem.dataset.serviceKey);
         }
         
         function handleLayerDragOver(e) {
