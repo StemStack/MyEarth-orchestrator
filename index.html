@@ -794,6 +794,7 @@
         .sidebar.collapsed {
             transform: translateX(-200px) !important;
             width: 80px !important;
+            overflow: visible !important;
         }
         
         /* Hide sidebar content when collapsed but keep toggle visible */
@@ -803,7 +804,7 @@
         }
         
         .sidebar.collapsed .sidebar-toggle {
-            position: absolute !important;
+            position: fixed !important;
             left: 25px !important;
             top: 10px !important;
             margin: 0 !important;
@@ -816,6 +817,7 @@
             align-items: center !important;
             justify-content: center !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            z-index: 1002 !important;
         }
         
         /* Hide all tools when collapsed */
