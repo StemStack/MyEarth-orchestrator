@@ -6662,6 +6662,7 @@ Built with CesiumJS`;
                     measurementControls.style.display = 'none';
                     const measurementToolEl = document.getElementById('measurementTool');
                     if (measurementToolEl) measurementToolEl.classList.remove('active');
+                    stopMeasurement(); // Ensure measurement click handler is removed
                 }
                 
                 markerControls.style.display = 'block';
@@ -6678,8 +6679,18 @@ Built with CesiumJS`;
 
         function enableMarkerMode() {
             // Enable click handler for marker placement
-            if (viewer && !viewer.markerClickHandler) {
+            if (viewer) {
+                // First ensure any existing handlers are removed
+                viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+                
+                // Then set up new handler
                 viewer.markerClickHandler = viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function(event) {
+                    // Only place markers if marker panel is actually open
+                    const markerControls = document.getElementById('markerControls');
+                    if (!markerControls || markerControls.style.display !== 'block') {
+                        return;
+                    }
+                    
                     const pickedPosition = viewer.camera.pickEllipsoid(event.position, viewer.scene.globe.ellipsoid);
                     if (pickedPosition) {
                         const cartographic = Cesium.Cartographic.fromCartesian(pickedPosition);
@@ -6693,7 +6704,8 @@ Built with CesiumJS`;
 
         function disableMarkerMode() {
             // Remove click handler for marker placement
-            if (viewer && viewer.markerClickHandler) {
+            if (viewer) {
+                // Always remove any existing click handlers to ensure clean state
                 viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
                 viewer.markerClickHandler = null;
             }
