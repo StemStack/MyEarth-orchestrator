@@ -5890,13 +5890,13 @@
          * Toggle Right Panel Visibility
          */
         function toggleRightPanel() {
-            const panel = document.getElementById('rightPanel');
-            if (panel) {
-                panel.classList.toggle('collapsed');
-                const isCollapsed = panel.classList.contains('collapsed');
+            const rightPanelElement = document.getElementById('rightPanel');
+            if (rightPanelElement) {
+                rightPanelElement.classList.toggle('collapsed');
+                const isCollapsed = rightPanelElement.classList.contains('collapsed');
                 
                 // Update toggle button icon
-                const toggleBtn = panel.querySelector('.panel-toggle-btn');
+                const toggleBtn = rightPanelElement.querySelector('.panel-toggle-btn');
                 if (toggleBtn) {
                     const svg = toggleBtn.querySelector('svg');
                     if (svg) {
