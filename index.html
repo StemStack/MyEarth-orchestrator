@@ -764,8 +764,8 @@
 
         /* Left Panel Collapse State */
         .sidebar.collapsed {
-            transform: translateX(-220px) !important;
-            width: 60px !important;
+            transform: translateX(-200px) !important;
+            width: 80px !important;
         }
         
         /* Hide sidebar content when collapsed but keep toggle visible */
@@ -776,7 +776,7 @@
         
         .sidebar.collapsed .sidebar-toggle {
             position: absolute !important;
-            left: 15px !important;
+            left: 25px !important;
             top: 10px !important;
             margin: 0 !important;
             display: flex !important;
@@ -787,6 +787,7 @@
             border-radius: 50% !important;
             align-items: center !important;
             justify-content: center !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
         }
         
         /* Hide all tools when collapsed */
@@ -6606,7 +6607,6 @@
             // Start with both panels collapsed by default
             if (leftPanel) {
                 leftPanel.classList.add('collapsed');
-                leftPanel.style.transform = 'translateX(-100%)';
                 cesiumContainer.classList.remove('with-left-panel');
             }
             
@@ -6886,7 +6886,7 @@
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
-                leftPanelElement.style.transform = 'translateX(0)';
+                leftPanelElement.style.transform = ''; // Remove inline style to use CSS
                 cesiumContainer.classList.add('with-left-panel');
                 if (floatingButton) {
                     floatingButton.style.display = 'none';
@@ -6895,7 +6895,7 @@
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
-                leftPanelElement.style.transform = 'translateX(-100%)';
+                leftPanelElement.style.transform = ''; // Remove inline style to use CSS
                 cesiumContainer.classList.remove('with-left-panel');
                 setTimeout(() => {
                     if (floatingButton) {
@@ -6903,14 +6903,6 @@
                     }
                 }, 300);
                 console.log('Left panel collapsed');
-            }
-            
-            // Update toggle button text
-            const toggleBtn = leftPanelElement.querySelector('.sidebar-toggle');
-            if (toggleBtn) {
-                toggleBtn.innerHTML = leftPanelElement.classList.contains('collapsed') ? 
-                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>' : 
-                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
             }
         }
 
