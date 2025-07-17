@@ -12,18 +12,18 @@
         /* CSS Variables for Theme System */
         :root {
             --bg-color: #000;
-            --sidebar-bg: #f8f9fa;
+            --sidebar-bg: transparent;
             --sidebar-border: #dee2e6;
             --text-color: #333;
             --text-muted: #666;
             --button-bg: #007bff;
             --button-hover: #0056b3;
             --button-secondary: #6c757d;
-            --input-bg: #fff;
+            --input-bg: transparent;
             --input-border: #ced4da;
-            --panel-bg: rgba(255, 255, 255, 0.95);
+            --panel-bg: transparent;
             --shadow: rgba(0, 0, 0, 0.1);
-            --legend-bg: #f8f9fa;
+            --legend-bg: transparent;
             --legend-border: #dee2e6;
             --switch-bg: #ccc;
             --switch-toggle: #fff;
@@ -31,18 +31,18 @@
         
         [data-theme="dark"] {
             --bg-color: #000;
-            --sidebar-bg: #1a1a1a;
+            --sidebar-bg: transparent;
             --sidebar-border: #404040;
             --text-color: #e0e0e0;
             --text-muted: #b0b0b0;
             --button-bg: #0d6efd;
             --button-hover: #0b5ed7;
             --button-secondary: #495057;
-            --input-bg: #2d2d2d;
+            --input-bg: transparent;
             --input-border: #404040;
-            --panel-bg: rgba(26, 26, 26, 0.95);
+            --panel-bg: transparent;
             --shadow: rgba(0, 0, 0, 0.3);
-            --legend-bg: #2d2d2d;
+            --legend-bg: transparent;
             --legend-border: #404040;
             --switch-bg: #404040;
             --switch-toggle: #0d6efd;
@@ -189,7 +189,7 @@
         .sidebar-search-wrapper {
             display: flex;
             align-items: center;
-            background-color: var(--input-bg);
+            background-color: rgba(255, 255, 255, 0.1);
             border: 1px solid var(--input-border);
             border-radius: 4px;
             box-shadow: 0 1px 3px var(--shadow);
