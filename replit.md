@@ -111,7 +111,10 @@ The CesiumJS globe viewer is now fully functional with:
 - **Professional Visual Effect**: Clean white transparency with blur effects for modern UI appearance
 - **EPSG:4326 Projection Fix**: Implemented proper Equirectangular (Geographic) projection for 2D Flat Earth Mode
 - **WMS Layer Projection Support**: Added dynamic tilingScheme switching for WMS layers based on projection mode
-- **Protected Areas Layer Fix**: Converted from tile service to WMS for proper Geographic projection support
+- **Protected Areas Layer Fix**: Switched to ArcGIS FeatureServer source after UNEP-WCMC WMS service issues
+- **Clean Export Layout**: Simplified export panel to match geo.admin.ch style with minimal controls
+- **Export UI Improvements**: Removed visual overload, cleaner format selection (A4/A3 Landscape, A4 Portrait)
+- **Simplified Print Preview**: Minimalist metadata display with coordinates, date, and layers only
 
 ## Previous Changes (July 16, 2025)
 
