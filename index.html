@@ -2180,12 +2180,6 @@
             <div class="top-search-container">
                 <div class="top-search-wrapper">
                     <input type="text" id="topSearchInput" placeholder="Search address, place, or coordinates..." autocomplete="off" class="top-search-input">
-                    <button class="top-search-button" id="topSearchButton">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8"/>
-                            <path d="m21 21-4.35-4.35"/>
-                        </svg>
-                    </button>
                     <div class="top-loading-spinner" id="topLoadingSpinner" style="display: none;"></div>
                 </div>
                 <div class="top-suggestions-dropdown" id="topSuggestionsDropdown" style="display: none;"></div>
@@ -2556,6 +2550,15 @@
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </div>
+        
+        <!-- Help/Info Menu Button -->
+        <div class="tool-icon" id="helpMenuTool" title="Help & Information" onclick="toggleHelpMenu()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
         </div>
         
@@ -3390,15 +3393,8 @@
 
         // Add top search event listeners
         const topSearchInput = document.getElementById('topSearchInput');
-        const topSearchButton = document.getElementById('topSearchButton');
         const topLoadingSpinner = document.getElementById('topLoadingSpinner');
         const topSuggestionsDropdown = document.getElementById('topSuggestionsDropdown');
-        
-        if (topSearchButton) {
-            topSearchButton.addEventListener('click', function() {
-                performSearch(topSearchInput.value.trim());
-            });
-        }
         
         if (topSearchInput) {
             topSearchInput.addEventListener('keypress', function(e) {
@@ -3484,6 +3480,44 @@
                 hideSuggestions();
             }
         });
+
+        // Toggle help menu
+        function toggleHelpMenu() {
+            const helpInfo = `My Earth - 3D Globe Viewer
+
+CONTROLS:
+• Mouse: Click and drag to rotate
+• Scroll: Zoom in/out
+• Right-click: Pan view
+• Double-click: Zoom to location
+
+SEARCH:
+• Enter location names or coordinates
+• Autocomplete suggestions provided
+• Press Enter to search
+
+TOOLS:
+• North Arrow: Reset to north orientation
+• Home: Return to default view
+• Zoom In/Out: Precise zoom control
+• Search: Find locations worldwide
+• Measurement: Measure distances and areas
+• Markers: Place point markers
+• Models: Load 3D models
+• Layers: Manage map layers
+• Capture: Take screenshots
+• Fullscreen: Toggle fullscreen view
+• Settings: Customize appearance
+• Print: Print current view
+
+SUPPORT:
+Email: support@myearth.app
+
+Version: 1.0
+Built with CesiumJS`;
+            
+            alert(helpInfo);
+        }
 
         /**
          * Live Coordinates Tracking System
