@@ -6512,20 +6512,18 @@
                     metersPerPixel = groundDistance / pixelDistance;
                 }
                 
-                // Calculate appropriate scale for different base line sizes to get better scale values
+                // Calculate appropriate scale - force larger values at high altitudes
                 let basePixels = 100;
                 let baseDistance = metersPerPixel * basePixels;
                 
                 // Debug logging to understand the issue
                 console.log(`Scale debug: baseDistance=${Math.round(baseDistance/1000)}km, metersPerPixel=${Math.round(metersPerPixel)}`);
                 
-                // For very large scales, use smaller pixel base to get appropriate scale values
-                if (baseDistance > 500000) { // > 500km
-                    basePixels = 20;
-                    baseDistance = metersPerPixel * basePixels;
-                } else if (baseDistance > 100000) { // > 100km
-                    basePixels = 50;
-                    baseDistance = metersPerPixel * basePixels;
+                // For very large scales, we need to INCREASE the target distance, not decrease pixel base
+                if (baseDistance > 500000) { // > 500km - aim for much larger scale values
+                    baseDistance = metersPerPixel * 200; // Use larger base to get bigger scale values
+                } else if (baseDistance > 100000) { // > 100km - aim for larger scale values  
+                    baseDistance = metersPerPixel * 150; // Increase base distance
                 }
                 
                 // Round to nice scale values
