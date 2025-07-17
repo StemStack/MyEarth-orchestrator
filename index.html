@@ -5033,16 +5033,19 @@ Built with CesiumJS`;
             
             if (measurementTool.mode === 'line') {
                 results = calculateLineDistance();
-                drawMeasurementLine();
             } else if (measurementTool.mode === 'vertical') {
                 results = calculateVerticalDistance();
-                drawMeasurementLine();
             } else if (measurementTool.mode === 'area') {
                 results = calculateAreaMeasurement();
                 drawAreaPolygon();
+                measurementTool.results = results;
+                displayResults(results);
+                return;
             }
             
+            // Set results first, then draw line with label
             measurementTool.results = results;
+            drawMeasurementLine();
             displayResults(results);
         }
 
