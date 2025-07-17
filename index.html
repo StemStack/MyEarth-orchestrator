@@ -6749,6 +6749,21 @@ Built with CesiumJS`;
                 updatePointsUI(); // Update the correct UI
             }
         }
+        
+        function updateMarkerLabel(markerId, newLabel) {
+            const marker = markers.get(markerId);
+            if (marker && newLabel && newLabel.trim()) {
+                // Update the stored marker data
+                marker.label = newLabel.trim();
+                
+                // Update the entity's label
+                if (marker.entity && marker.entity.label) {
+                    marker.entity.label.text = newLabel.trim();
+                }
+                
+                console.log(`Marker ${markerId} renamed to: ${newLabel.trim()}`);
+            }
+        }
 
         function toggleModelPanel() {
             const modelSection = document.getElementById('modelSection');
@@ -8177,12 +8192,15 @@ Built with CesiumJS`;
                 return;
             }
             
-            // Use simpler UI that matches the existing marker menu style
+            // Use simpler UI that matches the existing marker menu style with editable names
             let listHTML = '';
             markerArray.forEach(marker => {
                 listHTML += `
                     <div class="marker-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <span style="font-size: 11px; color: white;">${marker.label}</span>
+                        <input type="text" value="${marker.label}" 
+                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 100px;"
+                               onchange="updateMarkerLabel('${marker.id}', this.value)"
+                               onblur="updateMarkerLabel('${marker.id}', this.value)">
                         <button onclick="removeMarker('${marker.id}')" style="background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 9px; cursor: pointer;">Remove</button>
                     </div>
                 `;
