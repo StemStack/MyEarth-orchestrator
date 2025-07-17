@@ -7227,6 +7227,7 @@
                 layerItem.className = 'layer-item';
                 layerItem.draggable = true;
                 layerItem.dataset.serviceKey = serviceKey;
+                layerItem.style.cursor = 'move';
                 
                 layerItem.innerHTML = `
                     <div class="layer-drag-handle">
@@ -7293,17 +7294,27 @@
             e.preventDefault();
             e.dataTransfer.dropEffect = 'move';
             
-            // Add visual feedback
-            this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+            // Only add visual feedback if this is not the dragged element
+            if (this !== draggedElement) {
+                this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                this.style.borderColor = '#3498db';
+            }
         }
         
         function handleLayerDragEnter(e) {
             e.preventDefault();
-            this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+            if (this !== draggedElement) {
+                this.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+                this.style.borderColor = '#3498db';
+            }
         }
         
         function handleLayerDragLeave(e) {
-            this.style.backgroundColor = '';
+            // Only remove feedback if we're actually leaving this element
+            if (!this.contains(e.relatedTarget)) {
+                this.style.backgroundColor = '';
+                this.style.borderColor = '#ddd';
+            }
         }
         
         function handleLayerDrop(e) {
@@ -7312,18 +7323,21 @@
             
             // Remove visual feedback
             this.style.backgroundColor = '';
+            this.style.borderColor = '#ddd';
             
             if (draggedElement && draggedElement !== this) {
                 const draggedServiceKey = draggedElement.dataset.serviceKey;
                 const targetServiceKey = this.dataset.serviceKey;
                 
-                console.log('Dropping layer:', draggedServiceKey, 'onto:', targetServiceKey);
+                console.log('Successfully dropping layer:', draggedServiceKey, 'onto:', targetServiceKey);
                 
                 // Reorder layers in CesiumJS and update display
                 reorderImageryLayers(draggedServiceKey, targetServiceKey);
                 
                 // Update the display order
                 updateActiveLayersDisplay();
+            } else {
+                console.log('Drop ignored - same element or no dragged element');
             }
             
             return false;
@@ -7336,6 +7350,7 @@
             const layerItems = document.querySelectorAll('.layer-item');
             layerItems.forEach(item => {
                 item.style.backgroundColor = '';
+                item.style.borderColor = '#ddd';
             });
             
             draggedElement = null;
