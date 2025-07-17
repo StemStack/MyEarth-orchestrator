@@ -2353,14 +2353,7 @@
 
 
 
-    <!-- Floating menu button (appears when sidebar is collapsed) -->
-    <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-        </svg>
-    </button>
+
 
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
@@ -6603,7 +6596,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             const leftPanel = document.getElementById('leftPanel');
             const rightPanel = document.getElementById('rightPanel');
-            const floatingButton = document.getElementById('floatingMenuButton');
             const cesiumContainer = document.getElementById('cesiumContainer');
             
             // Start with both panels collapsed by default
@@ -6614,10 +6606,6 @@
             
             if (rightPanel) {
                 rightPanel.classList.remove('collapsed');
-            }
-            
-            if (floatingButton) {
-                floatingButton.style.display = 'flex';
             }
             
             // Initialize bottom band updates
@@ -6883,27 +6871,16 @@
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
-            const floatingButton = document.getElementById('floatingMenuButton');
             
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
-                leftPanelElement.style.transform = ''; // Remove inline style to use CSS
                 cesiumContainer.classList.add('with-left-panel');
-                if (floatingButton) {
-                    floatingButton.style.display = 'none';
-                }
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
-                leftPanelElement.style.transform = ''; // Remove inline style to use CSS
                 cesiumContainer.classList.remove('with-left-panel');
-                setTimeout(() => {
-                    if (floatingButton) {
-                        floatingButton.style.display = 'flex';
-                    }
-                }, 300);
                 console.log('Left panel collapsed');
             }
         }
