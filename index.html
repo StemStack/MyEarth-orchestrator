@@ -629,6 +629,8 @@
             transition: transform 0.3s ease;
             overflow-y: auto;
             padding-top: 40px;
+            padding-bottom: 20px; /* Add padding at the bottom */
+            box-sizing: border-box;
         }
 
         /* Right Panel Styles - Single Vertical Column */
@@ -1312,6 +1314,8 @@
         @media (max-width: 768px) {
             .sidebar {
                 width: 300px;
+                height: calc(100vh - 80px); /* Account for top panel (40px) and bottom band (40px) */
+                bottom: 40px; /* Add bottom spacing for the bottom band */
             }
         }
 
@@ -1332,6 +1336,7 @@
             justify-content: space-between;
             align-items: center;
             transition: background-color 0.3s ease;
+            touch-action: manipulation; /* Better touch response on mobile */
         }
 
         .section-header:hover {

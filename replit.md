@@ -100,9 +100,10 @@ The CesiumJS globe viewer is now fully functional with:
 ## Recent Changes (July 17, 2025)
 
 - **Panel Transparency Fixed**: Resolved transparency rendering issues that caused panels to appear dark
-- **50% Transparency Applied**: All panels now use rgba(248, 248, 248, 0.5) with proper white overlay
-- **Enhanced Backdrop Filters**: Added brightness(1.3) filter to maintain white appearance over dark backgrounds
-- **Comprehensive Panel Updates**: Applied transparency to sidebar, right panel, bottom band, top panel, and all sub-elements
+- **Updated to 85% White Opacity**: All panels now use rgba(255, 255, 255, 0.85) for bright white appearance
+- **Enhanced Backdrop Filters**: Added blur(30px) saturate(200%) brightness(1.5) for maximum brightness
+- **Right Panel Frame Removed**: Made right panel background transparent - tools now float without frame
+- **Mobile Sidebar Fix**: Fixed Performance section accessibility by adjusting height calculation and adding proper spacing
 - **Professional Visual Effect**: Clean white transparency with blur effects for modern UI appearance
 
 ## Previous Changes (July 16, 2025)
