@@ -8118,19 +8118,13 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/WDPA_Public/FeatureServer',
+                url: 'https://tiles.arcgis.com/tiles/nzS0F0zdNLvs7nc8/arcgis/rest/services/WDPA_current/MapServer/WMSServer',
                 name: 'World Database of Protected Areas',
-                type: 'geojson',
-                format: 'vector',
+                type: 'wms',
+                layers: '0',
+                format: 'image/png',
                 transparent: true,
-                credit: 'UNEP-WCMC and IUCN (2023), Protected Planet: The World Database on Protected Areas (WDPA)',
-                styleOptions: {
-                    stroke: '#228B22',
-                    strokeWidth: 2,
-                    fill: '#90EE90',
-                    fillOpacity: 0.4,
-                    markerSymbol: '🌲'
-                }
+                credit: 'UNEP-WCMC and IUCN (2023), Protected Planet: The World Database on Protected Areas (WDPA)'
             },
             land_degradation: {
                 url: 'https://datacore.unepgrid.ch/geoserver/MapX_UNDP/ows',
@@ -8176,7 +8170,7 @@ Built with CesiumJS`;
                         });
                     } else if (service.type === 'geojson') {
                         // Handle GeoJSON/FeatureServer data sources for protected areas
-                        const featureServerUrl = service.url + '/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson';
+                        const featureServerUrl = service.url.includes('query?') ? service.url : service.url + '/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson';
                         
                         Cesium.GeoJsonDataSource.load(featureServerUrl, {
                             stroke: Cesium.Color.fromCssColorString(service.styleOptions?.stroke || '#228B22').withAlpha(0.8),
