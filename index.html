@@ -8118,13 +8118,19 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://geoservice.unep-wcmc.org/arcgis/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/WMSServer',
+                url: 'https://services1.arcgis.com/fBc8EJBxQRMcHlei/arcgis/rest/services/WDPA_Public/FeatureServer',
                 name: 'World Database of Protected Areas',
-                type: 'wms',
-                layers: '0,1,2,3,4,5,6',
-                format: 'image/png',
+                type: 'geojson',
+                format: 'vector',
                 transparent: true,
-                credit: 'UNEP-WCMC and IUCN (2023), Protected Planet: The World Database on Protected Areas (WDPA)'
+                credit: 'UNEP-WCMC and IUCN (2023), Protected Planet: The World Database on Protected Areas (WDPA)',
+                styleOptions: {
+                    stroke: '#228B22',
+                    strokeWidth: 2,
+                    fill: '#90EE90',
+                    fillOpacity: 0.4,
+                    markerSymbol: '🌲'
+                }
             },
             land_degradation: {
                 url: 'https://datacore.unepgrid.ch/geoserver/MapX_UNDP/ows',
@@ -8169,11 +8175,14 @@ Built with CesiumJS`;
                             tilingScheme: tilingScheme
                         });
                     } else if (service.type === 'geojson') {
-                        // Handle GeoJSON data sources
-                        Cesium.GeoJsonDataSource.load(service.url, {
-                            stroke: Cesium.Color.GREEN.withAlpha(0.8),
-                            fill: Cesium.Color.GREEN.withAlpha(0.3),
-                            strokeWidth: 2
+                        // Handle GeoJSON/FeatureServer data sources for protected areas
+                        const featureServerUrl = service.url + '/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson';
+                        
+                        Cesium.GeoJsonDataSource.load(featureServerUrl, {
+                            stroke: Cesium.Color.fromCssColorString(service.styleOptions?.stroke || '#228B22').withAlpha(0.8),
+                            fill: Cesium.Color.fromCssColorString(service.styleOptions?.fill || '#90EE90').withAlpha(service.styleOptions?.fillOpacity || 0.4),
+                            strokeWidth: service.styleOptions?.strokeWidth || 2,
+                            markerSymbol: service.styleOptions?.markerSymbol || '🌲'
                         }).then(function(dataSource) {
                             globalViewer.dataSources.add(dataSource);
                             
@@ -8189,8 +8198,28 @@ Built with CesiumJS`;
                             updateLegend();
                         }).catch(error => {
                             console.error(`Failed to load ${service.name}:`, error);
-                            const checkbox = document.getElementById(`${serviceKey}Wms`);
-                            if (checkbox) checkbox.checked = false;
+                            // Fallback to alternative protected areas source
+                            const fallbackUrl = 'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson';
+                            Cesium.GeoJsonDataSource.load(fallbackUrl, {
+                                stroke: Cesium.Color.GREEN.withAlpha(0.8),
+                                fill: Cesium.Color.GREEN.withAlpha(0.3),
+                                strokeWidth: 2
+                            }).then(function(dataSource) {
+                                globalViewer.dataSources.add(dataSource);
+                                predefinedWmsLayers.set(serviceKey, {
+                                    dataSource: dataSource,
+                                    name: service.name + ' (Simplified)',
+                                    serviceKey: serviceKey,
+                                    type: 'geojson'
+                                });
+                                console.log(`✓ ${service.name} layer enabled with fallback data`);
+                                updateLayersList();
+                                updateLegend();
+                            }).catch(fallbackError => {
+                                console.error(`Failed to load fallback data:`, fallbackError);
+                                const checkbox = document.getElementById(`${serviceKey}Wms`);
+                                if (checkbox) checkbox.checked = false;
+                            });
                         });
                         return;
                     } else {
