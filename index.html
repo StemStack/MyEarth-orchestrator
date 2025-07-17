@@ -1795,7 +1795,7 @@
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('searchSection')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/></svg>Search & Navigation</span>
-                <span>▼</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content" id="searchSection">
                 <div class="sidebar-search-container">
@@ -1820,7 +1820,7 @@
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('mapsDisplayed')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 6h12M6 12h12M6 18h12" stroke="currentColor" stroke-width="1"/></svg>Maps displayed</span>
-                <span>▼</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content" id="mapsDisplayed">
                 <!-- Base Map Selection -->
@@ -1856,7 +1856,7 @@
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('dataServices')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2" stroke="currentColor" stroke-width="2"/></svg>Data Services</span>
-                <span>▼</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content" id="dataServices">
                 <!-- Predefined WMS Layers -->
@@ -1918,7 +1918,7 @@
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('measurementTools')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z" fill="none" stroke="currentColor" stroke-width="2"/></svg>Measurement</span>
-                <span>▼</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content" id="measurementTools">
                 <button class="control-button secondary" onclick="toggleMeasurementTool()">
@@ -1934,7 +1934,7 @@
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('models3d')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 22V12" stroke="currentColor" stroke-width="2"/><path d="M2 7L12 12L22 7" stroke="currentColor" stroke-width="2"/></svg>3D Models</span>
-                <span>▼</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content" id="models3d">
                 <button class="control-button secondary" id="modelUploadButton">
@@ -1950,7 +1950,7 @@
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('performance')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>Performance</span>
-                <span>▼</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content collapsed" id="performance">
                 <div class="webgl-notice">
@@ -1969,7 +1969,12 @@
     <div class="service-loader-panel" id="serviceLoaderPanel" style="display: none;">
         <div class="service-loader-header">
             <div class="service-loader-title">Data Service Loader</div>
-            <button onclick="toggleServiceLoader()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
+            <button onclick="toggleServiceLoader()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
         </div>
         
         <div class="service-loader-content">
@@ -2046,8 +2051,13 @@
     <!-- Measurement Controls - Line & Area -->
     <div class="measurement-controls" id="measurementControls" style="display: none;">
         <div class="measurement-header">
-            <div class="measurement-title">📏 Measurement</div>
-            <button onclick="toggleMeasurementTool()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
+            <div class="measurement-title">Measurement</div>
+            <button onclick="toggleMeasurementTool()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
         </div>
         
         <div class="measurement-mode-buttons">
@@ -2083,7 +2093,12 @@
     <div class="marker-controls" id="markerControls" style="display: none;">
         <div class="measurement-header">
             <div class="measurement-title">Point Markers</div>
-            <button onclick="toggleMarkerPanel()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
+            <button onclick="toggleMarkerPanel()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
         </div>
         
         <div class="points-list" id="pointsList">
@@ -5787,11 +5802,18 @@
         // Toggle section collapse/expand
         function toggleSection(sectionId) {
             const content = document.getElementById(sectionId);
+            if (!content) return;
+            
             const header = content.previousElementSibling;
+            if (!header) return;
+            
             const arrow = header.querySelector('span:last-child');
+            if (!arrow) return;
             
             content.classList.toggle('collapsed');
-            arrow.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+            arrow.innerHTML = content.classList.contains('collapsed') ? 
+                '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,18 15,12 9,6"/></svg>' : 
+                '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg>';
         }
         
         // Show sample models function (placeholder)
