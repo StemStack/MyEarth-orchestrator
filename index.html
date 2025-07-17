@@ -2174,6 +2174,297 @@
         .scale-bar-container {
             opacity: 1 !important;
         }
+
+        /* Map Export Tool Styles */
+        .map-export-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 15000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .map-export-container {
+            background: white;
+            border-radius: 8px;
+            width: 95%;
+            max-width: 1200px;
+            height: 90%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .map-export-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .map-export-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .map-export-content {
+            display: flex;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .export-settings-panel {
+            width: 300px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .print-preview-panel {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            background: #e9ecef;
+        }
+
+        .settings-section {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+        }
+
+        .settings-section h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .setting-group {
+            margin-bottom: 12px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 12px;
+            color: #495057;
+            font-weight: 500;
+        }
+
+        .setting-group input, .setting-group select, .setting-group textarea {
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 12px;
+            box-sizing: border-box;
+        }
+
+        .export-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .export-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .pdf-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .png-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .preview-header h4 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .preview-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-page {
+            position: relative;
+            background: white;
+            border: 1px solid #dee2e6;
+            margin: 0 auto;
+            padding: 15mm;
+            width: 180mm;
+            min-height: 257mm;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transform: scale(0.6);
+            transform-origin: top center;
+        }
+
+        .preview-page.landscape {
+            width: 257mm;
+            min-height: 180mm;
+        }
+
+        .preview-map-area {
+            width: 100%;
+            height: 150mm;
+            border: 1px solid #ccc;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10mm;
+            position: relative;
+        }
+
+        .preview-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10mm;
+            color: #2c3e50;
+        }
+
+        .preview-metadata {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5mm;
+            margin-bottom: 10mm;
+            font-size: 10px;
+        }
+
+        .metadata-group {
+            background: #f8f9fa;
+            padding: 3mm;
+            border-radius: 2mm;
+        }
+
+        .preview-scale-bar {
+            position: absolute;
+            bottom: 15mm;
+            left: 10mm;
+            display: flex;
+            align-items: center;
+            gap: 5mm;
+        }
+
+        .scale-line {
+            width: 20mm;
+            height: 1mm;
+            background: black;
+            border-left: 1mm solid black;
+            border-right: 1mm solid black;
+        }
+
+        .scale-text {
+            font-size: 8px;
+            font-weight: 500;
+        }
+
+        .preview-north-arrow {
+            position: absolute;
+            top: 15mm;
+            right: 15mm;
+        }
+
+        .preview-legend {
+            position: absolute;
+            top: 50mm;
+            right: 15mm;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            padding: 5mm;
+            border-radius: 2mm;
+            font-size: 8px;
+            max-width: 40mm;
+        }
+
+        .preview-legend h5 {
+            margin: 0 0 3mm 0;
+            font-size: 9px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+            margin-bottom: 2mm;
+        }
+
+        .legend-color {
+            width: 3mm;
+            height: 3mm;
+            border-radius: 1mm;
+        }
+
+        .preview-notes {
+            position: absolute;
+            bottom: 25mm;
+            left: 10mm;
+            right: 10mm;
+            font-size: 8px;
+            color: #495057;
+        }
+
+        .preview-logo {
+            position: absolute;
+            top: 15mm;
+            left: 15mm;
+            max-width: 30mm;
+            max-height: 15mm;
+        }
+
+        .preview-qr {
+            position: absolute;
+            bottom: 15mm;
+            right: 15mm;
+            font-size: 6px;
+            text-align: center;
+        }
+
+        .preview-attribution {
+            position: absolute;
+            bottom: 5mm;
+            left: 10mm;
+            font-size: 6px;
+            color: #6c757d;
+        }
     </style>
 </head>
 
@@ -2349,6 +2640,22 @@
             </div>
         </div>
         
+        <!-- Map Export / Print Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('mapexport')">
+                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2"/></svg>Print / Export Map</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
+            </div>
+            <div class="section-content collapsed" id="mapexport">
+                <button class="control-button primary" onclick="openMapExportTool()" style="margin-bottom: 8px;">
+                    🖨️ Open Export Tool
+                </button>
+                <div style="font-size: 11px; color: #666; margin-top: 4px;">
+                    Generate publication-ready PDF and PNG exports with metadata
+                </div>
+            </div>
+        </div>
+        
         <!-- Performance Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('performance')">
@@ -2518,6 +2825,153 @@
     <!-- Color Picker Dropdown -->
     <div class="color-picker-dropdown" id="colorPickerDropdown">
         <!-- Color options will be dynamically inserted here -->
+    </div>
+
+    <!-- Map Export Tool Interface -->
+    <div class="map-export-overlay" id="mapExportOverlay" style="display: none;">
+        <div class="map-export-container">
+            <div class="map-export-header">
+                <h3>Map Export Tool</h3>
+                <button onclick="closeMapExportTool()" class="close-btn">✕</button>
+            </div>
+            
+            <div class="map-export-content">
+                <!-- Export Settings Panel -->
+                <div class="export-settings-panel">
+                    <div class="settings-section">
+                        <h4>Layout Settings</h4>
+                        <div class="setting-group">
+                            <label>Paper Size:</label>
+                            <select id="paperSize" onchange="updatePrintPreview()">
+                                <option value="A4">A4 (210 × 297 mm)</option>
+                                <option value="A3">A3 (297 × 420 mm)</option>
+                                <option value="A5">A5 (148 × 210 mm)</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>Orientation:</label>
+                            <select id="orientation" onchange="updatePrintPreview()">
+                                <option value="portrait">Portrait</option>
+                                <option value="landscape">Landscape</option>
+                            </select>
+                        </div>
+                        <div class="setting-group">
+                            <label>DPI:</label>
+                            <select id="dpiSetting">
+                                <option value="150">150 DPI</option>
+                                <option value="300">300 DPI</option>
+                                <option value="600">600 DPI</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>Map Content</h4>
+                        <div class="setting-group">
+                            <label>Title:</label>
+                            <input type="text" id="mapTitle" value="Map Export" placeholder="Enter map title" onchange="updatePrintPreview()">
+                        </div>
+                        <div class="setting-group">
+                            <label>Notes:</label>
+                            <textarea id="mapNotes" placeholder="Add custom notes..." rows="3" onchange="updatePrintPreview()"></textarea>
+                        </div>
+                        <div class="setting-group">
+                            <label>Logo Upload:</label>
+                            <input type="file" id="logoUpload" accept="image/*" onchange="handleLogoUpload()">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h4>Advanced Options</h4>
+                        <div class="setting-group">
+                            <label>
+                                <input type="checkbox" id="includeCoordinateGrid" onchange="updatePrintPreview()">
+                                Include coordinate grid
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label>
+                                <input type="checkbox" id="includeQRCode" checked onchange="updatePrintPreview()">
+                                Include QR code for online view
+                            </label>
+                        </div>
+                        <div class="setting-group">
+                            <label>Custom Scale (optional):</label>
+                            <input type="text" id="customScale" placeholder="e.g., 1:25000" onchange="updatePrintPreview()">
+                        </div>
+                    </div>
+
+                    <div class="export-actions">
+                        <button class="export-btn pdf-btn" onclick="exportAsPDF()">📄 Export as PDF</button>
+                        <button class="export-btn png-btn" onclick="exportAsPNG()">🖼️ Export as PNG</button>
+                    </div>
+                </div>
+
+                <!-- Print Preview Panel -->
+                <div class="print-preview-panel">
+                    <div class="preview-header">
+                        <h4>Print Preview</h4>
+                        <span id="previewScale">Scale: 1:50,000</span>
+                    </div>
+                    <div class="preview-container" id="printPreviewContainer">
+                        <div class="preview-page" id="previewPage">
+                            <!-- Map image will be inserted here -->
+                            <div class="preview-map-area" id="previewMapArea">
+                                <canvas id="previewMapCanvas"></canvas>
+                            </div>
+                            
+                            <!-- Map metadata and layout elements -->
+                            <div class="preview-title" id="previewTitle">Map Export</div>
+                            
+                            <div class="preview-metadata">
+                                <div class="metadata-group">
+                                    <strong>Center:</strong> <span id="previewCoordinates">0.00°, 0.00°</span>
+                                </div>
+                                <div class="metadata-group">
+                                    <strong>Zoom:</strong> <span id="previewZoomLevel">12</span>
+                                </div>
+                                <div class="metadata-group">
+                                    <strong>Date:</strong> <span id="previewDate"></span>
+                                </div>
+                                <div class="metadata-group">
+                                    <strong>Layers:</strong> <span id="previewLayers">OpenStreetMap</span>
+                                </div>
+                            </div>
+
+                            <div class="preview-scale-bar" id="previewScaleBar">
+                                <div class="scale-line"></div>
+                                <span class="scale-text">5 km</span>
+                            </div>
+
+                            <div class="preview-north-arrow">
+                                <svg width="30" height="30" viewBox="0 0 24 24">
+                                    <path d="M12 2L15 8H13V22H11V8H9L12 2Z" fill="black"/>
+                                    <text x="12" y="20" text-anchor="middle" font-size="6" fill="black">N</text>
+                                </svg>
+                            </div>
+
+                            <div class="preview-legend" id="previewLegend">
+                                <h5>Legend</h5>
+                                <div class="legend-item">
+                                    <div class="legend-color" style="background: #4CAF50;"></div>
+                                    <span>Base Map</span>
+                                </div>
+                            </div>
+
+                            <div class="preview-notes" id="previewNotes"></div>
+                            
+                            <div class="preview-logo" id="previewLogo"></div>
+                            
+                            <div class="preview-qr" id="previewQR"></div>
+
+                            <div class="preview-attribution">
+                                © OpenStreetMap contributors, CesiumJS
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="drag-drop-overlay" id="dragDropOverlay" style="display: none;">
@@ -6749,6 +7203,31 @@ Built with CesiumJS`;
                 updatePointsUI(); // Update the correct UI
             }
         }
+
+        function updateMarkerLabel(markerId, newLabel) {
+            const marker = markers.get(markerId);
+            if (marker && newLabel.trim()) {
+                // Update marker data
+                marker.label = newLabel.trim();
+                
+                // Update the label entity in Cesium
+                if (marker.entity && marker.entity.label) {
+                    marker.entity.label.text = newLabel.trim();
+                }
+                
+                console.log(`Marker ${markerId} renamed to: ${newLabel.trim()}`);
+            }
+        }
+
+        function focusOnMarker(markerId) {
+            const marker = markers.get(markerId);
+            if (marker && marker.entity && viewer) {
+                viewer.flyTo(marker.entity, {
+                    duration: 1.0,
+                    offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-45), 5000)
+                });
+            }
+        }
         
         function updateMarkerLabel(markerId, newLabel) {
             const marker = markers.get(markerId);
@@ -8198,9 +8677,10 @@ Built with CesiumJS`;
                 listHTML += `
                     <div class="marker-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                         <input type="text" value="${marker.label}" 
-                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 100px;"
+                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 100px; outline: none;"
                                onchange="updateMarkerLabel('${marker.id}', this.value)"
-                               onblur="updateMarkerLabel('${marker.id}', this.value)">
+                               onblur="updateMarkerLabel('${marker.id}', this.value)"
+                               title="Click to rename marker">
                         <button onclick="removeMarker('${marker.id}')" style="background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 9px; cursor: pointer;">Remove</button>
                     </div>
                 `;
@@ -8422,6 +8902,248 @@ Built with CesiumJS`;
         
         // Initialize points UI
         updatePointsUI();
+
+        // Map Export Tool Functions
+        let mapExportData = {
+            userLogo: null
+        };
+
+        function openMapExportTool() {
+            const overlay = document.getElementById('mapExportOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                initializePrintPreview();
+            }
+        }
+
+        function closeMapExportTool() {
+            const overlay = document.getElementById('mapExportOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+
+        function initializePrintPreview() {
+            // Set current date
+            const now = new Date();
+            document.getElementById('previewDate').textContent = now.toLocaleDateString();
+            
+            // Update coordinates and zoom level
+            updateMapMetadata();
+            
+            // Capture map image
+            captureMapImage();
+            
+            // Generate QR code if enabled
+            generateQRCode();
+        }
+
+        function updatePrintPreview() {
+            const paperSize = document.getElementById('paperSize').value;
+            const orientation = document.getElementById('orientation').value;
+            const title = document.getElementById('mapTitle').value;
+            const notes = document.getElementById('mapNotes').value;
+            
+            // Update preview page layout
+            const previewPage = document.getElementById('previewPage');
+            previewPage.className = 'preview-page';
+            if (orientation === 'landscape') {
+                previewPage.classList.add('landscape');
+            }
+            
+            // Update title
+            document.getElementById('previewTitle').textContent = title;
+            
+            // Update notes
+            document.getElementById('previewNotes').textContent = notes;
+            
+            // Update metadata
+            updateMapMetadata();
+            
+            // Update legend
+            generateLegend();
+            
+            // Recalculate scale
+            calculateScaleBar();
+        }
+
+        function updateMapMetadata() {
+            if (!viewer || !viewer.camera) return;
+            
+            const cartographic = viewer.camera.positionCartographic;
+            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+            const height = cartographic.height;
+            
+            // Update coordinates
+            document.getElementById('previewCoordinates').textContent = 
+                `${latitude.toFixed(6)}°, ${longitude.toFixed(6)}°`;
+            
+            // Calculate zoom level equivalent
+            const zoomLevel = Math.round(Math.log2(156543.03392 * Math.cos(latitude * Math.PI / 180) / height * 256));
+            document.getElementById('previewZoomLevel').textContent = Math.max(0, zoomLevel);
+        }
+
+        function captureMapImage() {
+            if (!viewer) return;
+            
+            try {
+                // Force render
+                viewer.scene.requestRender();
+                
+                // Capture canvas after a short delay to ensure rendering
+                setTimeout(() => {
+                    const canvas = viewer.scene.canvas;
+                    const mapArea = document.getElementById('previewMapArea');
+                    const previewCanvas = document.getElementById('previewMapCanvas');
+                    
+                    if (canvas && previewCanvas) {
+                        const ctx = previewCanvas.getContext('2d');
+                        previewCanvas.width = mapArea.offsetWidth - 2;
+                        previewCanvas.height = mapArea.offsetHeight - 2;
+                        
+                        // Draw the Cesium canvas to our preview canvas
+                        ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                    }
+                }, 100);
+            } catch (error) {
+                console.warn('Failed to capture map image:', error);
+                // Show placeholder
+                const mapArea = document.getElementById('previewMapArea');
+                if (mapArea) {
+                    mapArea.innerHTML = '<div style="color: #999; font-size: 12px;">Map Preview<br>(Click Export to generate)</div>';
+                }
+            }
+        }
+
+        function calculateScaleBar() {
+            if (!viewer || !viewer.camera) return;
+            
+            const cartographic = viewer.camera.positionCartographic;
+            const height = cartographic.height;
+            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+            
+            // Calculate approximate scale
+            const metersPerPixel = height / 256;
+            const scale = Math.round(metersPerPixel * 1000); // Rough scale calculation
+            
+            // Update scale display
+            document.getElementById('previewScale').textContent = `Scale: 1:${scale.toLocaleString()}`;
+            
+            // Update scale bar
+            let scaleDistance;
+            if (scale < 10000) {
+                scaleDistance = '1 km';
+            } else if (scale < 100000) {
+                scaleDistance = '5 km';
+            } else {
+                scaleDistance = '10 km';
+            }
+            
+            document.querySelector('.scale-text').textContent = scaleDistance;
+        }
+
+        function generateLegend() {
+            const legendContainer = document.getElementById('previewLegend');
+            if (!legendContainer) return;
+            
+            // Get current base map
+            const baseMapSelector = document.getElementById('baseMapSelector');
+            const currentBaseMap = baseMapSelector ? baseMapSelector.value : 'osm';
+            
+            let legendHTML = '<h5>Legend</h5>';
+            
+            // Add base map to legend
+            legendHTML += `
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4CAF50;"></div>
+                    <span>Base Map</span>
+                </div>
+            `;
+            
+            // Add active overlays
+            const activeOverlays = getActiveOverlays();
+            activeOverlays.forEach(overlay => {
+                legendHTML += `
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: ${overlay.color};"></div>
+                        <span>${overlay.name}</span>
+                    </div>
+                `;
+            });
+            
+            legendContainer.innerHTML = legendHTML;
+        }
+
+        function getActiveOverlays() {
+            // Return list of active overlay layers
+            const overlays = [];
+            
+            // Check WMS layers
+            if (typeof activeWmsLayers !== 'undefined') {
+                activeWmsLayers.forEach(layer => {
+                    overlays.push({
+                        name: layer.name || 'WMS Layer',
+                        color: '#FF6B6B'
+                    });
+                });
+            }
+            
+            // Add markers if any exist
+            if (markers && markers.size > 0) {
+                overlays.push({
+                    name: `Markers (${markers.size})`,
+                    color: '#FF0000'
+                });
+            }
+            
+            return overlays;
+        }
+
+        function generateQRCode() {
+            const includeQR = document.getElementById('includeQRCode').checked;
+            const qrContainer = document.getElementById('previewQR');
+            
+            if (!includeQR || !qrContainer) return;
+            
+            // Generate URL for current view
+            const currentURL = window.location.href;
+            
+            // For now, show placeholder - in production you'd use a QR library
+            qrContainer.innerHTML = `
+                <div style="width: 30px; height: 30px; background: #000; margin-bottom: 2px;"></div>
+                <div>View online</div>
+            `;
+        }
+
+        function handleLogoUpload() {
+            const fileInput = document.getElementById('logoUpload');
+            const file = fileInput.files[0];
+            
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    mapExportData.userLogo = e.target.result;
+                    
+                    // Show logo in preview
+                    const logoContainer = document.getElementById('previewLogo');
+                    if (logoContainer) {
+                        logoContainer.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 100%;">`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function exportAsPDF() {
+            alert('PDF export functionality would require a PDF library like jsPDF or html2pdf.js');
+            // Implementation would use a library like jsPDF or html2pdf.js
+        }
+
+        function exportAsPNG() {
+            alert('PNG export functionality would require a library like html2canvas or dom-to-image');
+            // Implementation would use a library like html2canvas
+        }
         
     </script>
 </body>
