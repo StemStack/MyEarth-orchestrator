@@ -7260,8 +7260,8 @@
                     <div class="layer-info">
                         <span class="layer-name">${layerInfo.name}</span>
                         <div class="layer-controls">
-                            <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" onclick="event.stopPropagation()">
-                            <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')">×</button>
+                            <input type="range" min="0" max="100" value="70" class="opacity-slider" onchange="updateLayerOpacity('${serviceKey}', this.value)" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+                            <button class="remove-layer-btn" onclick="removePredefinedLayer('${serviceKey}')" onmousedown="event.stopPropagation()">×</button>
                         </div>
                     </div>
                 `;
@@ -7303,8 +7303,8 @@
         let draggedElement = null;
         
         function handleLayerDragStart(e) {
-            // Only allow drag from the drag handle
-            if (!e.target.closest('.layer-drag-handle')) {
+            // Prevent drag if clicking on slider or button
+            if (e.target.matches('.opacity-slider, .remove-layer-btn')) {
                 e.preventDefault();
                 return false;
             }
