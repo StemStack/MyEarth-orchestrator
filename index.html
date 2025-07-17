@@ -648,8 +648,8 @@
         #rightPanel {
             position: fixed !important;
             top: 10px !important;
-            right: 10px !important;
-            width: 40px;
+            right: 5px !important;
+            width: 42px;
             background: transparent !important;
             z-index: 999;
             display: flex;
@@ -664,6 +664,7 @@
             width: 0px;
             opacity: 0;
             visibility: hidden;
+            margin-right: -50px;
         }
         
 
@@ -767,9 +768,20 @@
         }
         
         /* Target specific timeline elements more precisely */
-        .cesium-viewer .cesium-viewer-bottom {
+        .cesium-viewer .cesium-viewer-bottom,
+        .cesium-viewer-bottom,
+        div[class*="cesium-viewer-bottom"],
+        div[class*="timeline"],
+        div[class*="animation"] {
             display: none !important;
             height: 0 !important;
+            width: 0 !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            z-index: -9999 !important;
         }
 
         /* Update theme toggle button position */
@@ -2418,7 +2430,9 @@
             .cesium-viewer-bottom,
             .cesium-viewer-timelineContainer,
             .cesium-viewer-animationContainer,
-            .cesium-widget-credits {
+            .cesium-widget-credits,
+            .cesium-timeline,
+            .cesium-animation {
                 display: none !important;
                 visibility: hidden !important;
                 opacity: 0 !important;
@@ -2428,6 +2442,7 @@
                 position: absolute !important;
                 top: -9999px !important;
                 left: -9999px !important;
+                z-index: -9999 !important;
             }
         `;
         document.head.appendChild(timelineCSS);
@@ -2468,16 +2483,32 @@
                     el.style.opacity = '0';
                     el.style.height = '0';
                     el.style.width = '0';
+                    el.style.zIndex = '-9999';
                     el.remove();
                 }
             });
             
-            // Force hide the bottom container specifically
-            const bottomContainer = document.querySelector('.cesium-viewer-bottom');
-            if (bottomContainer) {
-                bottomContainer.style.display = 'none !important';
-                bottomContainer.remove();
-            }
+            // Force hide the bottom container specifically - multiple approaches
+            const bottomSelectors = [
+                '.cesium-viewer-bottom',
+                '.cesium-viewer .cesium-viewer-bottom',
+                '.cesium-widget .cesium-viewer-bottom',
+                'div[class*="cesium-viewer-bottom"]'
+            ];
+            
+            bottomSelectors.forEach(selector => {
+                const containers = document.querySelectorAll(selector);
+                containers.forEach(container => {
+                    if (container) {
+                        container.style.display = 'none !important';
+                        container.style.visibility = 'hidden !important';
+                        container.style.opacity = '0 !important';
+                        container.style.height = '0 !important';
+                        container.style.zIndex = '-9999 !important';
+                        container.remove();
+                    }
+                });
+            });
         }, 500);
         
         // Stop checking after 10 seconds
