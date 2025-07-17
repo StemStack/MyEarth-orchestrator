@@ -1,0 +1,97 @@
+We’re preparing this project for deployment on a real server, where we’ll be using PostgreSQL with the PostGIS extension to handle geospatial data (e.g., maps, locations, polygons, 3D points, etc.).
+
+So we're adapting the Replit environment to:
+
+Connect to a real PostgreSQL/PostGIS database (we’ll set it up on the server).
+
+Structure the backend to support spatial models using geoalchemy2.
+
+Make the whole project easily deployable via GitHub and FastAPI.
+
+✅ What to do in Replit:
+1. Create these 4 files:
+main.py
+
+database.py
+
+models.py
+
+.env
+
+Also add a requirements.txt.
+
+2. Paste this into each file:
+👉 database.py
+python
+Copy
+Edit
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://myappuser:yourStrongPassword@localhost/myappdb")
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+Base = declarative_base()
+👉 models.py
+python
+Copy
+Edit
+from sqlalchemy import Column, Integer, String
+from geoalchemy2 import Geometry
+from database import Base
+
+class Location(Base):
+    __tablename__ = "locations"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    geom = Column(Geometry("POINT", srid=4326))
+👉 main.py
+python
+Copy
+Edit
+from fastapi import FastAPI
+from database import engine
+from models import Base
+
+app = FastAPI()
+
+# Automatically create the tables on startup
+Base.metadata.create_all(bind=engine)
+
+@app.get("/")
+def root():
+    return {"message": "MVP backend ready with PostGIS support"}
+👉 .env
+env
+Copy
+Edit
+DATABASE_URL=postgresql://myappuser:yourStrongPassword@localhost/myappdb
+This will be used on the server, but keep it in Replit for dev/testing.
+
+3. Add this to requirements.txt:
+php
+Copy
+Edit
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+geoalchemy2
+python-dotenv
+4. If using Replit Secrets tab (instead of .env):
+Add a secret named DATABASE_URL with your connection string.
+
+✅ Final Note for Replit:
+This setup prepares the project to:
+
+Connect to a PostgreSQL/PostGIS DB on deployment
+
+Store and query geospatial data
+
+Be pushed to GitHub, cloned to our server, and deployed via Uvicorn + Nginx

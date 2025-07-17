@@ -15,10 +15,22 @@ Bottom panel: Coordinates with cm precision, text stays in right 2/3 area.
 
 ## System Architecture
 
+### Full-Stack Architecture
+- **Frontend**: Pure HTML/CSS/JavaScript with CesiumJS for 3D globe visualization
+- **Backend**: FastAPI with PostgreSQL/PostGIS database for geospatial data management
+- **Database**: PostgreSQL with PostGIS extension for spatial data storage and queries
+- **API Layer**: RESTful endpoints for location management and spatial operations
+
 ### Frontend Architecture
 - **Pure HTML/CSS/JavaScript**: The application uses a simple client-side architecture with no build tools or frameworks
 - **Single Page Application**: Built as a standalone HTML file that loads CesiumJS from CDN
 - **Responsive Design**: Configured for full viewport utilization with mobile-friendly viewport settings
+
+### Backend Architecture
+- **FastAPI Framework**: Modern Python web framework with automatic OpenAPI documentation
+- **PostgreSQL Database**: Robust relational database with PostGIS spatial extension
+- **SQLAlchemy ORM**: Object-relational mapping with GeoAlchemy2 for spatial data types
+- **Pydantic Models**: Data validation and serialization for API requests/responses
 
 ### Rendering Engine
 - **CesiumJS 1.111**: Primary 3D visualization library handling WebGL rendering, globe visualization, and user interactions
@@ -99,6 +111,16 @@ The CesiumJS globe viewer is now fully functional with:
 
 ## Recent Changes (July 17, 2025)
 
+- **Backend Infrastructure Added**: Created complete FastAPI backend with PostgreSQL/PostGIS database support
+- **Spatial Database Setup**: Enabled PostGIS extension and created Location model with geometry points (SRID 4326)
+- **RESTful API Endpoints**: Added `/locations` POST/GET, `/locations/nearby` for spatial queries, and `/health` for monitoring
+- **Geospatial Queries**: Implemented PostGIS-powered nearby location search with distance calculations
+- **CORS Support**: Added proper CORS middleware for frontend-backend communication
+- **Database Models**: Created SQLAlchemy models with GeoAlchemy2 for spatial data handling
+- **Deployment Ready**: Project structured for easy deployment with requirements.txt, main.py, models.py, database.py
+- **Round Toggle Enhancement**: Increased opacity of all round toggle buttons and icons from 20% to 30% for better visibility
+- **API Testing**: Successfully tested location creation, retrieval, and spatial search functionality
+- **Development Environment**: Both frontend (port 5000) and backend (port 8000) running simultaneously
 - **Marker Renaming Feature**: Added inline editing capability for marker labels with proper UI integration
 - **Professional Map Export Tool**: Complete geo.admin-style print/export system with live preview
 - **Map Capture Enhancement**: Fixed WebGL canvas rendering in print preview with retry mechanism
