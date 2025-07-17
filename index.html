@@ -2650,6 +2650,9 @@
                 <button class="control-button primary" onclick="openMapExportTool()" style="margin-bottom: 8px;">
                     🖨️ Open Export Tool
                 </button>
+                <button class="control-button secondary" onclick="testMapCapture()" style="margin-bottom: 4px; font-size: 10px;">
+                    🔧 Test Capture
+                </button>
                 <div style="font-size: 11px; color: #666; margin-top: 4px;">
                     Generate publication-ready PDF and PNG exports with metadata
                 </div>
@@ -8960,7 +8963,7 @@ Built with CesiumJS`;
         }
 
         function captureMapImageWithRetry(retryCount = 0) {
-            const maxRetries = 3;
+            const maxRetries = 5;
             
             if (retryCount >= maxRetries) {
                 console.warn('Max retries reached for map capture');
@@ -8973,17 +8976,27 @@ Built with CesiumJS`;
                 return;
             }
             
-            // Ensure scene is fully rendered
+            // Force multiple renders to ensure WebGL is ready
+            viewer.scene.requestRender();
+            viewer.scene.requestRender();
             viewer.scene.requestRender();
             
-            // Wait for render completion and try capture
+            // Wait longer for WebGL context to be ready
             setTimeout(() => {
-                const success = attemptMapCapture();
-                if (!success && retryCount < maxRetries) {
-                    console.log(`Map capture attempt ${retryCount + 1} failed, retrying...`);
-                    setTimeout(() => captureMapImageWithRetry(retryCount + 1), 1000);
-                }
-            }, 800);
+                // Additional render before capture
+                viewer.scene.requestRender();
+                
+                setTimeout(() => {
+                    const success = attemptMapCapture();
+                    if (!success && retryCount < maxRetries - 1) {
+                        console.log(`Map capture attempt ${retryCount + 1} failed, retrying...`);
+                        setTimeout(() => captureMapImageWithRetry(retryCount + 1), 1500);
+                    } else if (!success) {
+                        console.warn('All capture attempts failed, showing fallback');
+                        showMapPlaceholder();
+                    }
+                }, 200);
+            }, 1200); // Increased delay for WebGL stability
         }
 
         function attemptMapCapture() {
@@ -8996,31 +9009,52 @@ Built with CesiumJS`;
                     return false;
                 }
                 
-                const ctx = previewCanvas.getContext('2d');
-                
-                // Clear previous content
-                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                
-                // Try to draw the Cesium canvas
-                ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
-                
-                // Check if we actually drew something (not just black)
-                const imageData = ctx.getImageData(0, 0, Math.min(previewCanvas.width, 50), Math.min(previewCanvas.height, 50));
-                const pixels = imageData.data;
-                let hasNonBlackPixels = false;
-                
-                for (let i = 0; i < pixels.length; i += 4) {
-                    if (pixels[i] > 10 || pixels[i + 1] > 10 || pixels[i + 2] > 10) {
-                        hasNonBlackPixels = true;
-                        break;
+                // Method 1: Use toDataURL to properly extract WebGL content
+                try {
+                    const dataURL = canvas.toDataURL('image/png');
+                    
+                    // Check if we got a valid image (not just empty data)
+                    if (dataURL && dataURL.length > 1000 && !dataURL.includes('data:,')) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const ctx = previewCanvas.getContext('2d');
+                            ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                            ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                            console.log('Map successfully captured via toDataURL');
+                        };
+                        img.src = dataURL;
+                        return true;
+                    } else {
+                        console.warn('toDataURL returned empty or invalid data');
                     }
+                } catch (dataURLError) {
+                    console.warn('toDataURL method failed:', dataURLError);
                 }
                 
-                if (hasNonBlackPixels) {
-                    console.log('Map successfully captured in preview');
-                    return true;
-                } else {
-                    console.warn('Captured image appears to be black/empty');
+                // Method 2: Direct canvas drawing (fallback)
+                try {
+                    const ctx = previewCanvas.getContext('2d');
+                    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                    ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+                    
+                    // Validate the capture by checking for non-black pixels
+                    const imageData = ctx.getImageData(0, 0, Math.min(previewCanvas.width, 100), Math.min(previewCanvas.height, 100));
+                    const pixels = imageData.data;
+                    let colorSum = 0;
+                    
+                    for (let i = 0; i < pixels.length; i += 4) {
+                        colorSum += pixels[i] + pixels[i + 1] + pixels[i + 2];
+                    }
+                    
+                    if (colorSum > 1000) { // Threshold for non-black content
+                        console.log('Map successfully captured via direct drawing');
+                        return true;
+                    } else {
+                        console.warn('Captured image appears to be black/empty');
+                        return false;
+                    }
+                } catch (drawError) {
+                    console.warn('Direct canvas drawing failed:', drawError);
                     return false;
                 }
                 
@@ -9057,6 +9091,11 @@ Built with CesiumJS`;
             
             // Recalculate scale
             calculateScaleBar();
+            
+            // Recapture map image when settings change
+            setTimeout(() => {
+                captureMapImageWithRetry();
+            }, 100);
         }
 
         function updateMapMetadata() {
@@ -9076,58 +9115,56 @@ Built with CesiumJS`;
             document.getElementById('previewZoomLevel').textContent = Math.max(0, zoomLevel);
         }
 
-        function captureMapImage() {
-            if (!viewer) return;
+        function captureMapImageDirect() {
+            if (!viewer || !viewer.scene) return false;
             
             try {
-                // Force render and wait for completion
+                const canvas = viewer.scene.canvas;
+                const previewCanvas = document.getElementById('previewMapCanvas');
+                
+                if (!canvas || !previewCanvas) {
+                    console.warn('Canvas elements not available');
+                    return false;
+                }
+                
+                // Force render to ensure latest frame
                 viewer.scene.requestRender();
                 
-                // Use a longer delay and ensure WebGL context is preserved
+                // Wait a moment then capture using toDataURL
                 setTimeout(() => {
-                    const canvas = viewer.scene.canvas;
-                    const mapArea = document.getElementById('previewMapArea');
-                    const previewCanvas = document.getElementById('previewMapCanvas');
-                    
-                    if (canvas && previewCanvas && mapArea) {
-                        const ctx = previewCanvas.getContext('2d');
-                        previewCanvas.width = mapArea.offsetWidth - 2;
-                        previewCanvas.height = mapArea.offsetHeight - 2;
+                    try {
+                        const dataURL = canvas.toDataURL('image/png');
                         
-                        try {
-                            // Method 1: Try direct canvas copy with WebGL preservation
-                            ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
-                            console.log('Map image captured successfully');
-                        } catch (webglError) {
-                            console.warn('Direct canvas copy failed, trying alternative method:', webglError);
-                            
-                            // Method 2: Use canvas.toDataURL() approach
-                            try {
-                                const dataURL = canvas.toDataURL('image/png');
-                                const img = new Image();
-                                img.onload = function() {
-                                    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                                    ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
-                                    console.log('Map image captured via dataURL');
-                                };
-                                img.onerror = function() {
-                                    console.warn('Failed to load image from dataURL');
-                                    showMapPlaceholder();
-                                };
-                                img.src = dataURL;
-                            } catch (dataURLError) {
-                                console.warn('toDataURL method failed:', dataURLError);
+                        if (dataURL && dataURL.length > 1000) {
+                            const img = new Image();
+                            img.onload = function() {
+                                const ctx = previewCanvas.getContext('2d');
+                                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                                ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                                console.log('Direct map capture successful');
+                            };
+                            img.onerror = function() {
+                                console.warn('Failed to load captured image');
                                 showMapPlaceholder();
-                            }
+                            };
+                            img.src = dataURL;
+                            return true;
+                        } else {
+                            console.warn('Captured data appears empty');
+                            showMapPlaceholder();
+                            return false;
                         }
-                    } else {
-                        console.warn('Canvas elements not found');
+                    } catch (captureError) {
+                        console.warn('Canvas capture failed:', captureError);
                         showMapPlaceholder();
+                        return false;
                     }
-                }, 500); // Increased delay for better WebGL stability
+                }, 300);
+                
+                return true;
             } catch (error) {
-                console.warn('Failed to capture map image:', error);
-                showMapPlaceholder();
+                console.warn('Direct capture error:', error);
+                return false;
             }
         }
 
@@ -9323,6 +9360,34 @@ Built with CesiumJS`;
                     alert('No map preview available to export');
                 }
             }, 1000);
+        }
+
+        // Test function to debug map capture
+        function testMapCapture() {
+            console.log('Testing map capture...');
+            if (!viewer || !viewer.scene) {
+                alert('Viewer not ready');
+                return;
+            }
+            
+            const canvas = viewer.scene.canvas;
+            console.log('Canvas found:', !!canvas);
+            console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+            
+            try {
+                const dataURL = canvas.toDataURL('image/png');
+                console.log('DataURL length:', dataURL.length);
+                console.log('DataURL preview:', dataURL.substring(0, 100));
+                
+                if (dataURL.length > 1000) {
+                    alert('Map capture test successful! DataURL length: ' + dataURL.length);
+                } else {
+                    alert('Map capture test failed - empty data');
+                }
+            } catch (error) {
+                console.error('Capture test error:', error);
+                alert('Map capture test failed: ' + error.message);
+            }
         }
         
     </script>
