@@ -2204,7 +2204,7 @@
         </div>
         
         <!-- 1. North Arrow Tool -->
-        <div class="tool-icon info-display" id="northArrow" title="North Direction" style="cursor: default;">
+        <div class="tool-icon" id="northArrow" title="North Direction - Click to Reset" onclick="resetViewToNorth()" style="cursor: pointer;">
             <svg width="16" height="16" viewBox="0 0 24 24" style="transform: rotate(0deg);">
                 <polygon points="12,2 16,12 12,10 8,12" fill="red" stroke="none"/>
                 <polygon points="12,22 8,12 12,14 16,12" fill="white" stroke="black" stroke-width="1"/>
@@ -2254,7 +2254,7 @@
         </div>
 
         <!-- 7. Point Tool -->
-        <div class="tool-icon" id="markerTool" title="Place Markers" onclick="toggleMarkerTool()">
+        <div class="tool-icon" id="markerTool" title="Place Markers" onclick="toggleMarkerPanel()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="2"/>
                 <circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3193,7 +3193,7 @@
         function updateNorthArrow() {
             try {
                 // Check if north arrow tool exists in the right panel
-                const northArrowTool = document.getElementById('northArrowTool');
+                const northArrowTool = document.getElementById('northArrow');
                 if (!northArrowTool) {
                     return;
                 }
@@ -3210,7 +3210,7 @@
                 const rotation = -headingDegrees;
                 
                 // Apply rotation transform to the north arrow in the right panel
-                const northArrowElement = document.getElementById('northArrowTool');
+                const northArrowElement = document.getElementById('northArrow');
                 if (northArrowElement) {
                     const svg = northArrowElement.querySelector('svg');
                     if (svg) {
@@ -3221,7 +3221,7 @@
             } catch (error) {
                 console.warn('North arrow update failed:', error);
                 // Reset to default orientation on error
-                const northArrowElement = document.getElementById('northArrowTool');
+                const northArrowElement = document.getElementById('northArrow');
                 if (northArrowElement) {
                     const svg = northArrowElement.querySelector('svg');
                     if (svg) {
