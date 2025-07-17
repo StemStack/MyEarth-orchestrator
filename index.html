@@ -1355,20 +1355,21 @@
         }
 
         /* Measurement tool styles */
-        .measurement-controls {
-            position: absolute;
-            top: 200px;
-            right: 10px;
+        .measurement-controls, .marker-controls {
+            position: fixed;
+            top: 60px;
+            left: 15px;
+            width: 220px;
             background: rgba(42, 42, 42, 0.95);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
-            padding: 12px;
+            padding: 10px;
             color: white;
             font-family: Arial, sans-serif;
             font-size: 12px;
             z-index: 1000;
-            max-width: 280px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .measurement-header {
@@ -2031,17 +2032,16 @@
         </div>
     </div>
 
-    <!-- Measurement Controls -->
+    <!-- Measurement Controls - Line & Area -->
     <div class="measurement-controls" id="measurementControls" style="display: none;">
         <div class="measurement-header">
-            <div class="measurement-title">📏 Measurement Tool</div>
+            <div class="measurement-title">📏 Measurement</div>
             <button onclick="toggleMeasurementTool()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
         </div>
         
         <div class="measurement-mode-buttons">
             <button class="measurement-mode-btn active" data-mode="line" onclick="setMeasurementMode('line')">Line</button>
             <button class="measurement-mode-btn" data-mode="area" onclick="setMeasurementMode('area')">Area</button>
-            <button class="measurement-mode-btn" data-mode="vertical" onclick="setMeasurementMode('vertical')">Vertical</button>
         </div>
         
         <div class="measurement-units">
@@ -2053,7 +2053,7 @@
         </div>
         
         <div class="measurement-results" id="measurementResults">
-            <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 15px;">
+            <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px;">
                 No measurements yet
             </div>
         </div>
@@ -2066,21 +2066,23 @@
             <button class="measurement-btn primary" onclick="newMeasurement()">New</button>
             <button class="measurement-btn secondary" onclick="clearMeasurements()">Clear All</button>
         </div>
+    </div>
 
-        <!-- Point Marker Management Section -->
-        <div class="points-section">
-            <div class="points-header">
-                <span class="points-title">📍 Point Markers</span>
-                <span class="points-count" id="pointsCount">0 points</span>
+    <!-- Point Marker Controls -->
+    <div class="marker-controls" id="markerControls" style="display: none;">
+        <div class="measurement-header">
+            <div class="measurement-title">📍 Point Markers</div>
+            <button onclick="toggleMarkerPanel()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
+        </div>
+        
+        <div class="points-list" id="pointsList">
+            <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px;">
+                No markers placed
             </div>
-            
-            <div class="points-list" id="pointsList">
-                <!-- Point items will be dynamically inserted here -->
-            </div>
+        </div>
 
-            <div class="points-actions">
-                <button class="points-clear-btn" onclick="clearAllPoints()">Clear All Points</button>
-            </div>
+        <div class="points-actions">
+            <button class="points-clear-btn" onclick="clearAllPoints()">Clear All Points</button>
         </div>
     </div>
 
@@ -2226,7 +2228,7 @@
                 <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z" fill="none" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
-        <div class="tool-icon" id="markerTool" title="Point Markers" onclick="toggleMarkerMode()">
+        <div class="tool-icon" id="markerTool" title="Point Markers" onclick="toggleMarkerPanel()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="2"/>
                 <circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -4190,15 +4192,28 @@
          */
         function toggleMeasurementTool() {
             const measurementControls = document.getElementById('measurementControls');
+            const measurementToolEl = document.getElementById('measurementTool');
             
-            if (measurementControls.style.display === 'none') {
+            if (measurementControls.style.display === 'none' || measurementControls.style.display === '') {
+                // Close marker panel if open
+                const markerControls = document.getElementById('markerControls');
+                if (markerControls.style.display === 'block') {
+                    markerControls.style.display = 'none';
+                    const markerTool = document.getElementById('markerTool');
+                    if (markerTool) markerTool.classList.remove('active');
+                }
+                
                 measurementControls.style.display = 'block';
                 measurementTool.isActive = true;
+                if (measurementToolEl) measurementToolEl.classList.add('active');
                 startMeasurement();
+                console.log('Measurement panel activated');
             } else {
                 measurementControls.style.display = 'none';
                 measurementTool.isActive = false;
+                if (measurementToolEl) measurementToolEl.classList.remove('active');
                 stopMeasurement();
+                console.log('Measurement panel deactivated');
             }
         }
 
@@ -5931,49 +5946,90 @@
             }
         }
 
-        function toggleMeasurementTool() {
-            const measurementSection = document.getElementById('measurementTools');
-            const measurementTool = document.getElementById('measurementTool');
-            const measurementControls = document.getElementById('measurementControls');
+        function toggleMarkerPanel() {
+            const markerControls = document.getElementById('markerControls');
+            const markerTool = document.getElementById('markerTool');
             
-            if (measurementSection) {
-                measurementSection.classList.toggle('collapsed');
-                const arrow = measurementSection.previousElementSibling.querySelector('span:last-child');
-                if (arrow) {
-                    arrow.textContent = measurementSection.classList.contains('collapsed') ? '▶' : '▼';
+            if (markerControls.style.display === 'none' || markerControls.style.display === '') {
+                // Close measurement panel if open
+                const measurementControls = document.getElementById('measurementControls');
+                if (measurementControls.style.display === 'block') {
+                    measurementControls.style.display = 'none';
+                    const measurementToolEl = document.getElementById('measurementTool');
+                    if (measurementToolEl) measurementToolEl.classList.remove('active');
                 }
                 
-                // Toggle tool activation state
-                if (measurementTool) {
-                    measurementTool.classList.toggle('active', !measurementSection.classList.contains('collapsed'));
-                }
-                
-                // Show/hide measurement controls
-                if (measurementControls) {
-                    measurementControls.style.display = measurementSection.classList.contains('collapsed') ? 'none' : 'block';
-                }
-                
-                console.log('Measurement panel', measurementSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
+                markerControls.style.display = 'block';
+                if (markerTool) markerTool.classList.add('active');
+                enableMarkerMode();
+                console.log('Marker panel activated');
+            } else {
+                markerControls.style.display = 'none';
+                if (markerTool) markerTool.classList.remove('active');
+                disableMarkerMode();
+                console.log('Marker panel deactivated');
             }
         }
 
-        function toggleMarkerMode() {
-            const markerSection = document.getElementById('markerSection');
-            const markerTool = document.getElementById('markerTool');
+        function enableMarkerMode() {
+            // Enable click handler for marker placement
+            if (viewer && !viewer.markerClickHandler) {
+                viewer.markerClickHandler = viewer.cesiumWidget.screenSpaceEventHandler.setInputAction(function(event) {
+                    const pickedPosition = viewer.camera.pickEllipsoid(event.position, viewer.scene.globe.ellipsoid);
+                    if (pickedPosition) {
+                        const cartographic = Cesium.Cartographic.fromCartesian(pickedPosition);
+                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                        placeMarker(longitude, latitude);
+                    }
+                }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+            }
+        }
+
+        function disableMarkerMode() {
+            // Remove click handler for marker placement
+            if (viewer && viewer.markerClickHandler) {
+                viewer.cesiumWidget.screenSpaceEventHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+                viewer.markerClickHandler = null;
+            }
+        }
+
+        function placeMarker(longitude, latitude) {
+            const markerCount = markers.size + 1;
+            const color = availableColors[markerCount % availableColors.length];
+            const label = `Marker ${markerCount}`;
             
-            if (markerSection) {
-                markerSection.classList.toggle('collapsed');
-                const arrow = markerSection.previousElementSibling.querySelector('span:last-child');
-                if (arrow) {
-                    arrow.textContent = markerSection.classList.contains('collapsed') ? '▶' : '▼';
-                }
-                
-                // Toggle tool activation state
-                if (markerTool) {
-                    markerTool.classList.toggle('active', !markerSection.classList.contains('collapsed'));
-                }
-                
-                console.log('Marker panel', markerSection.classList.contains('collapsed') ? 'deactivated' : 'activated');
+            const marker = createMarker(longitude, latitude, label, color);
+            updateMarkersList();
+        }
+
+        function updateMarkersList() {
+            const pointsList = document.getElementById('pointsList');
+            if (!pointsList) return;
+            
+            if (markers.size === 0) {
+                pointsList.innerHTML = '<div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px;">No markers placed</div>';
+                return;
+            }
+            
+            let listHTML = '';
+            markers.forEach((marker, id) => {
+                listHTML += `
+                    <div class="marker-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <span style="font-size: 11px; color: white;">${marker.label}</span>
+                        <button onclick="removeMarker('${id}')" style="background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 9px; cursor: pointer;">Remove</button>
+                    </div>
+                `;
+            });
+            pointsList.innerHTML = listHTML;
+        }
+
+        function removeMarker(markerId) {
+            const marker = markers.get(markerId);
+            if (marker) {
+                viewer.entities.remove(marker.entity);
+                markers.delete(markerId);
+                updateMarkersList();
             }
         }
 
