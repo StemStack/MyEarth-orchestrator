@@ -815,12 +815,16 @@
             display: flex;
             justify-content: flex-start;
             align-items: center;
+            overflow: hidden;
+            gap: 4px;
         }
 
         .bottom-center {
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
+            text-align: center;
         }
 
 
@@ -831,6 +835,7 @@
             align-items: center;
             text-align: right;
             gap: 8px;
+            overflow: hidden;
         }
 
         /* Mobile responsive adjustments */
@@ -838,7 +843,7 @@
             #bottomBand {
                 padding: 0 8px;
                 font-size: 9px;
-                grid-template-columns: 1fr 1fr 2fr;
+                grid-template-columns: 0.8fr 1fr 1.2fr;
             }
             
             #coordinatesInfo {
@@ -870,7 +875,7 @@
             #bottomBand {
                 padding: 0 6px;
                 font-size: 8px;
-                grid-template-columns: 1fr 1fr 2fr;
+                grid-template-columns: 0.7fr 1fr 1.3fr;
             }
             
             #coordinatesInfo {
@@ -921,27 +926,33 @@
         /* Mobile scale bar adjustments */
         @media (max-width: 768px) {
             .scale-bar-container {
-                gap: 4px;
+                gap: 2px;
             }
             
-            .scale-text {
-                font-size: 9px;
-                min-width: 25px;
-            }
-            
-            .scale-line {
-                min-width: 30px;
-            }
-        }
-        
-        @media (max-width: 480px) {
             .scale-text {
                 font-size: 8px;
                 min-width: 20px;
             }
             
             .scale-line {
-                min-width: 25px;
+                min-width: 20px;
+                max-width: 40px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .scale-text {
+                font-size: 7px;
+                min-width: 15px;
+            }
+            
+            .scale-line {
+                min-width: 15px;
+                max-width: 30px;
+            }
+            
+            .scale-bar-container {
+                gap: 1px;
             }
         }
 
