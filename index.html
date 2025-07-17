@@ -2332,12 +2332,12 @@
             baseLayerPicker: false,     // Remove base layer picker
             fullscreenButton: false,    // Remove fullscreen button - use custom
             geocoder: false,            // Remove geocoder search
-            homeButton: false,          // REMOVE home button - causing black icon
+            homeButton: false,          // Remove home button
             infoBox: false,             // Remove info box
-            sceneModePicker: false,     // Remove 2D/3D mode picker
+            sceneModePicker: false,     // Remove scene mode picker
+            timeline: false,            // Remove timeline slider
+            navigationHelpButton: false, // Remove help button
             selectionIndicator: false,  // Remove selection indicator
-            timeline: false,            // Remove timeline
-            navigationHelpButton: false,// REMOVE navigation help - causing black icons
             
             // Use ellipsoid terrain initially, will be upgraded after initialization
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
@@ -2368,6 +2368,8 @@
                 '.cesium-baseLayerPicker-dropDown',
                 '.cesium-animation-container',
                 '.cesium-timeline-main',
+                '.cesium-timeline-container',
+                '.cesium-timeline-bar',
                 '.cesium-fullscreenButton',
                 '.cesium-vrButton',
                 '.cesium-widget-toolbar',
@@ -2527,13 +2529,7 @@
         // Set initial camera position centered on Europe
         viewer.camera.setView(europeHomeView);
 
-        // Override the default home button behavior to use European coordinates (if exists)
-        if (viewer.homeButton && viewer.homeButton.viewModel) {
-            viewer.homeButton.viewModel.command.beforeExecute.addEventListener(function(e) {
-                e.cancel = true;
-                viewer.camera.flyTo(europeHomeView);
-            });
-        }
+        // Home button is disabled - no need for override
 
         // Handle window resize events for responsiveness
         window.addEventListener('resize', function() {
