@@ -637,9 +637,7 @@
             top: 50px !important;
             right: 20px !important;
             width: 50px;
-            background: rgba(255, 255, 255, 0.85) !important;
-            backdrop-filter: blur(30px) saturate(200%) brightness(1.5) !important;
-            -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.5) !important;
+            background: transparent !important;
             z-index: 999;
             display: flex;
             flex-direction: column;
@@ -647,15 +645,15 @@
             max-height: none;
             overflow: visible;
             transition: all 0.3s ease;
-            padding: 10px;
+            padding: 0;
             box-sizing: border-box;
             align-items: center;
-            border-radius: 8px;
+            border-radius: 0;
         }
 
         #rightPanel.collapsed {
             width: 50px;
-            padding: 10px;
+            padding: 0;
         }
         
         #rightPanel.collapsed .tool-icon {
@@ -2145,12 +2143,19 @@
         
         /* Panel transparency - bright white with 50% transparency */
         .sidebar,
-        #rightPanel,
         #bottomBand,
         .top-panel {
             background: rgba(255, 255, 255, 0.85) !important;
             backdrop-filter: blur(30px) saturate(200%) brightness(1.5) !important;
             -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.5) !important;
+            opacity: 1 !important;
+        }
+        
+        /* Right panel is transparent - no background */
+        #rightPanel {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
             opacity: 1 !important;
         }
         
