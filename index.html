@@ -639,10 +639,11 @@
             transition: all 0.3s ease;
             padding: 10px;
             box-sizing: border-box;
+            align-items: center;
         }
 
         #rightPanel.collapsed {
-            width: 80px;
+            width: 50px;
             padding: 10px;
         }
         
@@ -652,9 +653,7 @@
         
         #rightPanel.collapsed .panel-toggle-btn {
             display: flex !important;
-            position: absolute !important;
-            right: -15px !important;
-            top: 10px !important;
+            position: relative !important;
             margin: 0 !important;
             width: 30px !important;
             height: 30px !important;
@@ -670,9 +669,7 @@
 
         /* Panel toggle button - exactly same as left panel */
         .panel-toggle-btn {
-            position: absolute;
-            top: 10px;
-            right: -15px;
+            position: relative;
             width: 30px;
             height: 30px;
             border-radius: 50%;
@@ -686,6 +683,7 @@
             z-index: 1001;
             transition: all 0.2s ease;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
         }
         
 
