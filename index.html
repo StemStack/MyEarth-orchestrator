@@ -1844,7 +1844,7 @@
         <!-- Data Services Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('dataServices')">
-                <span>📡 Data Services</span>
+                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2" stroke="currentColor" stroke-width="2"/></svg>Data Services</span>
                 <span>▼</span>
             </div>
             <div class="section-content" id="dataServices">
@@ -1869,12 +1869,12 @@
                     
                     <div class="control-item" style="margin-bottom: 4px;">
                         <input type="checkbox" id="protected_areasWms" onchange="togglePredefinedLayer('protected_areas', this.checked)" checked>
-                        <label for="protected_areasWms" style="font-size: 11px;">🌳 World Database of Protected Areas</label>
+                        <label for="protected_areasWms" style="font-size: 11px;">World Database of Protected Areas</label>
                     </div>
                     
                     <div class="control-item" style="margin-bottom: 8px;">
                         <input type="checkbox" id="land_degradationWms" onchange="togglePredefinedLayer('land_degradation', this.checked)">
-                        <label for="land_degradationWms" style="font-size: 11px;">🏜️ Global Land Degradation (Bare Ground Change)</label>
+                        <label for="land_degradationWms" style="font-size: 11px;">Global Land Degradation (Bare Ground Change)</label>
                     </div>
                 </div>
                 
@@ -1906,7 +1906,7 @@
         <!-- Measurement Tools Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('measurementTools')">
-                <span>📏 Measurement</span>
+                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z" fill="none" stroke="currentColor" stroke-width="2"/></svg>Measurement</span>
                 <span>▼</span>
             </div>
             <div class="section-content" id="measurementTools">
@@ -1922,7 +1922,7 @@
         <!-- 3D Models Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('models3d')">
-                <span>🏗️ 3D Models</span>
+                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 22V12" stroke="currentColor" stroke-width="2"/><path d="M2 7L12 12L22 7" stroke="currentColor" stroke-width="2"/></svg>3D Models</span>
                 <span>▼</span>
             </div>
             <div class="section-content" id="models3d">
@@ -1938,7 +1938,7 @@
         <!-- Performance Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('performance')">
-                <span>⚡ Performance</span>
+                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>Performance</span>
                 <span>▼</span>
             </div>
             <div class="section-content collapsed" id="performance">
@@ -1957,7 +1957,7 @@
     <!-- Service Loader Panel -->
     <div class="service-loader-panel" id="serviceLoaderPanel" style="display: none;">
         <div class="service-loader-header">
-            <div class="service-loader-title">📡 Data Service Loader</div>
+            <div class="service-loader-title">Data Service Loader</div>
             <button onclick="toggleServiceLoader()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
         </div>
         
@@ -2144,17 +2144,7 @@
                 <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
-        <div class="tool-icon" id="refreshTool" title="Refresh" onclick="refreshMap()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M3 3v5h5M21 21v-5h-5" stroke="currentColor" stroke-width="2"/>
-                <path d="M2 12A10 10 0 0 1 12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10 10 10 0 0 1-10-10z" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="fullscreenTool" title="Fullscreen" onclick="toggleFullscreen()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
+
         <div class="tool-icon" id="searchTool" title="Search" onclick="toggleSearchPanel()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -2162,67 +2152,7 @@
             </svg>
         </div>
 
-        <!-- Base Map Icons -->
-        <div class="tool-icon" id="osmStandardTool" title="OSM Standard" onclick="switchBaseMap('osm')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M6 6h12M6 12h12M6 18h12" stroke="currentColor" stroke-width="1"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="osmHumanitarianTool" title="OSM Humanitarian" onclick="switchBaseMap('humanitarian')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="cyclOSMTool" title="CyclOSM" onclick="switchBaseMap('cyclosm')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="openTopoTool" title="OpenTopoMap" onclick="switchBaseMap('topo')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M3 20l6-6 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2"/>
-                <circle cx="9" cy="14" r="1" fill="currentColor"/>
-                <circle cx="13" cy="10" r="1" fill="currentColor"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="monochromeTool" title="Monochrome" onclick="switchBaseMap('monochrome')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M3 3l18 18" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="darkModeTool" title="Dark Mode Map" onclick="switchBaseMap('dark')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="5" fill="currentColor"/>
-                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="cartoDTool" title="CartoDB Positron" onclick="switchBaseMap('cartodb')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1"/>
-                <circle cx="12" cy="12" r="2" fill="currentColor"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="esriTool" title="ESRI World Imagery" onclick="switchBaseMap('esri')">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
-                <rect x="6" y="6" width="4" height="4" fill="currentColor"/>
-                <rect x="14" y="6" width="4" height="4" fill="currentColor"/>
-                <rect x="6" y="14" width="4" height="4" fill="currentColor"/>
-                <rect x="14" y="14" width="4" height="4" fill="currentColor"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="layerTool" title="Data Layers" onclick="toggleLayerPanel()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/>
-                <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/>
-                <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
+        <!-- Core Tools Only -->
         <div class="tool-icon" id="measurementTool" title="Measurement Tools" onclick="toggleMeasurementTool()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -2234,19 +2164,7 @@
                 <circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
-        <div class="tool-icon" id="modelTool" title="3D Models" onclick="toggleModelPanel()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 22V12" stroke="currentColor" stroke-width="2"/>
-                <path d="M2 7L12 12L22 7" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-        <div class="tool-icon" id="settingsTool" title="Settings" onclick="toggleSettingsPanel()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
+
         
         <!-- Home Button -->
         <div class="tool-icon" id="homeTool" title="Home View" onclick="resetToHomeView()">
