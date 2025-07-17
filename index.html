@@ -760,6 +760,12 @@
             stroke: white;
         }
 
+        /* Left Panel Collapse State */
+        .sidebar.collapsed {
+            transform: translateX(-240px) !important;
+            width: 40px !important;
+        }
+        
         /* Hide sidebar content when collapsed but keep toggle visible */
         .sidebar.collapsed .sidebar-header,
         .sidebar.collapsed .sidebar-section {
@@ -767,11 +773,13 @@
         }
         
         .sidebar.collapsed .sidebar-toggle {
-            position: relative;
-            left: 0;
-            top: 0;
-            margin: 10px auto;
-            display: flex;
+            position: absolute !important;
+            left: 0 !important;
+            top: 10px !important;
+            margin: 0 !important;
+            display: flex !important;
+            width: 30px !important;
+            height: 30px !important;
         }
         
         /* Hide all tools when collapsed */
