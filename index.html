@@ -8118,12 +8118,13 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                url: 'https://geoservice.unep-wcmc.org/arcgis/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/WMSServer',
                 name: 'World Database of Protected Areas',
-                type: 'tile',
-                format: 'raster',
-                transparent: false,
-                note: 'Using OSM as placeholder - WDPA service unavailable'
+                type: 'wms',
+                layers: '0,1,2,3,4,5,6',
+                format: 'image/png',
+                transparent: true,
+                credit: 'UNEP-WCMC and IUCN (2023), Protected Planet: The World Database on Protected Areas (WDPA)'
             },
             land_degradation: {
                 url: 'https://datacore.unepgrid.ch/geoserver/MapX_UNDP/ows',
