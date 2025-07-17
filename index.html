@@ -2427,17 +2427,19 @@
         
         console.log('✓ All services using free, open-source providers only');
         
-        // Auto-enable protected areas layer on startup
+        // Auto-enable protected areas layer on startup (delayed to ensure WMS services are defined)
         setTimeout(() => {
             const protectedAreasCheckbox = document.getElementById('protected_areasWms');
             if (protectedAreasCheckbox && protectedAreasCheckbox.checked) {
-                togglePredefinedLayer('protected_areas', true);
-                // Initialize legend after layer is loaded
-                setTimeout(() => {
-                    updateLegend();
-                }, 500);
+                if (typeof togglePredefinedLayer !== 'undefined' && typeof predefinedWmsServices !== 'undefined') {
+                    togglePredefinedLayer('protected_areas', true);
+                    // Initialize legend after layer is loaded
+                    setTimeout(() => {
+                        updateLegend();
+                    }, 500);
+                }
             }
-        }, 1000);
+        }, 2000);
         
         // Add fallback to ellipsoid terrain if the terrain provider fails
         viewer.terrainProvider.errorEvent.addEventListener(function(err) {
@@ -6539,7 +6541,7 @@
         
         // Helper function to get round scale values
         function getRoundScaleValue(value) {
-            const scales = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+            const scales = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
             
             // Find the best scale that's close to the calculated value
             let bestScale = scales[0];
