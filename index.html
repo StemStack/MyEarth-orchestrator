@@ -98,20 +98,28 @@
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
-        /* Completely hide ALL CesiumJS UI elements including compass */
-        .cesium-viewer-toolbar,
+        /* Move CesiumJS toolbar to bottom right corner instead of hiding */
+        .cesium-viewer-toolbar {
+            position: fixed !important;
+            top: auto !important;
+            bottom: 80px !important;
+            right: 10px !important;
+            background: rgba(0, 0, 0, 0.6) !important;
+            border-radius: 8px !important;
+            padding: 4px !important;
+            flex-direction: column !important;
+            display: flex !important;
+        }
+        
+        /* Hide other unwanted elements but keep the main toolbar */
         .cesium-viewer-navigationContainer,
         .cesium-navigation-help-button,
-        .cesium-home-button,
         .cesium-sceneModePicker-wrapper,
         .cesium-baseLayerPicker-dropDown,
         .cesium-animation-container,
         .cesium-timeline-main,
         .cesium-fullscreenButton,
         .cesium-vrButton,
-        .cesium-widget-toolbar,
-        .cesium-button,
-        .cesium-toolbar-button,
         .cesium-compass,
         .cesium-compass-wrapper,
         .cesium-compass-outerRing,
@@ -639,10 +647,10 @@
         /* Right Panel Styles - MapX Style */
         #rightPanel {
             position: fixed !important;
-            top: 300px !important;
+            top: 10px !important;
             right: 10px !important;
             width: 80px;
-            background: rgba(255, 0, 0, 0.3) !important;
+            background: transparent !important;
             z-index: 999;
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -6368,7 +6376,7 @@
             }
             
             if (rightPanel) {
-                rightPanel.classList.add('collapsed');
+                rightPanel.classList.remove('collapsed');
             }
             
             if (floatingButton) {
