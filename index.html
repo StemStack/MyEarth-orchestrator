@@ -2325,6 +2325,18 @@
         
         console.log('✓ Ion services completely disabled - using only free, open-source data');
         
+        // Force disable timeline and animation widgets at the Cesium level
+        if (typeof Cesium !== 'undefined') {
+            const originalViewer = Cesium.Viewer;
+            Cesium.Viewer = function(container, options) {
+                options = options || {};
+                options.timeline = false;
+                options.animation = false;
+                return originalViewer.call(this, container, options);
+            };
+            Cesium.Viewer.prototype = originalViewer.prototype;
+        }
+        
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable ALL UI widgets for completely clean appearance
