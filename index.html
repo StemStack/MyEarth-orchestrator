@@ -7221,8 +7221,17 @@
                 return;
             }
             
-            // Create sortable list of active layers
-            predefinedWmsLayers.forEach((layerInfo, serviceKey) => {
+            // Create sortable list of active layers ordered by their position in CesiumJS
+            const layerArray = Array.from(predefinedWmsLayers.entries());
+            
+            // Sort by layer index in CesiumJS viewer
+            layerArray.sort((a, b) => {
+                const indexA = viewer.imageryLayers.indexOf(a[1].layer);
+                const indexB = viewer.imageryLayers.indexOf(b[1].layer);
+                return indexB - indexA; // Reverse order (higher index = on top)
+            });
+            
+            layerArray.forEach(([serviceKey, layerInfo]) => {
                 const layerItem = document.createElement('div');
                 layerItem.className = 'layer-item';
                 layerItem.draggable = true;
@@ -7335,7 +7344,7 @@
                 reorderImageryLayers(draggedServiceKey, targetServiceKey);
                 
                 // Update the display order
-                updateActiveLayersDisplay();
+                updateLayersList();
             } else {
                 console.log('Drop ignored - same element or no dragged element');
             }
@@ -7500,7 +7509,11 @@
             layers.add(draggedLayer, targetIndex);
             
             console.log(`Successfully reordered layer ${draggedKey} to position of ${targetKey}`);
-            updateLayersList();
+            
+            // Update the display order to match the new layer order
+            setTimeout(() => {
+                updateLayersList();
+            }, 100);
         }
         
         /**
