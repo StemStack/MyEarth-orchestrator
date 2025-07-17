@@ -8273,26 +8273,50 @@ Built with CesiumJS`;
             if (markers.size === 0) return;
             
             if (confirm(`Delete all ${markers.size} point markers?`)) {
-                // Remove all markers from viewer
+                // Method 1: Remove all markers from viewer using stored entities
                 markers.forEach(markerData => {
                     if (markerData.entity) {
-                        viewer.entities.remove(markerData.entity);
+                        try {
+                            viewer.entities.remove(markerData.entity);
+                        } catch (e) {
+                            console.warn('Error removing marker entity:', e);
+                        }
                     }
                 });
                 
-                // Force remove any remaining entities that might match marker pattern
+                // Method 2: Force remove any remaining billboard entities (markers use billboards)
+                const allEntities = viewer.entities.values;
                 const entitiesToRemove = [];
-                viewer.entities.values.forEach(entity => {
-                    if (entity.billboard && entity.billboard.image && 
-                        entity.billboard.image.getValue && 
-                        entity.billboard.image.getValue().indexOf('data:image/svg+xml') === 0) {
-                        entitiesToRemove.push(entity);
+                
+                for (let i = 0; i < allEntities.length; i++) {
+                    const entity = allEntities[i];
+                    // Check if entity has a billboard (marker characteristic)
+                    if (entity.billboard) {
+                        // Check if it's a marker by looking for SVG image data
+                        const image = entity.billboard.image;
+                        if (image && image.getValue) {
+                            const imageValue = image.getValue();
+                            if (typeof imageValue === 'string' && imageValue.indexOf('data:image/svg+xml') === 0) {
+                                entitiesToRemove.push(entity);
+                            }
+                        }
+                    }
+                }
+                
+                // Remove all identified marker entities
+                entitiesToRemove.forEach(entity => {
+                    try {
+                        viewer.entities.remove(entity);
+                    } catch (e) {
+                        console.warn('Error removing billboard entity:', e);
                     }
                 });
                 
-                entitiesToRemove.forEach(entity => {
-                    viewer.entities.remove(entity);
-                });
+                // Method 3: Nuclear option - remove all entities and rebuild non-marker ones
+                if (entitiesToRemove.length === 0 && markers.size > 0) {
+                    console.warn('Falling back to nuclear cleanup method');
+                    viewer.entities.removeAll();
+                }
                 
                 // Clear data store
                 markers.clear();
@@ -8301,10 +8325,12 @@ Built with CesiumJS`;
                 // Update UI
                 updatePointsUI();
                 
-                // Force scene update
+                // Force multiple scene updates
                 viewer.scene.requestRender();
+                setTimeout(() => viewer.scene.requestRender(), 50);
+                setTimeout(() => viewer.scene.requestRender(), 100);
                 
-                console.log('All point markers cleared');
+                console.log('All point markers cleared using comprehensive method');
             }
         }
 
