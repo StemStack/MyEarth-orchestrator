@@ -5280,6 +5280,10 @@ Built with CesiumJS`;
                             <span class="measurement-result-value">${formatDistance(results.horizontal || 0)}</span>
                         </div>
                         <div class="measurement-result-item">
+                            <span class="measurement-result-label">Vertical:</span>
+                            <span class="measurement-result-value">${formatDistance(results.vertical || 0)}</span>
+                        </div>
+                        <div class="measurement-result-item">
                             <span class="measurement-result-label">Slope:</span>
                             <span class="measurement-result-value">${(parseFloat(results.slope) || 0).toFixed(1)}°</span>
                         </div>
