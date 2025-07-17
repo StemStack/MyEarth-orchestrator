@@ -97,7 +97,15 @@ The CesiumJS globe viewer is now fully functional with:
 - Minimal UI with disabled optional widgets
 - Clean full-screen design
 
-## Recent Changes (July 16, 2025)
+## Recent Changes (July 17, 2025)
+
+- **Panel Transparency Fixed**: Resolved transparency rendering issues that caused panels to appear dark
+- **50% Transparency Applied**: All panels now use rgba(248, 248, 248, 0.5) with proper white overlay
+- **Enhanced Backdrop Filters**: Added brightness(1.3) filter to maintain white appearance over dark backgrounds
+- **Comprehensive Panel Updates**: Applied transparency to sidebar, right panel, bottom band, top panel, and all sub-elements
+- **Professional Visual Effect**: Clean white transparency with blur effects for modern UI appearance
+
+## Previous Changes (July 16, 2025)
 
 - **MapX-Style UI**: Complete redesign matching MapX interface with clean, round monochrome icons
 - **Smaller Icons**: Reduced icon size from 50px to 36px for more compact design
