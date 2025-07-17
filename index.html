@@ -3583,13 +3583,29 @@
         // Current base map - default to OSM Standard for clean appearance
         let currentBaseMap = 'openstreetmap';
         
-        // Remove default imagery and add OSM Standard (free open-source service)
+        // Remove default imagery
         viewer.imageryLayers.removeAll();
-        const defaultImageryProvider = new Cesium.UrlTemplateImageryProvider({
-            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            subdomains: ['a', 'b', 'c'],
-            credit: '© OpenStreetMap contributors'
-        });
+        
+        // Function to load base map with appropriate projection
+        function loadBaseMapWithProjection(url, subdomains, credit) {
+            const tilingScheme = flatEarthMode ? 
+                new Cesium.GeographicTilingScheme() : 
+                new Cesium.WebMercatorTilingScheme();
+                
+            return new Cesium.UrlTemplateImageryProvider({
+                url: url,
+                subdomains: subdomains,
+                credit: credit,
+                tilingScheme: tilingScheme
+            });
+        }
+        
+        // Add default OSM base map
+        const defaultImageryProvider = loadBaseMapWithProjection(
+            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            ['a', 'b', 'c'],
+            '© OpenStreetMap contributors'
+        );
         viewer.imageryLayers.addImageryProvider(defaultImageryProvider);
         
         console.log('✓ Using OSM Standard - free, open-source base map provider');
@@ -9801,11 +9817,17 @@ Built with CesiumJS`;
             flatEarthMode = !flatEarthMode;
             
             if (flatEarthMode) {
-                // Configure Equirectangular (Plate Carrée) projection
-                globalViewer.scene.mapProjection = new Cesium.GeographicProjection();
+                // First set up the Geographic projection before switching modes
+                const geographicProjection = new Cesium.GeographicProjection();
                 
-                // Switch to 2D mode
-                globalViewer.scene.mode = Cesium.SceneMode.SCENE2D;
+                // Store current view for conversion
+                const currentView = globalViewer.camera.positionCartographic;
+                
+                // Switch to 2D mode with Geographic projection
+                globalViewer.scene.morphTo2D(0); // Instant morph
+                
+                // Force the projection change
+                globalViewer.scene.mapProjection = geographicProjection;
                 
                 // Disable terrain and shadows for clean 2D view
                 globalViewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
@@ -9814,17 +9836,34 @@ Built with CesiumJS`;
                 if (globalViewer.scene.moon) globalViewer.scene.moon.show = false;
                 if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = false;
                 
-                // Adjust 2D view settings for better cartographic display
+                // Disable rotation and tilt for stable cartographic display
                 globalViewer.scene.screenSpaceCameraController.enableRotate = false;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = false;
                 
-                console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection');
+                // Wait a moment for mode switch to complete
+                setTimeout(() => {
+                    // Reload base map with Geographic tiling scheme
+                    const currentImagery = globalViewer.imageryLayers.get(0);
+                    if (currentImagery) {
+                        const provider = currentImagery.imageryProvider;
+                        globalViewer.imageryLayers.remove(currentImagery);
+                        
+                        // Re-add with Geographic tiling scheme
+                        const newProvider = loadBaseMapWithProjection(
+                            provider._url || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            provider._subdomains || ['a', 'b', 'c'],
+                            provider._credit || '© OpenStreetMap contributors'
+                        );
+                        globalViewer.imageryLayers.addImageryProvider(newProvider);
+                    }
+                    
+                    // Force re-render with new projection
+                    globalViewer.scene.requestRender();
+                    console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection (EPSG:4326)');
+                }, 100);
             } else {
-                // Reset to Web Mercator for 3D mode
-                globalViewer.scene.mapProjection = new Cesium.WebMercatorProjection();
-                
                 // Switch back to 3D mode
-                globalViewer.scene.mode = Cesium.SceneMode.SCENE3D;
+                globalViewer.scene.morphTo3D(0); // Instant morph
                 
                 // Re-enable terrain if it was enabled before
                 if (terrainEnabled) {
@@ -9843,7 +9882,25 @@ Built with CesiumJS`;
                 globalViewer.scene.screenSpaceCameraController.enableRotate = true;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = true;
                 
-                console.log('Switched to Globe Mode (3D)');
+                // Wait for mode switch
+                setTimeout(() => {
+                    // Reload base map with Web Mercator tiling scheme
+                    const currentImagery = globalViewer.imageryLayers.get(0);
+                    if (currentImagery) {
+                        const provider = currentImagery.imageryProvider;
+                        globalViewer.imageryLayers.remove(currentImagery);
+                        
+                        // Re-add with Web Mercator tiling scheme
+                        const newProvider = loadBaseMapWithProjection(
+                            provider._url || 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            provider._subdomains || ['a', 'b', 'c'],
+                            provider._credit || '© OpenStreetMap contributors'
+                        );
+                        globalViewer.imageryLayers.addImageryProvider(newProvider);
+                    }
+                    
+                    console.log('Switched to Globe Mode (3D)');
+                }, 100);
             }
             
             // Update tool icon appearance
