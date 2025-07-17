@@ -6534,7 +6534,9 @@
                 if (baseDistance >= 1000) {
                     // For kilometers, use expanded range including 2000, 5000, 10000, 20000, 50000
                     const kmDistance = baseDistance / 1000;
+                    console.log(`Before getRoundScaleValue: kmDistance=${Math.round(kmDistance)}km`);
                     const roundedKm = getRoundScaleValue(kmDistance);
+                    console.log(`After getRoundScaleValue: roundedKm=${roundedKm}km`);
                     scaleDistance = roundedKm * 1000;
                     scalePixels = (scaleDistance / metersPerPixel);
                     
@@ -6562,23 +6564,21 @@
             }
         }
         
-        // Helper function to get round scale values
+        // Helper function to get round scale values - prioritizes larger scales for better readability
         function getRoundScaleValue(value) {
             const scales = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000];
             
-            // Find the best scale that's close to the calculated value
-            let bestScale = scales[0];
-            let minDifference = Math.abs(value - bestScale);
-            
-            for (let scale of scales) {
-                const difference = Math.abs(value - scale);
-                if (difference < minDifference) {
-                    minDifference = difference;
-                    bestScale = scale;
+            // Find the first scale that is greater than or equal to the value
+            // This ensures we show meaningful scale increments rather than exact matches
+            for (let i = 0; i < scales.length; i++) {
+                const scale = scales[i];
+                if (scale >= value * 0.5) { // Allow scale to be up to 2x the calculated value for better readability
+                    return scale;
                 }
             }
             
-            return bestScale;
+            // If no suitable scale found, return the largest
+            return scales[scales.length - 1];
         }
 
         // Updated toggle function for left panel
