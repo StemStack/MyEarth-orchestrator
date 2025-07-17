@@ -9954,6 +9954,24 @@ Built with CesiumJS`;
                 // Switch back to 3D mode
                 globalViewer.scene.mode = Cesium.SceneMode.SCENE3D;
                 
+                // Reset map projection to Web Mercator for 3D
+                globalViewer.scene.mapProjection = new Cesium.WebMercatorProjection();
+                
+                // Reload imagery layers with proper 3D tiling scheme
+                const imageryLayers = globalViewer.imageryLayers;
+                imageryLayers.removeAll();
+                
+                // Add OSM base layer with Web Mercator tiling scheme for 3D
+                const osmProvider = new Cesium.UrlTemplateImageryProvider({
+                    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: [],
+                    credit: '© OpenStreetMap contributors',
+                    tilingScheme: new Cesium.WebMercatorTilingScheme(),
+                    rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90),
+                    maximumLevel: 19
+                });
+                imageryLayers.addImageryProvider(osmProvider);
+                
                 // Re-enable terrain if it was enabled before
                 if (terrainEnabled) {
                     // Use enhanced terrain (free alternative to Cesium World Terrain)
@@ -9970,6 +9988,12 @@ Built with CesiumJS`;
                 // Re-enable rotation and tilt
                 globalViewer.scene.screenSpaceCameraController.enableRotate = true;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = true;
+                
+                // Force scene update to fix rendering issues
+                globalViewer.scene.requestRender();
+                setTimeout(() => {
+                    globalViewer.scene.requestRender();
+                }, 100);
                 
                 console.log('Switched to Globe Mode (3D)');
             }

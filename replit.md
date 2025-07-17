@@ -115,6 +115,7 @@ The CesiumJS globe viewer is now fully functional with:
 - **Clean Export Layout**: Simplified export panel to match geo.admin.ch style with minimal controls
 - **Export UI Improvements**: Removed visual overload, cleaner format selection (A4/A3 Landscape, A4 Portrait)
 - **Simplified Print Preview**: Minimalist metadata display with coordinates, date, and layers only
+- **2D/3D Mode Fix**: Fixed critical issue where half the globe became invisible when exiting flat mode by properly resetting map projection and imagery layers with correct tiling schemes
 
 ## Previous Changes (July 16, 2025)
 
