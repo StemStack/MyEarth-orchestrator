@@ -6404,8 +6404,7 @@
             document.body.appendChild(testDiv);
             console.log('DEBUG: Test element created and added to body');
             
-            // Check if rightPanel exists
-            const rightPanel = document.getElementById('rightPanel');
+            // Check if rightPanel exists (reuse variable from above)
             console.log('DEBUG: rightPanel found:', !!rightPanel);
             if (rightPanel) {
                 console.log('DEBUG: rightPanel display:', window.getComputedStyle(rightPanel).display);
