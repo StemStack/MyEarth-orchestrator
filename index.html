@@ -793,9 +793,9 @@
             height: 40px;
             background: rgba(255,255,255,0.95);
             border-top: 1px solid #ddd;
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
             align-items: center;
-            justify-content: space-between;
             padding: 0 15px;
             z-index: 1000;
             backdrop-filter: blur(10px);
@@ -812,15 +812,12 @@
         }
 
         .bottom-left {
-            flex: 1;
-            min-width: 0;
-            max-width: 33.333%;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
         }
 
         .bottom-center {
-            flex: 1;
-            min-width: 0;
-            max-width: 40%;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -829,12 +826,11 @@
 
 
         .bottom-right {
-            flex: 2;
+            display: flex;
             justify-content: flex-end;
-            min-width: 0;
+            align-items: center;
             text-align: right;
             gap: 8px;
-            max-width: 50%;
         }
 
         /* Mobile responsive adjustments */
@@ -842,30 +838,7 @@
             #bottomBand {
                 padding: 0 8px;
                 font-size: 9px;
-                gap: 8px;
-            }
-            
-            .bottom-left {
-                flex: 1;
-                max-width: 20%;
-                overflow: hidden;
-            }
-            
-            .bottom-center {
-                flex: 1;
-                max-width: 35%;
-                gap: 4px;
-                overflow: hidden;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-            }
-            
-            .bottom-right {
-                flex: 2;
-                max-width: 45%;
-                gap: 4px;
-                overflow: hidden;
+                grid-template-columns: 1fr 1fr 2fr;
             }
             
             #coordinatesInfo {
@@ -897,26 +870,7 @@
             #bottomBand {
                 padding: 0 6px;
                 font-size: 8px;
-            }
-            
-            .bottom-left {
-                flex: 1;
-                max-width: 20%;
-            }
-            
-            .bottom-center {
-                flex: 1;
-                max-width: 35%;
-                gap: 2px;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-            }
-            
-            .bottom-right {
-                flex: 2;
-                max-width: 45%;
-                gap: 2px;
+                grid-template-columns: 1fr 1fr 2fr;
             }
             
             #coordinatesInfo {
