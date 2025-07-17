@@ -757,6 +757,19 @@
         .zoom-controls {
             display: none;
         }
+        
+        /* Completely hide the bottom area where timeline appears */
+        .cesium-widget,
+        .cesium-viewer {
+            bottom: 0 !important;
+            height: 100% !important;
+        }
+        
+        /* Target specific timeline elements more precisely */
+        .cesium-viewer .cesium-viewer-bottom {
+            display: none !important;
+            height: 0 !important;
+        }
 
         /* Update theme toggle button position */
         .theme-toggle-button {
@@ -2325,17 +2338,8 @@
         
         console.log('✓ Ion services completely disabled - using only free, open-source data');
         
-        // Force disable timeline and animation widgets at the Cesium level
-        if (typeof Cesium !== 'undefined') {
-            const originalViewer = Cesium.Viewer;
-            Cesium.Viewer = function(container, options) {
-                options = options || {};
-                options.timeline = false;
-                options.animation = false;
-                return originalViewer.call(this, container, options);
-            };
-            Cesium.Viewer.prototype = originalViewer.prototype;
-        }
+        // Safely disable timeline and animation in viewer options only
+        console.log('Preparing viewer with timeline disabled');
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -2418,13 +2422,20 @@
             .cesium-animation-container,
             .cesium-animation-svgContainer,
             .cesium-home-button,
-            .cesium-navigation-help-button {
+            .cesium-navigation-help-button,
+            .cesium-viewer-bottom,
+            .cesium-viewer-timelineContainer,
+            .cesium-viewer-animationContainer,
+            .cesium-widget-credits {
                 display: none !important;
                 visibility: hidden !important;
                 opacity: 0 !important;
                 width: 0 !important;
                 height: 0 !important;
                 overflow: hidden !important;
+                position: absolute !important;
+                top: -9999px !important;
+                left: -9999px !important;
             }
         `;
         document.head.appendChild(timelineCSS);
