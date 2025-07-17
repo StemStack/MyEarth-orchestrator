@@ -818,18 +818,22 @@
         }
 
         .bottom-center {
-            flex: 0;
+            flex: 2;
             min-width: 0;
-            display: none;
+            max-width: 66.667%;
+            display: flex;
+            justify-content: center;
         }
 
+
+
         .bottom-right {
-            flex: 2;
+            flex: 1;
             justify-content: flex-end;
             min-width: 0;
             text-align: right;
             gap: 8px;
-            max-width: 66.667%;
+            max-width: 33.333%;
         }
 
         /* Mobile responsive adjustments */
@@ -842,13 +846,21 @@
             
             .bottom-left {
                 flex: 1;
-                max-width: 33.333%;
+                max-width: 20%;
                 overflow: hidden;
             }
             
-            .bottom-right {
+            .bottom-center {
                 flex: 2;
-                max-width: 66.667%;
+                max-width: 50%;
+                gap: 4px;
+                overflow: hidden;
+                justify-content: flex-start;
+            }
+            
+            .bottom-right {
+                flex: 1;
+                max-width: 30%;
                 gap: 4px;
                 overflow: hidden;
             }
@@ -886,12 +898,19 @@
             
             .bottom-left {
                 flex: 1;
-                max-width: 30%;
+                max-width: 20%;
+            }
+            
+            .bottom-center {
+                flex: 2;
+                max-width: 50%;
+                gap: 2px;
+                justify-content: flex-start;
             }
             
             .bottom-right {
-                flex: 2;
-                max-width: 70%;
+                flex: 1;
+                max-width: 30%;
                 gap: 2px;
             }
             
@@ -938,6 +957,33 @@
             font-weight: 500;
             white-space: nowrap;
             min-width: 30px;
+        }
+        
+        /* Mobile scale bar adjustments */
+        @media (max-width: 768px) {
+            .scale-bar-container {
+                gap: 4px;
+            }
+            
+            .scale-text {
+                font-size: 9px;
+                min-width: 25px;
+            }
+            
+            .scale-line {
+                min-width: 30px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .scale-text {
+                font-size: 8px;
+                min-width: 20px;
+            }
+            
+            .scale-line {
+                min-width: 25px;
+            }
         }
 
         #coordinatesInfo {
@@ -2252,13 +2298,12 @@
                     <div class="scale-text" id="scaleText">1 km</div>
                 </div>
             </div>
-            <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
         </div>
         <div class="bottom-center">
-            <!-- Hidden - content moved to right -->
+            <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
+            <div id="activeLayersInfo">Active Layers: OSM Standard</div>
         </div>
         <div class="bottom-right">
-            <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
         </div>
     </div>
@@ -6519,8 +6564,8 @@
                 // Calculate appropriate scale values that match the map
                 let scaleDistance, scalePixels, scaleLabel;
                 
-                // Get phone viewport width for 1/3 limit
-                const maxScaleWidth = Math.min(120, window.innerWidth / 3); // Max 1/3 of phone width or 120px
+                // Get phone viewport width for mobile-friendly scale bar size
+                const maxScaleWidth = Math.min(100, window.innerWidth / 5); // Max 1/5 of screen width or 100px
                 
                 if (baseDistance >= 1000) {
                     // For kilometers - find the best scale that fits within size limits
