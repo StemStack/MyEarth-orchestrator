@@ -622,7 +622,7 @@
         /* Right Panel Styles - MapX Style */
         #rightPanel {
             position: fixed;
-            top: 10px;
+            bottom: 60px;
             right: 10px;
             width: 80px;
             background: transparent;
@@ -2282,17 +2282,17 @@
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
-            // Disable unnecessary UI widgets for clean appearance
+            // Disable ALL UI widgets for completely clean appearance
             animation: false,           // Remove animation controls
             baseLayerPicker: false,     // Remove base layer picker
-            fullscreenButton: true,     // Keep fullscreen button
+            fullscreenButton: false,    // Remove fullscreen button - use custom
             geocoder: false,            // Remove geocoder search
-            homeButton: true,           // Keep home button for navigation reset
+            homeButton: false,          // REMOVE home button - causing black icon
             infoBox: false,             // Remove info box
             sceneModePicker: false,     // Remove 2D/3D mode picker
             selectionIndicator: false,  // Remove selection indicator
             timeline: false,            // Remove timeline
-            navigationHelpButton: true, // Keep navigation help
+            navigationHelpButton: false,// REMOVE navigation help - causing black icons
             
             // Use ellipsoid terrain initially, will be upgraded after initialization
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
