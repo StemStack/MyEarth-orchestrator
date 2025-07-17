@@ -1254,26 +1254,26 @@
             color: #333;
         }
 
-        /* Floating menu button when sidebar is collapsed - maps.geo.admin style */
+        /* Floating menu button when sidebar is collapsed - match right panel icons exactly */
         .floating-menu-button {
             position: fixed;
             top: 50px;
             left: 10px;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             background: rgba(255, 255, 255, 0.4) !important;
             color: #333;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 4px;
+            border: none !important;
+            border-radius: 50% !important;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 14px;
             z-index: 1002;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.2s ease;
-            font-weight: bold;
+            font-weight: 400;
         }
 
         /* Collapsed left panel toggle button */
@@ -1298,17 +1298,25 @@
 
         .floating-menu-button:hover {
             background: rgba(255, 255, 255, 0.5) !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            transform: scale(1.05);
         }
         
-        /* Target floating menu button by ID with maximum specificity */
+        /* Target floating menu button by ID with maximum specificity - match right panel */
         #floatingMenuButton {
+            width: 30px !important;
+            height: 30px !important;
             background: rgba(255, 255, 255, 0.4) !important;
+            border: none !important;
+            border-radius: 50% !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
             opacity: 1 !important;
         }
         
         #floatingMenuButton:hover {
             background: rgba(255, 255, 255, 0.5) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+            transform: scale(1.05) !important;
         }
 
         /* Ensure sidebar is visible by default on desktop */
@@ -7081,6 +7089,13 @@ Built with CesiumJS`;
                 setTimeout(() => {
                     if (floatingButton) {
                         floatingButton.style.display = 'flex';
+                        // Apply inline styles to match right panel icons
+                        floatingButton.style.width = '30px';
+                        floatingButton.style.height = '30px';
+                        floatingButton.style.background = 'rgba(255, 255, 255, 0.4)';
+                        floatingButton.style.border = 'none';
+                        floatingButton.style.borderRadius = '50%';
+                        floatingButton.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
                     }
                 }, 300);
                 console.log('Sidebar collapsed');
