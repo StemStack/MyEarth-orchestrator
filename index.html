@@ -6395,6 +6395,23 @@
             setInterval(updateBottomBand, 1000);
             
             console.log('✓ Menu system initialized - left panel collapsed, right panel visible by default');
+            
+            // Create a test element to debug visibility issues
+            const testDiv = document.createElement('div');
+            testDiv.id = 'debugTest';
+            testDiv.innerHTML = 'DEBUG TEST VISIBLE';
+            testDiv.style.cssText = 'position: fixed !important; top: 50px !important; right: 50px !important; width: 200px !important; height: 100px !important; background: lime !important; color: black !important; font-size: 20px !important; z-index: 999999 !important; display: block !important; border: 5px solid purple !important; padding: 10px !important;';
+            document.body.appendChild(testDiv);
+            console.log('DEBUG: Test element created and added to body');
+            
+            // Check if rightPanel exists
+            const rightPanel = document.getElementById('rightPanel');
+            console.log('DEBUG: rightPanel found:', !!rightPanel);
+            if (rightPanel) {
+                console.log('DEBUG: rightPanel display:', window.getComputedStyle(rightPanel).display);
+                console.log('DEBUG: rightPanel visibility:', window.getComputedStyle(rightPanel).visibility);
+                console.log('DEBUG: rightPanel position:', window.getComputedStyle(rightPanel).position);
+            }
         });
 
         // Update bottom band information
