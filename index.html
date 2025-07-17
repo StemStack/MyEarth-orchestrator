@@ -6379,6 +6379,22 @@
             setInterval(updateBottomBand, 1000);
             
             console.log('✓ Menu system initialized - both panels collapsed by default');
+        
+        // Force right panel to be visible and positioned correctly
+        setTimeout(() => {
+            const rightPanel = document.getElementById('rightPanel');
+            if (rightPanel) {
+                rightPanel.style.display = 'grid';
+                rightPanel.style.visibility = 'visible';
+                rightPanel.style.position = 'fixed';
+                rightPanel.style.top = '300px';
+                rightPanel.style.right = '10px';
+                rightPanel.style.zIndex = '9999';
+                rightPanel.style.background = 'rgba(255, 0, 0, 0.5)';
+                rightPanel.classList.remove('collapsed');
+                console.log('Right panel forced visible at position 300px');
+            }
+        }, 100);
         });
 
         // Update bottom band information
