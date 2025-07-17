@@ -2383,6 +2383,15 @@
 
 
 
+    <!-- Floating menu button for collapsed left panel -->
+    <button class="floating-menu-button" id="floatingMenuButton" onclick="toggleLeftPanel()" style="display: none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
     <!-- File input (hidden) -->
     <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
 
@@ -6629,6 +6638,8 @@
             if (leftPanel) {
                 leftPanel.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
+                const floatingButton = document.getElementById('floatingMenuButton');
+                if (floatingButton) floatingButton.style.display = 'flex';
             }
             
             if (rightPanel) {
@@ -6890,16 +6901,19 @@
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
+            const floatingButton = document.getElementById('floatingMenuButton');
             
             if (leftPanelElement.classList.contains('collapsed')) {
                 // Expand left panel
                 leftPanelElement.classList.remove('collapsed');
                 cesiumContainer.classList.add('with-left-panel');
+                if (floatingButton) floatingButton.style.display = 'none';
                 console.log('Left panel expanded');
             } else {
                 // Collapse left panel
                 leftPanelElement.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
+                if (floatingButton) floatingButton.style.display = 'flex';
                 console.log('Left panel collapsed');
             }
         }
