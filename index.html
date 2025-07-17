@@ -3244,6 +3244,8 @@
         // Safely disable timeline and animation in viewer options only
         console.log('Preparing viewer with timeline disabled');
         
+
+        
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable ALL UI widgets for completely clean appearance
@@ -3267,7 +3269,10 @@
             baseLayerPicker: false,
             geocoder: false,
             requestRenderMode: false,
-            maximumRenderTimeChange: Infinity
+            maximumRenderTimeChange: Infinity,
+            
+            // Use Geographic projection for better cartographic display
+            mapProjection: new Cesium.GeographicProjection()
         });
 
         // Hide the CesiumJS credits widget in bottom-right corner
@@ -9433,27 +9438,59 @@ Built with CesiumJS`;
             if (!viewer || !viewer.camera) return;
             
             const cartographic = viewer.camera.positionCartographic;
-            const height = cartographic.height;
             const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+            let scale;
             
-            // Calculate approximate scale
-            const metersPerPixel = height / 256;
-            const scale = Math.round(metersPerPixel * 1000); // Rough scale calculation
-            
-            // Update scale display
-            document.getElementById('previewScale').textContent = `Scale: 1:${scale.toLocaleString()}`;
-            
-            // Update scale bar
-            let scaleDistance;
-            if (scale < 10000) {
-                scaleDistance = '1 km';
-            } else if (scale < 100000) {
-                scaleDistance = '5 km';
+            if (flatEarthMode) {
+                // For Equirectangular projection in 2D mode
+                const viewRectangle = viewer.camera.computeViewRectangle();
+                if (viewRectangle) {
+                    // Calculate scale based on view width
+                    const west = Cesium.Math.toDegrees(viewRectangle.west);
+                    const east = Cesium.Math.toDegrees(viewRectangle.east);
+                    const viewWidthDegrees = Math.abs(east - west);
+                    
+                    // Convert degrees to meters at the center latitude
+                    const metersPerDegree = 111320 * Math.cos(latitude * Math.PI / 180);
+                    const viewWidthMeters = viewWidthDegrees * metersPerDegree;
+                    
+                    // Get viewport width in pixels
+                    const viewportWidth = viewer.canvas.clientWidth;
+                    
+                    // Calculate scale
+                    const metersPerPixel = viewWidthMeters / viewportWidth;
+                    scale = Math.round(metersPerPixel * 96 / 0.0254); // Convert to map scale (96 DPI)
+                }
             } else {
-                scaleDistance = '10 km';
+                // For 3D mode - original calculation
+                const height = cartographic.height;
+                const metersPerPixel = height / 256;
+                scale = Math.round(metersPerPixel * 1000);
             }
             
-            document.querySelector('.scale-text').textContent = scaleDistance;
+            // Update scale display
+            if (scale) {
+                document.getElementById('previewScale').textContent = `Scale: 1:${scale.toLocaleString()}`;
+                
+                // Update scale bar
+                let scaleDistance;
+                if (scale < 10000) {
+                    scaleDistance = '1 km';
+                } else if (scale < 100000) {
+                    scaleDistance = '5 km';
+                } else if (scale < 500000) {
+                    scaleDistance = '10 km';
+                } else if (scale < 1000000) {
+                    scaleDistance = '50 km';
+                } else {
+                    scaleDistance = '100 km';
+                }
+                
+                const scaleTextElement = document.querySelector('.scale-text');
+                if (scaleTextElement) {
+                    scaleTextElement.textContent = scaleDistance;
+                }
+            }
         }
 
         function generateLegend() {
@@ -9746,7 +9783,7 @@ Built with CesiumJS`;
             }, 100);
         }
 
-        // Toggle between 3D globe and 2D flat Earth mode
+        // Toggle between 3D globe and 2D flat Earth mode with Equirectangular projection
         function toggleFlatEarthMode() {
             if (!globalViewer) {
                 console.warn('Viewer not initialized');
@@ -9764,6 +9801,9 @@ Built with CesiumJS`;
             flatEarthMode = !flatEarthMode;
             
             if (flatEarthMode) {
+                // Configure Equirectangular (Plate Carrée) projection
+                globalViewer.scene.mapProjection = new Cesium.GeographicProjection();
+                
                 // Switch to 2D mode
                 globalViewer.scene.mode = Cesium.SceneMode.SCENE2D;
                 
@@ -9774,8 +9814,15 @@ Built with CesiumJS`;
                 if (globalViewer.scene.moon) globalViewer.scene.moon.show = false;
                 if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = false;
                 
-                console.log('Switched to Flat Earth Mode (2D)');
+                // Adjust 2D view settings for better cartographic display
+                globalViewer.scene.screenSpaceCameraController.enableRotate = false;
+                globalViewer.scene.screenSpaceCameraController.enableTilt = false;
+                
+                console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection');
             } else {
+                // Reset to Web Mercator for 3D mode
+                globalViewer.scene.mapProjection = new Cesium.WebMercatorProjection();
+                
                 // Switch back to 3D mode
                 globalViewer.scene.mode = Cesium.SceneMode.SCENE3D;
                 
@@ -9791,6 +9838,10 @@ Built with CesiumJS`;
                 if (globalViewer.scene.sun) globalViewer.scene.sun.show = true;
                 if (globalViewer.scene.moon) globalViewer.scene.moon.show = true;
                 if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
+                
+                // Re-enable rotation and tilt
+                globalViewer.scene.screenSpaceCameraController.enableRotate = true;
+                globalViewer.scene.screenSpaceCameraController.enableTilt = true;
                 
                 console.log('Switched to Globe Mode (3D)');
             }
@@ -9809,15 +9860,31 @@ Built with CesiumJS`;
             setTimeout(() => {
                 try {
                     if (flatEarthMode) {
-                        // In 2D mode, set a reasonable view
-                        const center = Cesium.Cartographic.fromCartesian(position);
+                        // In 2D mode with Equirectangular projection, set a global view
+                        const cartographic = Cesium.Cartographic.fromCartesian(position);
+                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
+                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
+                        
+                        // Set view to show entire world or region based on previous zoom
+                        const height = cartographic.height;
+                        let viewRectangle;
+                        
+                        if (height > 10000000) {
+                            // Global view
+                            viewRectangle = Cesium.Rectangle.fromDegrees(-180, -90, 180, 90);
+                        } else {
+                            // Regional view - calculate bounds based on height
+                            const degrees = Math.min(180, height / 111000); // rough conversion
+                            viewRectangle = Cesium.Rectangle.fromDegrees(
+                                Math.max(-180, longitude - degrees),
+                                Math.max(-90, latitude - degrees),
+                                Math.min(180, longitude + degrees),
+                                Math.min(90, latitude + degrees)
+                            );
+                        }
+                        
                         globalViewer.scene.camera.setView({
-                            destination: Cesium.Rectangle.fromDegrees(
-                                Cesium.Math.toDegrees(center.longitude) - 20,
-                                Cesium.Math.toDegrees(center.latitude) - 20,
-                                Cesium.Math.toDegrees(center.longitude) + 20,
-                                Cesium.Math.toDegrees(center.latitude) + 20
-                            )
+                            destination: viewRectangle
                         });
                     } else {
                         // Restore 3D view
