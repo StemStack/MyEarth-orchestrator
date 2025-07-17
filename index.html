@@ -2344,16 +2344,31 @@
         .preview-map-area {
             width: 100%;
             height: 180mm;
-            border: 2px solid #333;
-            background: white;
+            border: none;
+            background: #f0f0f0;
             display: block;
             margin-bottom: 10mm;
             position: relative;
             overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
         }
         
         .preview-page.landscape .preview-map-area {
             height: 130mm;
+        }
+        
+        .preview-map-mask {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            box-shadow: 
+                inset 0 0 0 2px #333,
+                inset 0 0 30px rgba(0,0,0,0.4),
+                inset 0 0 60px rgba(0,0,0,0.2);
+            z-index: 10;
         }
 
         .preview-title {
@@ -2927,6 +2942,7 @@
                             <!-- Map image will be inserted here -->
                             <div class="preview-map-area" id="previewMapArea">
                                 <canvas id="previewMapCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
+                                <div class="preview-map-mask"></div>
                             </div>
                             
                             <!-- Map metadata and layout elements -->
@@ -3133,6 +3149,8 @@
         // Global state variables
         let flatEarthMode = false;
         let globalViewer = null;
+        let terrainEnabled = true;
+        let atmosphereEnabled = true;
         
         // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
         if (typeof Cesium !== 'undefined') {
@@ -8957,6 +8975,14 @@ Built with CesiumJS`;
             if (overlay) {
                 overlay.style.display = 'none';
             }
+            
+            // Stop live preview updates
+            stopLivePreviewUpdates();
+            
+            // Optionally restore 3D mode if it was changed
+            if (flatEarthMode && confirm('Exit flat earth mode?')) {
+                toggleFlatEarthMode();
+            }
         }
 
         function initializePrintPreview() {
@@ -8970,7 +8996,10 @@ Built with CesiumJS`;
             // Initialize preview canvas
             initializePreviewCanvas();
             
-            // Capture map image with retry mechanism
+            // Start live preview updates
+            startLivePreviewUpdates();
+            
+            // Capture initial map image
             captureMapImageWithRetry();
             
             // Generate QR code if enabled
@@ -8979,6 +9008,30 @@ Built with CesiumJS`;
             // Update legend and scale
             generateLegend();
             calculateScaleBar();
+        }
+        
+        let livePreviewInterval = null;
+        
+        function startLivePreviewUpdates() {
+            // Clear existing interval if any
+            stopLivePreviewUpdates();
+            
+            // Update preview every 2 seconds
+            livePreviewInterval = setInterval(() => {
+                if (document.getElementById('mapExportOverlay').style.display === 'flex') {
+                    captureMapImageWithRetry();
+                    updateMapMetadata();
+                } else {
+                    stopLivePreviewUpdates();
+                }
+            }, 2000);
+        }
+        
+        function stopLivePreviewUpdates() {
+            if (livePreviewInterval) {
+                clearInterval(livePreviewInterval);
+                livePreviewInterval = null;
+            }
         }
 
         function initializePreviewCanvas() {
@@ -9049,34 +9102,32 @@ Built with CesiumJS`;
                 viewer.scene.render();
                 
                 // Method 1: Use toDataURL to properly extract WebGL content
-                try {
-                    // Use the enhanced capture function
-                    captureMapForExport((dataURL) => {
-                        if (dataURL) {
-                            const img = new Image();
-                            img.onload = function() {
-                                const ctx = previewCanvas.getContext('2d', { alpha: false });
-                                
-                                // Fill with white background first
-                                ctx.fillStyle = 'white';
-                                ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-                                
-                                // Draw the captured image
-                                ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
-                                console.log('Map successfully drawn to preview canvas');
-                            };
-                            img.onerror = function() {
-                                console.error('Failed to load captured image');
-                            };
-                            img.src = dataURL;
-                        } else {
-                            console.warn('Failed to capture map data');
-                        }
-                    });
-                    return true;
-                } catch (dataURLError) {
-                    console.warn('Enhanced capture method failed:', dataURLError);
-                }
+                // Use the enhanced capture function with top-down view
+                captureMapForExport((dataURL) => {
+                    if (dataURL) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const ctx = previewCanvas.getContext('2d', { alpha: false });
+                            
+                            // Fill with light gray background first
+                            ctx.fillStyle = '#f0f0f0';
+                            ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+                            
+                            // Draw the captured image
+                            ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
+                            console.log('Map successfully drawn to preview canvas');
+                        };
+                        img.onerror = function() {
+                            console.error('Failed to load captured image');
+                            showMapPlaceholder();
+                        };
+                        img.src = dataURL;
+                    } else {
+                        console.warn('Failed to capture map data');
+                        showMapPlaceholder();
+                    }
+                }, true); // Force top-down view
+                return true;
                 
                 // Method 2: Direct canvas drawing (fallback)
                 try {
@@ -9218,15 +9269,26 @@ Built with CesiumJS`;
         function showMapPlaceholder() {
             const mapArea = document.getElementById('previewMapArea');
             if (mapArea) {
-                mapArea.innerHTML = `
-                    <div style="color: #666; font-size: 14px; text-align: center; padding: 20px;">
-                        <div style="margin-bottom: 10px;">📍 Live Map View</div>
-                        <div style="font-size: 11px; color: #999;">
-                            Current view: ${getCurrentViewDescription()}<br>
-                            Map will be captured during export
-                        </div>
-                    </div>
-                `;
+                const canvas = document.getElementById('previewMapCanvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#f0f0f0';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    ctx.fillStyle = '#666';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('📍 Preparing map view...', canvas.width / 2, canvas.height / 2 - 10);
+                    
+                    ctx.font = '11px Arial';
+                    ctx.fillStyle = '#999';
+                    ctx.fillText(getCurrentViewDescription(), canvas.width / 2, canvas.height / 2 + 10);
+                }
+                
+                // Keep the mask overlay
+                if (!mapArea.querySelector('.preview-map-mask')) {
+                    mapArea.innerHTML += '<div class="preview-map-mask"></div>';
+                }
             }
         }
 
@@ -9445,36 +9507,81 @@ Built with CesiumJS`;
             }, 100);
         }
 
-        // Enhanced map capture with proper WebGL handling
-        function captureMapForExport(callback) {
+        // Enhanced map capture with proper WebGL handling and top-down view
+        function captureMapForExport(callback, forceTopDown = true) {
             if (!viewer || !viewer.scene || !viewer.scene.canvas) {
                 console.warn('Viewer not ready for capture');
                 if (callback) callback(null);
                 return;
             }
             
-            const canvas = viewer.scene.canvas;
+            // Store current camera state
+            const originalCamera = {
+                position: viewer.camera.position.clone(),
+                heading: viewer.camera.heading,
+                pitch: viewer.camera.pitch,
+                roll: viewer.camera.roll
+            };
             
-            // Ensure scene is rendered
+            // Force top-down view for print if requested
+            if (forceTopDown) {
+                if (flatEarthMode) {
+                    // In 2D mode, ensure north is up
+                    viewer.camera.setView({
+                        orientation: {
+                            heading: 0,
+                            pitch: Cesium.Math.toRadians(-90), // Top-down
+                            roll: 0
+                        }
+                    });
+                } else {
+                    // In 3D mode, adjust pitch to be more vertical
+                    viewer.camera.setView({
+                        destination: viewer.camera.position,
+                        orientation: {
+                            heading: 0,
+                            pitch: Cesium.Math.toRadians(-90), // Top-down
+                            roll: 0
+                        }
+                    });
+                }
+            }
+            
+            // Ensure scene is fully rendered
             viewer.scene.render();
             
-            // Wait for next animation frame
+            // Use multiple animation frames for stability
             requestAnimationFrame(() => {
-                try {
-                    // Capture the canvas
-                    const dataURL = canvas.toDataURL('image/png');
-                    
-                    if (dataURL && dataURL.length > 1000) {
-                        console.log('Map captured successfully, size:', dataURL.length);
-                        if (callback) callback(dataURL);
-                    } else {
-                        console.warn('Captured image is too small or empty');
+                viewer.scene.render();
+                requestAnimationFrame(() => {
+                    try {
+                        const canvas = viewer.scene.canvas;
+                        const dataURL = canvas.toDataURL('image/png');
+                        
+                        if (dataURL && dataURL.length > 1000) {
+                            console.log('Map captured successfully, size:', dataURL.length);
+                            if (callback) callback(dataURL);
+                        } else {
+                            console.warn('Captured image is too small or empty');
+                            if (callback) callback(null);
+                        }
+                    } catch (error) {
+                        console.error('Error capturing map:', error);
                         if (callback) callback(null);
+                    } finally {
+                        // Restore original camera if we changed it
+                        if (forceTopDown && flatEarthMode) {
+                            viewer.camera.setView({
+                                destination: originalCamera.position,
+                                orientation: {
+                                    heading: originalCamera.heading,
+                                    pitch: originalCamera.pitch,
+                                    roll: originalCamera.roll
+                                }
+                            });
+                        }
                     }
-                } catch (error) {
-                    console.error('Error capturing map:', error);
-                    if (callback) callback(null);
-                }
+                });
             });
         }
 
@@ -9539,9 +9646,9 @@ Built with CesiumJS`;
                 // Disable terrain and shadows for clean 2D view
                 globalViewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
                 globalViewer.scene.globe.enableLighting = false;
-                globalViewer.scene.sun.show = false;
-                globalViewer.scene.moon.show = false;
-                globalViewer.scene.skyAtmosphere.show = false;
+                if (globalViewer.scene.sun) globalViewer.scene.sun.show = false;
+                if (globalViewer.scene.moon) globalViewer.scene.moon.show = false;
+                if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = false;
                 
                 console.log('Switched to Flat Earth Mode (2D)');
             } else {
@@ -9558,9 +9665,9 @@ Built with CesiumJS`;
                 
                 // Re-enable atmosphere and lighting
                 globalViewer.scene.globe.enableLighting = true;
-                globalViewer.scene.sun.show = true;
-                globalViewer.scene.moon.show = true;
-                globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
+                if (globalViewer.scene.sun) globalViewer.scene.sun.show = true;
+                if (globalViewer.scene.moon) globalViewer.scene.moon.show = true;
+                if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
                 
                 console.log('Switched to Globe Mode (3D)');
             }
