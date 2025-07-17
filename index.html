@@ -823,6 +823,8 @@
             max-width: 40%;
             display: flex;
             justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
 
@@ -2300,7 +2302,7 @@
             </div>
         </div>
         <div class="bottom-center">
-            <div id="coordinatesInfo">Lat: 45.000° Lon: 15.000°</div>
+            <div id="coordinatesInfo">N: 45.000° E: 15.000°</div>
         </div>
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
@@ -3098,7 +3100,7 @@
                 // Update coordinates in bottom band with cm precision
                 const coordinatesInfo = document.getElementById('coordinatesInfo');
                 if (coordinatesInfo) {
-                    coordinatesInfo.textContent = `Lat: ${latitude.toFixed(8)}° Lon: ${longitude.toFixed(8)}°`;
+                    coordinatesInfo.textContent = `N: ${latitude.toFixed(8)}° E: ${longitude.toFixed(8)}°`;
                 }
                 
             } catch (error) {
@@ -6457,11 +6459,11 @@
                         const latitude = Cesium.Math.toDegrees(cartographic.latitude);
                         const longitude = Cesium.Math.toDegrees(cartographic.longitude);
                         // Display with cm precision (8 decimal places ≈ 1.1 cm at equator)
-                        coordinatesInfo.textContent = `Lat: ${latitude.toFixed(8)}° Lon: ${longitude.toFixed(8)}°`;
+                        coordinatesInfo.textContent = `N: ${latitude.toFixed(8)}° E: ${longitude.toFixed(8)}°`;
                     }
                 } catch (error) {
                     if (coordinatesInfo) {
-                        coordinatesInfo.textContent = 'Lat: ---.---° Lon: ---.---°';
+                        coordinatesInfo.textContent = 'N: ---.---° E: ---.---°';
                     }
                 }
                 
