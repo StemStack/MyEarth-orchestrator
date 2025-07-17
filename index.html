@@ -8273,48 +8273,59 @@ Built with CesiumJS`;
             if (markers.size === 0) return;
             
             if (confirm(`Delete all ${markers.size} point markers?`)) {
-                // Method 1: Remove all markers from viewer using stored entities
-                markers.forEach(markerData => {
+                console.log('Starting marker cleanup process...');
+                
+                // Method 1: Remove using stored entity references
+                let removedCount = 0;
+                markers.forEach((markerData, markerId) => {
                     if (markerData.entity) {
                         try {
-                            viewer.entities.remove(markerData.entity);
+                            const removed = viewer.entities.remove(markerData.entity);
+                            if (removed) {
+                                removedCount++;
+                                console.log(`Removed marker ${markerId}`);
+                            }
                         } catch (e) {
-                            console.warn('Error removing marker entity:', e);
+                            console.warn(`Error removing marker ${markerId}:`, e);
                         }
                     }
                 });
                 
-                // Method 2: Force remove any remaining billboard entities (markers use billboards)
+                // Method 2: Remove by entity ID (markers have IDs like "marker_1", "marker_2")
                 const allEntities = viewer.entities.values;
-                const entitiesToRemove = [];
-                
-                for (let i = 0; i < allEntities.length; i++) {
+                for (let i = allEntities.length - 1; i >= 0; i--) {
                     const entity = allEntities[i];
-                    // Check if entity has a billboard (marker characteristic)
-                    if (entity.billboard) {
-                        // Check if it's a marker by looking for SVG image data
-                        const image = entity.billboard.image;
-                        if (image && image.getValue) {
-                            const imageValue = image.getValue();
-                            if (typeof imageValue === 'string' && imageValue.indexOf('data:image/svg+xml') === 0) {
-                                entitiesToRemove.push(entity);
+                    if (entity.id && entity.id.startsWith('marker_')) {
+                        try {
+                            viewer.entities.remove(entity);
+                            console.log(`Removed entity with ID: ${entity.id}`);
+                        } catch (e) {
+                            console.warn(`Error removing entity ${entity.id}:`, e);
+                        }
+                    }
+                }
+                
+                // Method 3: Remove by billboard + canvas image pattern
+                const remainingEntities = viewer.entities.values;
+                for (let i = remainingEntities.length - 1; i >= 0; i--) {
+                    const entity = remainingEntities[i];
+                    if (entity.billboard && entity.billboard.image) {
+                        const image = entity.billboard.image.getValue();
+                        // Check if it's a canvas element (our markers use canvas)
+                        if (image && image.tagName === 'CANVAS') {
+                            try {
+                                viewer.entities.remove(entity);
+                                console.log('Removed canvas billboard entity');
+                            } catch (e) {
+                                console.warn('Error removing canvas entity:', e);
                             }
                         }
                     }
                 }
                 
-                // Remove all identified marker entities
-                entitiesToRemove.forEach(entity => {
-                    try {
-                        viewer.entities.remove(entity);
-                    } catch (e) {
-                        console.warn('Error removing billboard entity:', e);
-                    }
-                });
-                
-                // Method 3: Nuclear option - remove all entities and rebuild non-marker ones
-                if (entitiesToRemove.length === 0 && markers.size > 0) {
-                    console.warn('Falling back to nuclear cleanup method');
+                // Method 4: Nuclear option - remove all entities
+                if (markers.size > 0) {
+                    console.warn('Using nuclear cleanup - removing all entities');
                     viewer.entities.removeAll();
                 }
                 
@@ -8325,12 +8336,10 @@ Built with CesiumJS`;
                 // Update UI
                 updatePointsUI();
                 
-                // Force multiple scene updates
+                // Force scene re-render
                 viewer.scene.requestRender();
-                setTimeout(() => viewer.scene.requestRender(), 50);
-                setTimeout(() => viewer.scene.requestRender(), 100);
                 
-                console.log('All point markers cleared using comprehensive method');
+                console.log(`Marker cleanup completed. Removed ${removedCount} markers.`);
             }
         }
 
