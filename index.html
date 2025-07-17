@@ -2442,7 +2442,7 @@
             <!-- Active Layers List -->
             <div class="active-layers-section">
                 <div class="active-layers-title">Active Data Layers:</div>
-                <div id="activeLayersList" class="active-layers-list">
+                <div id="dynamicLayersList" class="active-layers-list">
                     <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 10px;">
                         No data layers loaded
                     </div>
@@ -5884,7 +5884,7 @@ Built with CesiumJS`;
          * Update the active layers list UI
          */
         function updateActiveLayersList() {
-            const listContainer = document.getElementById('activeLayersList');
+            const listContainer = document.getElementById('dynamicLayersList');
             
             if (activeDataLayers.size === 0) {
                 listContainer.innerHTML = `
@@ -6299,48 +6299,6 @@ Built with CesiumJS`;
                     console.error('TileJSON loading failed:', error);
                     showServiceError(`Failed to load TileJSON: ${error.message}`);
                 });
-        }
-        
-        /**
-         * Update the active layers list UI
-         */
-        function updateActiveLayersList() {
-            const listContainer = document.getElementById('activeLayersList');
-            
-            if (activeDataLayers.size === 0) {
-                listContainer.innerHTML = `
-                    <div style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 11px; margin-top: 10px;">
-                        No data layers loaded
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            for (const [layerId, layer] of activeDataLayers) {
-                const toggleClass = layer.visible ? '' : 'disabled';
-                const toggleText = layer.visible ? 'Hide' : 'Show';
-                
-                html += `
-                    <div class="layer-item">
-                        <div class="layer-info">
-                            <div class="layer-name">${layer.name}</div>
-                            <div class="layer-type">${layer.type}</div>
-                        </div>
-                        <div class="layer-controls">
-                            <button class="layer-toggle-btn ${toggleClass}" onclick="toggleDataLayer('${layerId}')">
-                                ${toggleText}
-                            </button>
-                            <button class="layer-remove-btn" onclick="removeDataLayer('${layerId}')">
-                                Remove
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            listContainer.innerHTML = html;
-        }
         
         /**
          * Toggle visibility of a data layer
