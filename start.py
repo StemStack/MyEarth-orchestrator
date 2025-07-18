@@ -17,8 +17,9 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     
     logger.info(f"Starting CesiumJS Globe Viewer FastAPI server on port {port}")
+    logger.info(f"Server will be accessible at http://0.0.0.0:{port}")
     
-    # Start the FastAPI application with production settings
+    # Start the FastAPI application with production settings optimized for Replit deployment
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
@@ -29,5 +30,8 @@ if __name__ == "__main__":
         access_log=True,
         server_header=False,  # Remove server header for security
         date_header=True,     # Keep date header for debugging
-        timeout_keep_alive=30  # Keep alive timeout for better performance
+        timeout_keep_alive=30,  # Keep alive timeout for better performance
+        limit_concurrency=1000,  # Increase concurrency limit
+        limit_max_requests=10000,  # Increase max requests
+        backlog=2048  # Increase backlog for better handling
     )

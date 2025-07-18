@@ -14,10 +14,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "FastAPI Backend"
+args = "Server"
 
 [[workflows.workflow]]
-name = "FastAPI Backend"
+name = "Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]

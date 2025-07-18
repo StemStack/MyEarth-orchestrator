@@ -10,7 +10,13 @@ from pydantic import BaseModel
 from typing import List
 import os
 
-app = FastAPI(title="CesiumJS Globe Viewer with PostGIS", version="1.0.0")
+app = FastAPI(
+    title="CesiumJS Globe Viewer with PostGIS", 
+    version="1.0.0",
+    description="A sophisticated CesiumJS web application for advanced geospatial exploration with PostgreSQL/PostGIS backend",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
 
 # Add CORS middleware
 app.add_middleware(
@@ -57,7 +63,14 @@ def root():
     Always returns JSON with 200 status code.
     Frontend is available at /app, /viewer, or /globe endpoints.
     """
-    return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
+    return {
+        "message": "CesiumJS Globe Viewer with PostGIS", 
+        "status": "healthy", 
+        "version": "1.0.0",
+        "server": "running",
+        "port": 5000,
+        "endpoints": ["/app", "/viewer", "/globe", "/health", "/locations"]
+    }
 
 # Health check endpoint for deployment monitoring
 @app.get("/api/health")
