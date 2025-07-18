@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -126,3 +127,16 @@ def get_nearby_locations(longitude: float, latitude: float, radius_km: float = 1
 @app.get("/app")
 def serve_frontend():
     return FileResponse("index.html")
+=======
+from fastapi import FastAPI
+from routers import data
+
+app = FastAPI()
+
+app.include_router(data.router, prefix="/data", tags=["data"])
+
+@app.get("/")
+def read_root():
+    return {"message": "Welcome to MyEarth API"}
+
+>>>>>>> 231ea7c7aa45cca04d0faf4c61ebfe31751f698e
