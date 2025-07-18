@@ -26,5 +26,8 @@ if __name__ == "__main__":
         reload=False,  # Disable reload for production
         workers=1,
         log_level="info",
-        access_log=True
+        access_log=True,
+        server_header=False,  # Remove server header for security
+        date_header=True,     # Keep date header for debugging
+        timeout_keep_alive=30  # Keep alive timeout for better performance
     )
