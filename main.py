@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Header
+from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,21 +48,32 @@ class LocationResponse(BaseModel):
     longitude: float
     latitude: float
 
-# Root endpoint - serve frontend application for users, health check for deployment
+# Root endpoint - serve frontend for users, health check for deployment systems
 @app.get("/")
 @app.head("/")
-def root(user_agent: str = Header(default=None)):
+def root(request: Request, user_agent: str = Header(default="")):
     """
-    Root endpoint that:
-    - Returns JSON health check for deployment systems (GET/HEAD)
-    - Serves CesiumJS frontend for web browsers (GET only)
+    Smart root endpoint that:
+    - Serves CesiumJS frontend for web browsers (GET)
+    - Returns JSON health check for deployment systems and HEAD requests
     """
-    # Check if this is a browser request by examining user agent
-    if user_agent and ('Mozilla' in user_agent or 'Chrome' in user_agent or 'Safari' in user_agent or 'Firefox' in user_agent):
+    # For HEAD requests (deployment health checks), always return health status
+    if request.method == "HEAD":
+        return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
+    
+    # For GET requests, detect if it's a browser or deployment system
+    browser_indicators = ['Mozilla', 'Chrome', 'Safari', 'Firefox', 'Edge', 'Opera']
+    is_browser = any(indicator in user_agent for indicator in browser_indicators)
+    
+    # Check for specific deployment system user agents that should get JSON
+    deployment_indicators = ['curl', 'wget', 'healthcheck', 'monitoring', 'probe', 'check']
+    is_deployment_check = any(indicator.lower() in user_agent.lower() for indicator in deployment_indicators)
+    
+    if is_browser and not is_deployment_check:
         # This is a browser request - serve the frontend
         return FileResponse("index.html")
     else:
-        # This is likely a health check request - return JSON status
+        # This is likely a deployment health check - return JSON status
         return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
 
 # Health check endpoint for deployment monitoring
@@ -140,7 +151,7 @@ def get_nearby_locations(longitude: float, latitude: float, radius_km: float = 1
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Serve the frontend index.html
+# Serve the frontend index.html for users
 @app.get("/app")
 def serve_frontend():
     return FileResponse("index.html")
@@ -148,6 +159,11 @@ def serve_frontend():
 # Alternative frontend endpoint for users
 @app.get("/viewer")
 def serve_viewer():
+    return FileResponse("index.html")
+
+# Main frontend endpoint
+@app.get("/globe")
+def serve_globe():
     return FileResponse("index.html")
 
 # Mount static files to serve CesiumJS assets - specific paths to avoid root conflict
