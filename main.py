@@ -48,33 +48,16 @@ class LocationResponse(BaseModel):
     longitude: float
     latitude: float
 
-# Root endpoint - serve frontend for users, health check for deployment systems
+# Root endpoint - always returns JSON health check for deployment systems
 @app.get("/")
 @app.head("/")
-def root(request: Request, user_agent: str = Header(default="")):
+def root():
     """
-    Smart root endpoint that:
-    - Serves CesiumJS frontend for web browsers (GET)
-    - Returns JSON health check for deployment systems and HEAD requests
+    Root health check endpoint for deployment systems.
+    Always returns JSON with 200 status code.
+    Frontend is available at /app, /viewer, or /globe endpoints.
     """
-    # For HEAD requests (deployment health checks), always return health status
-    if request.method == "HEAD":
-        return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
-    
-    # For GET requests, detect if it's a browser or deployment system
-    browser_indicators = ['Mozilla', 'Chrome', 'Safari', 'Firefox', 'Edge', 'Opera']
-    is_browser = any(indicator in user_agent for indicator in browser_indicators)
-    
-    # Check for specific deployment system user agents that should get JSON
-    deployment_indicators = ['curl', 'wget', 'healthcheck', 'monitoring', 'probe', 'check']
-    is_deployment_check = any(indicator.lower() in user_agent.lower() for indicator in deployment_indicators)
-    
-    if is_browser and not is_deployment_check:
-        # This is a browser request - serve the frontend
-        return FileResponse("index.html")
-    else:
-        # This is likely a deployment health check - return JSON status
-        return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
+    return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
 
 # Health check endpoint for deployment monitoring
 @app.get("/api/health")
