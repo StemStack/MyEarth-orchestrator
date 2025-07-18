@@ -1,8 +1,7 @@
-modules = ["nodejs-20", "python-3.11", "postgresql-16"]
+modules = ["nodejs-20", "python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["openssh"]
 
 [workflows]
 runButton = "Project"
@@ -14,24 +13,17 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Server"
+args = "CesiumJS Server"
 
 [[workflows.workflow]]
-name = "Server"
+name = "CesiumJS Server"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python start.py"
+args = "python -m http.server 5000"
 waitForPort = 5000
 
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 8000
-externalPort = 8000
-
-[deployment]
-deploymentTarget = "cloudrun"

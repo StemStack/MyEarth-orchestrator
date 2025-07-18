@@ -9927,38 +9927,51 @@ Built with CesiumJS`;
                 // Switch to 2D mode
                 globalViewer.scene.mode = Cesium.SceneMode.SCENE2D;
                 
-                // Remove all existing layers to prevent conflicts
-                globalViewer.imageryLayers.removeAll();
-                
-                // Add a simple OSM base layer with Geographic tiling scheme for 2D
-                const osmProvider = new Cesium.UrlTemplateImageryProvider({
-                    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    credit: '© OpenStreetMap contributors',
-                    tilingScheme: new Cesium.GeographicTilingScheme(),
-                    rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90),
-                    maximumLevel: 18
-                });
-                globalViewer.imageryLayers.addImageryProvider(osmProvider);
-                
-                // Force Geographic projection (EPSG:4326) after adding layers
+                // Force Geographic projection (EPSG:4326)
                 globalViewer.scene.mapProjection = new Cesium.GeographicProjection();
                 
-                // Disable 3D elements for clean 2D view
+                // Reload all imagery layers with Geographic tiling scheme
+                const imageryLayers = globalViewer.imageryLayers;
+                const layersToReload = [];
+                
+                // Collect layer info
+                for (let i = 0; i < imageryLayers.length; i++) {
+                    const layer = imageryLayers.get(i);
+                    const provider = layer.imageryProvider;
+                    layersToReload.push({
+                        url: provider._url || provider.url,
+                        subdomains: provider._subdomains,
+                        credit: provider._credit
+                    });
+                }
+                
+                // Remove all layers
+                imageryLayers.removeAll();
+                
+                // Re-add with Geographic tiling
+                layersToReload.forEach(layerInfo => {
+                    if (layerInfo.url) {
+                        const newProvider = new Cesium.UrlTemplateImageryProvider({
+                            url: layerInfo.url,
+                            subdomains: layerInfo.subdomains || ['a', 'b', 'c'],
+                            credit: layerInfo.credit || '',
+                            tilingScheme: new Cesium.GeographicTilingScheme(),
+                            rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90)
+                        });
+                        imageryLayers.addImageryProvider(newProvider);
+                    }
+                });
+                
+                // Disable terrain and shadows for clean 2D view
                 globalViewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
                 globalViewer.scene.globe.enableLighting = false;
-                globalViewer.scene.globe.showGroundAtmosphere = false;
                 if (globalViewer.scene.sun) globalViewer.scene.sun.show = false;
                 if (globalViewer.scene.moon) globalViewer.scene.moon.show = false;
                 if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = false;
-                if (globalViewer.scene.skyBox) globalViewer.scene.skyBox.show = false;
                 
                 // Disable rotation and tilt for stable cartographic display
                 globalViewer.scene.screenSpaceCameraController.enableRotate = false;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = false;
-                globalViewer.scene.screenSpaceCameraController.enableLook = false;
-                
-                // Force render to apply changes
-                globalViewer.scene.requestRender();
                 
                 console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection (EPSG:4326)');
             } else {
@@ -9968,37 +9981,37 @@ Built with CesiumJS`;
                 // Reset map projection to Web Mercator for 3D
                 globalViewer.scene.mapProjection = new Cesium.WebMercatorProjection();
                 
-                // Remove all layers and reload with proper 3D configuration
-                globalViewer.imageryLayers.removeAll();
+                // Reload imagery layers with proper 3D tiling scheme
+                const imageryLayers = globalViewer.imageryLayers;
+                imageryLayers.removeAll();
                 
                 // Add OSM base layer with Web Mercator tiling scheme for 3D
                 const osmProvider = new Cesium.UrlTemplateImageryProvider({
                     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    subdomains: [],
                     credit: '© OpenStreetMap contributors',
                     tilingScheme: new Cesium.WebMercatorTilingScheme(),
                     rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90),
                     maximumLevel: 19
                 });
-                globalViewer.imageryLayers.addImageryProvider(osmProvider);
-                
-                // Re-enable 3D elements
-                globalViewer.scene.globe.enableLighting = true;
-                globalViewer.scene.globe.showGroundAtmosphere = atmosphereEnabled;
-                if (globalViewer.scene.sun) globalViewer.scene.sun.show = true;
-                if (globalViewer.scene.moon) globalViewer.scene.moon.show = true;
-                if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
-                if (globalViewer.scene.skyBox) globalViewer.scene.skyBox.show = true;
+                imageryLayers.addImageryProvider(osmProvider);
                 
                 // Re-enable terrain if it was enabled before
                 if (terrainEnabled) {
+                    // Use enhanced terrain (free alternative to Cesium World Terrain)
                     globalViewer.scene.terrainExaggeration = 1.5;
                     globalViewer.scene.globe.enableLighting = true;
                 }
                 
-                // Re-enable camera controls
+                // Re-enable atmosphere and lighting
+                globalViewer.scene.globe.enableLighting = true;
+                if (globalViewer.scene.sun) globalViewer.scene.sun.show = true;
+                if (globalViewer.scene.moon) globalViewer.scene.moon.show = true;
+                if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
+                
+                // Re-enable rotation and tilt
                 globalViewer.scene.screenSpaceCameraController.enableRotate = true;
                 globalViewer.scene.screenSpaceCameraController.enableTilt = true;
-                globalViewer.scene.screenSpaceCameraController.enableLook = true;
                 
                 // Force scene update to fix rendering issues
                 globalViewer.scene.requestRender();

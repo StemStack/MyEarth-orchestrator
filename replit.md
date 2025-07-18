@@ -15,22 +15,10 @@ Bottom panel: Coordinates with cm precision, text stays in right 2/3 area.
 
 ## System Architecture
 
-### Full-Stack Architecture
-- **Frontend**: Pure HTML/CSS/JavaScript with CesiumJS for 3D globe visualization
-- **Backend**: FastAPI with PostgreSQL/PostGIS database for geospatial data management
-- **Database**: PostgreSQL with PostGIS extension for spatial data storage and queries
-- **API Layer**: RESTful endpoints for location management and spatial operations
-
 ### Frontend Architecture
 - **Pure HTML/CSS/JavaScript**: The application uses a simple client-side architecture with no build tools or frameworks
 - **Single Page Application**: Built as a standalone HTML file that loads CesiumJS from CDN
 - **Responsive Design**: Configured for full viewport utilization with mobile-friendly viewport settings
-
-### Backend Architecture
-- **FastAPI Framework**: Modern Python web framework with automatic OpenAPI documentation
-- **PostgreSQL Database**: Robust relational database with PostGIS spatial extension
-- **SQLAlchemy ORM**: Object-relational mapping with GeoAlchemy2 for spatial data types
-- **Pydantic Models**: Data validation and serialization for API requests/responses
 
 ### Rendering Engine
 - **CesiumJS 1.111**: Primary 3D visualization library handling WebGL rendering, globe visualization, and user interactions
@@ -109,36 +97,8 @@ The CesiumJS globe viewer is now fully functional with:
 - Minimal UI with disabled optional widgets
 - Clean full-screen design
 
-## Recent Changes (July 18, 2025)
+## Recent Changes (July 17, 2025)
 
-- **Deployment Fixes Applied**: Successfully implemented all three deployment fixes
-  - ✅ Changed run command to use `python start.py` for production deployment  
-  - ✅ Added proper root endpoint (/) returning JSON health check with 200 status code
-  - ✅ Enhanced FastAPI app configuration for production with logging and proper settings
-- **Health Check Endpoints**: Multiple health check endpoints now working:
-  - `/` - Returns JSON health status for deployment monitoring (200 OK verified)
-  - `/health` - Database connectivity verification  
-  - `/api/health` - Detailed application health information
-- **Root Endpoint Optimization**: Simplified root endpoint to always return JSON health check for deployment systems
-- **Frontend Access**: Application frontend accessible via `/app`, `/viewer`, and `/globe` endpoints
-- **Production Server**: Enhanced start.py with production logging and proper uvicorn settings
-- **Route Configuration**: Fixed static file mounting to prevent conflicts with API routes
-- **Deployment Ready**: All suggested deployment fixes successfully applied and tested
-  - Root endpoint returns proper JSON response with 200 status code
-  - Server starts on port 5000 with uvicorn production settings
-  - HEAD and GET requests both work correctly for health checks
-
-## Previous Changes (July 17, 2025)
-
-- **Backend Infrastructure Added**: Created complete FastAPI backend with PostgreSQL/PostGIS database support
-- **Spatial Database Setup**: Enabled PostGIS extension and created Location model with geometry points (SRID 4326)
-- **RESTful API Endpoints**: Added `/locations` POST/GET, `/locations/nearby` for spatial queries, and `/health` for monitoring
-- **Geospatial Queries**: Implemented PostGIS-powered nearby location search with distance calculations
-- **CORS Support**: Added proper CORS middleware for frontend-backend communication
-- **Database Models**: Created SQLAlchemy models with GeoAlchemy2 for spatial data handling
-- **Round Toggle Enhancement**: Increased opacity of all round toggle buttons and icons from 20% to 30% for better visibility
-- **API Testing**: Successfully tested location creation, retrieval, and spatial search functionality
-- **Development Environment**: Both frontend (port 5000) and backend (port 8000) running simultaneously
 - **Marker Renaming Feature**: Added inline editing capability for marker labels with proper UI integration
 - **Professional Map Export Tool**: Complete geo.admin-style print/export system with live preview
 - **Map Capture Enhancement**: Fixed WebGL canvas rendering in print preview with retry mechanism
@@ -156,8 +116,6 @@ The CesiumJS globe viewer is now fully functional with:
 - **Export UI Improvements**: Removed visual overload, cleaner format selection (A4/A3 Landscape, A4 Portrait)
 - **Simplified Print Preview**: Minimalist metadata display with coordinates, date, and layers only
 - **2D/3D Mode Fix**: Fixed critical issue where half the globe became invisible when exiting flat mode by properly resetting map projection and imagery layers with correct tiling schemes
-- **Flat Earth Blue Overlay Fix**: Resolved blue overlay covering half the 2D view by simplifying layer reload process and ensuring proper Geographic projection setup
-- **Comprehensive README Added**: Created detailed documentation covering features, installation, architecture, API endpoints, troubleshooting, and development guidelines
 
 ## Previous Changes (July 16, 2025)
 
