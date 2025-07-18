@@ -50,11 +50,12 @@ class LocationResponse(BaseModel):
 
 # Root endpoint - serve frontend application for users, health check for deployment
 @app.get("/")
+@app.head("/")
 def root(user_agent: str = Header(default=None)):
     """
     Root endpoint that:
-    - Returns JSON health check for deployment systems
-    - Serves CesiumJS frontend for web browsers
+    - Returns JSON health check for deployment systems (GET/HEAD)
+    - Serves CesiumJS frontend for web browsers (GET only)
     """
     # Check if this is a browser request by examining user agent
     if user_agent and ('Mozilla' in user_agent or 'Chrome' in user_agent or 'Safari' in user_agent or 'Firefox' in user_agent):
