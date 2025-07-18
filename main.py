@@ -86,7 +86,7 @@ def create_location(location: LocationCreate, db: Session = Depends(get_db)):
         db.refresh(db_location)
         
         # Get coordinates back from the geometry
-        result = db.execute(text(f"SELECT ST_X(geom) as lon, ST_Y(geom) as lat FROM locations WHERE id = {db_location.id}")).fetchone()
+        result = db.execute(text("SELECT ST_X(geom) as lon, ST_Y(geom) as lat FROM locations WHERE id = :id"), {"id": db_location.id}).fetchone()
         
         return LocationResponse(
             id=db_location.id,
