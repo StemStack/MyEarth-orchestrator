@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -48,10 +48,21 @@ class LocationResponse(BaseModel):
     longitude: float
     latitude: float
 
-# Root endpoint serves the frontend application
+# Root endpoint - serve frontend application for users, health check for deployment
 @app.get("/")
-def root():
-    return FileResponse("index.html")
+def root(user_agent: str = Header(default=None)):
+    """
+    Root endpoint that:
+    - Returns JSON health check for deployment systems
+    - Serves CesiumJS frontend for web browsers
+    """
+    # Check if this is a browser request by examining user agent
+    if user_agent and ('Mozilla' in user_agent or 'Chrome' in user_agent or 'Safari' in user_agent or 'Firefox' in user_agent):
+        # This is a browser request - serve the frontend
+        return FileResponse("index.html")
+    else:
+        # This is likely a health check request - return JSON status
+        return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
 
 # Health check endpoint for deployment monitoring
 @app.get("/api/health")
@@ -133,5 +144,10 @@ def get_nearby_locations(longitude: float, latitude: float, radius_km: float = 1
 def serve_frontend():
     return FileResponse("index.html")
 
-# Mount static files to serve CesiumJS assets
-app.mount("/static", StaticFiles(directory="."), name="static")
+# Alternative frontend endpoint for users
+@app.get("/viewer")
+def serve_viewer():
+    return FileResponse("index.html")
+
+# Mount static files to serve CesiumJS assets - specific paths to avoid root conflict
+app.mount("/assets", StaticFiles(directory="."), name="assets")
