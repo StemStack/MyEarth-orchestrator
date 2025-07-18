@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -49,9 +48,15 @@ class LocationResponse(BaseModel):
     longitude: float
     latitude: float
 
+# Root endpoint serves the frontend application
 @app.get("/")
 def root():
-    return {"message": "MVP backend ready with PostGIS support", "frontend": "/app"}
+    return FileResponse("index.html")
+
+# Health check endpoint for deployment monitoring
+@app.get("/api/health")
+def health_check_api():
+    return {"message": "CesiumJS Globe Viewer with PostGIS", "status": "healthy", "version": "1.0.0"}
 
 @app.get("/health")
 def health_check(db: Session = Depends(get_db)):
@@ -123,20 +128,10 @@ def get_nearby_locations(longitude: float, latitude: float, radius_km: float = 1
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Serve the frontend index.html for the root path
+# Serve the frontend index.html
 @app.get("/app")
 def serve_frontend():
     return FileResponse("index.html")
-=======
-from fastapi import FastAPI
-from routers import data
 
-app = FastAPI()
-
-app.include_router(data.router, prefix="/data", tags=["data"])
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to MyEarth API"}
-
->>>>>>> 231ea7c7aa45cca04d0faf4c61ebfe31751f698e
+# Mount static files to serve CesiumJS assets
+app.mount("/static", StaticFiles(directory="."), name="static")
