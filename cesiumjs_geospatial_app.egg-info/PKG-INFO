@@ -1,0 +1,51 @@
+Metadata-Version: 2.4
+Name: cesiumjs-geospatial-app
+Version: 1.0.0
+Summary: A sophisticated CesiumJS web application for advanced geospatial exploration
+Author-email: Replit User <user@replit.com>
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+
+# CesiumJS Geospatial Application
+
+A sophisticated CesiumJS web application for advanced geospatial exploration, featuring comprehensive map visualization and interaction capabilities with professional WebGL rendering.
+
+## Features
+
+- CesiumJS with advanced projection support
+- Dynamic layer management and interactive map controls
+- Responsive design with high-fidelity geospatial rendering
+- Enhanced UI with subtle animations and transparent interface elements
+- Interactive WMS and feature layer integration
+- Flat Earth mode with EPSG:4326 projection support
+
+## Deployment
+
+This application is configured for deployment on Replit and other cloud platforms using a Python-based static file server.
+
+### Local Development
+
+```bash
+python main.py
+```
+
+The application will be available at `http://localhost:5000`
+
+### Environment Variables
+
+- `PORT` - Server port (default: 5000)
+
+## Architecture
+
+- **Frontend**: Pure HTML/CSS/JavaScript with CesiumJS
+- **Backend**: Python HTTP server with CORS support
+- **Dependencies**: No external dependencies (uses Python standard library)
+- **Data Sources**: OpenStreetMap and other open geospatial data providers
+
+## Technical Notes
+
+- No external dependencies required (uses Python standard library)
+- CesiumJS assets loaded from official CDN
+- All geospatial data from open sources (no API keys needed)
+- Optimized for static file serving with proper MIME types
+- Ready for production deployment with security headers
