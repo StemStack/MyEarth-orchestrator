@@ -51,15 +51,31 @@ def run_server(port=5000):
     
     handler = CesiumHTTPRequestHandler
     
-    with socketserver.TCPServer(("0.0.0.0", port), handler) as httpd:
-        print(f"✓ CesiumJS server running on http://0.0.0.0:{port}")
-        print(f"✓ Serving static files from: {os.getcwd()}")
-        print(f"✓ Access the application at: http://localhost:{port}")
-        
+    # Try multiple ports if the specified one is in use
+    max_attempts = 5
+    for attempt in range(max_attempts):
         try:
-            httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\n✓ Server stopped gracefully")
+            with socketserver.TCPServer(("0.0.0.0", port), handler) as httpd:
+                print(f"✓ CesiumJS server running on http://0.0.0.0:{port}")
+                print(f"✓ Serving static files from: {os.getcwd()}")
+                print(f"✓ Access the application at: http://localhost:{port}")
+                
+                try:
+                    httpd.serve_forever()
+                except KeyboardInterrupt:
+                    print("\n✓ Server stopped gracefully")
+                break
+        except OSError as e:
+            if e.errno == 98:  # Address already in use
+                if attempt < max_attempts - 1:
+                    port += 1
+                    print(f"⚠ Port {port-1} is in use, trying port {port}")
+                    continue
+                else:
+                    print(f"✗ Failed to find available port after {max_attempts} attempts")
+                    raise
+            else:
+                raise
 
 if __name__ == "__main__":
     import sys

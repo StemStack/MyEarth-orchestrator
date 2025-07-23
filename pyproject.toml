@@ -1,0 +1,20 @@
+[project]
+name = "cesiumjs-geospatial-app"
+version = "1.0.0"
+description = "A sophisticated CesiumJS web application for advanced geospatial exploration"
+authors = [
+    {name = "Replit User", email = "user@replit.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+cesiumjs-app = "main:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["main", "server"]

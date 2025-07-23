@@ -7,7 +7,8 @@ This file serves as the primary application launcher for deployment
 from server import run_server
 import os
 
-if __name__ == "__main__":
+def main():
+    """Main application entry point for deployment systems"""
     # Get port from environment variable (used by Cloud Run and other platforms)
     port = int(os.environ.get('PORT', 5000))
     
@@ -16,3 +17,6 @@ if __name__ == "__main__":
     print(f"🔧 Server configuration: Python HTTP server with CORS support")
     
     run_server(port)
+
+if __name__ == "__main__":
+    main()
