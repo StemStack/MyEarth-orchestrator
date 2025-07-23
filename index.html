@@ -668,7 +668,7 @@
             margin: 0 !important;
             width: 30px !important;
             height: 30px !important;
-            background: rgba(255,255,255,0.3) !important;
+            background: rgba(255,255,255,0.1) !important;
             border: 1px solid #ddd !important;
             border-radius: 50% !important;
             align-items: center !important;
@@ -684,7 +684,7 @@
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
             border: 1px solid #ddd;
             cursor: pointer;
             display: flex;
@@ -702,7 +702,7 @@
         /* No rotation needed for hamburger menus - they stay the same */
 
         .panel-toggle-btn:hover {
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.3);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
@@ -713,7 +713,7 @@
             left: 20px;
             width: 40px;
             height: 40px;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
             border: 1px solid #ddd;
             border-radius: 50%;
             display: flex;
@@ -726,7 +726,7 @@
         }
 
         .floating-toggle:hover {
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.3);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             transform: scale(1.05);
         }
@@ -736,7 +736,7 @@
             width: 30px;
             height: 30px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
             border: none;
             display: flex;
             align-items: center;
@@ -752,7 +752,7 @@
         }
 
         .tool-icon:hover {
-            background: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.3);
             box-shadow: 0 2px 6px rgba(0,0,0,0.15);
             transform: scale(1.05);
         }
@@ -2174,408 +2174,6 @@
         .scale-bar-container {
             opacity: 1 !important;
         }
-
-        /* Viewer-Integrated Print Mask - geo.admin.ch style */
-        .print-mask-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9998;
-        }
-        
-        .print-mask-frame {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(64, 64, 64, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .print-mask-inner {
-            background: transparent;
-            box-shadow: inset 0 0 0 2px #fff, 0 0 50px rgba(0, 0, 0, 0.5);
-            pointer-events: none;
-            position: relative;
-        }
-        
-        /* A4 Landscape default */
-        .print-mask-inner {
-            width: 297mm;
-            height: 210mm;
-            max-width: 90vw;
-            max-height: 80vh;
-        }
-        
-        .print-mask-inner.portrait {
-            width: 210mm;
-            height: 297mm;
-        }
-        
-        .print-mask-inner.a3 {
-            width: 420mm;
-            height: 297mm;
-        }
-        
-        .print-mask-inner.a3.portrait {
-            width: 297mm;
-            height: 420mm;
-        }
-        
-        .print-mask-inner.a5 {
-            width: 210mm;
-            height: 148mm;
-        }
-        
-        .print-mask-inner.a5.portrait {
-            width: 148mm;
-            height: 210mm;
-        }
-
-        /* Map Export Tool Styles */
-        .map-export-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 15000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .map-export-container {
-            background: white;
-            border-radius: 8px;
-            width: 95%;
-            max-width: 1200px;
-            height: 90%;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .map-export-header {
-            background: #2c3e50;
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .map-export-header h3 {
-            margin: 0;
-            font-size: 18px;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 5px;
-        }
-
-        .map-export-content {
-            display: flex;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .export-settings-panel {
-            width: 280px;
-            background: #ffffff;
-            border-right: 1px solid #e0e0e0;
-            padding: 20px;
-            overflow-y: auto;
-        }
-
-        .print-preview-panel {
-            flex: 1;
-            padding: 20px;
-            overflow: auto;
-            background: #f5f5f5;
-        }
-
-        .settings-section {
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-        }
-
-        .settings-section h4 {
-            margin: 0 0 10px 0;
-            color: #2c3e50;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .setting-group {
-            margin-bottom: 12px;
-        }
-
-        .setting-group label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 12px;
-            color: #495057;
-            font-weight: 500;
-        }
-
-        .setting-group input, .setting-group select, .setting-group textarea {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 12px;
-            box-sizing: border-box;
-        }
-
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .checkbox-group label {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            color: #333;
-            cursor: pointer;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            margin-right: 8px;
-        }
-
-        .export-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 20px;
-        }
-
-        .export-btn {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 3px;
-            font-size: 13px;
-            cursor: pointer;
-            font-weight: 500;
-            background: white;
-            color: #333;
-            transition: all 0.2s ease;
-        }
-
-        .export-btn.primary {
-            background: #d1222b;
-            color: white;
-            border-color: #d1222b;
-        }
-
-        .export-btn.primary:hover {
-            background: #b91e26;
-            border-color: #b91e26;
-        }
-
-        .export-btn.secondary:hover {
-            background: #f5f5f5;
-            border-color: #999;
-        }
-
-        .preview-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .preview-header h4 {
-            margin: 0;
-            color: #2c3e50;
-        }
-
-        .preview-container {
-            background: white;
-            border-radius: 4px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .preview-page {
-            position: relative;
-            background: white;
-            border: 1px solid #dee2e6;
-            margin: 0 auto;
-            padding: 20mm;
-            width: 190mm;
-            min-height: 267mm;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transform: scale(0.7);
-            transform-origin: top center;
-        }
-
-        .preview-page.landscape {
-            width: 267mm;
-            min-height: 190mm;
-        }
-        
-        .preview-page.a3 {
-            width: 297mm;
-            min-height: 420mm;
-        }
-        
-        .preview-page.a3.landscape {
-            width: 420mm;
-            min-height: 297mm;
-        }
-
-        .preview-map-area {
-            width: 100%;
-            height: 160mm;
-            border: 1px solid #ccc;
-            background: #f0f0f0;
-            display: block;
-            margin-bottom: 5mm;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .preview-page.landscape .preview-map-area {
-            height: 140mm;
-        }
-        
-        .preview-map-mask {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .preview-title {
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 10mm;
-            color: #2c3e50;
-        }
-
-        .preview-metadata {
-            position: absolute;
-            bottom: 10mm;
-            left: 10mm;
-            right: 10mm;
-            font-size: 11px;
-            color: #666;
-            text-align: center;
-            background: rgba(255,255,255,0.9);
-            padding: 2mm;
-            border-top: 1px solid #ddd;
-        }
-
-        .preview-scale-bar {
-            position: absolute;
-            bottom: 15mm;
-            left: 10mm;
-            display: flex;
-            align-items: center;
-            gap: 5mm;
-        }
-
-        .scale-line {
-            width: 20mm;
-            height: 1mm;
-            background: black;
-            border-left: 1mm solid black;
-            border-right: 1mm solid black;
-        }
-
-        .scale-text {
-            font-size: 8px;
-            font-weight: 500;
-        }
-
-        .preview-north-arrow {
-            position: absolute;
-            top: 15mm;
-            right: 15mm;
-        }
-
-        .preview-legend {
-            position: absolute;
-            top: 50mm;
-            right: 15mm;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #ccc;
-            padding: 5mm;
-            border-radius: 2mm;
-            font-size: 8px;
-            max-width: 40mm;
-        }
-
-        .preview-legend h5 {
-            margin: 0 0 3mm 0;
-            font-size: 9px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 2mm;
-            margin-bottom: 2mm;
-        }
-
-        .legend-color {
-            width: 3mm;
-            height: 3mm;
-            border-radius: 1mm;
-        }
-
-        .preview-notes {
-            position: absolute;
-            bottom: 25mm;
-            left: 10mm;
-            right: 10mm;
-            font-size: 8px;
-            color: #495057;
-        }
-
-        .preview-logo {
-            position: absolute;
-            top: 15mm;
-            left: 15mm;
-            max-width: 30mm;
-            max-height: 15mm;
-        }
-
-        .preview-qr {
-            position: absolute;
-            bottom: 15mm;
-            right: 15mm;
-            font-size: 6px;
-            text-align: center;
-        }
-
-        .preview-attribution {
-            position: absolute;
-            bottom: 5mm;
-            left: 10mm;
-            font-size: 6px;
-            color: #6c757d;
-        }
     </style>
 </head>
 
@@ -2751,28 +2349,6 @@
             </div>
         </div>
         
-        <!-- Map Export / Print Section -->
-        <div class="sidebar-section">
-            <div class="section-header" onclick="toggleSection('mapexport')">
-                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="none" stroke="currentColor" stroke-width="2"/><line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2"/><path d="M16 10a4 4 0 0 1-8 0" stroke="currentColor" stroke-width="2"/></svg>Print / Export Map</span>
-                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
-            </div>
-            <div class="section-content collapsed" id="mapexport">
-                <button class="control-button primary" onclick="openMapExportTool()" style="margin-bottom: 8px;">
-                    🖨️ Open Export Tool
-                </button>
-                <button class="control-button secondary" onclick="testMapCapture()" style="margin-bottom: 4px; font-size: 10px;">
-                    🔧 Test Capture
-                </button>
-                <button class="control-button secondary" onclick="directMapTest()" style="margin-bottom: 4px; font-size: 10px;">
-                    📸 Direct Test
-                </button>
-                <div style="font-size: 11px; color: #666; margin-top: 4px;">
-                    Generate publication-ready PDF and PNG exports with metadata
-                </div>
-            </div>
-        </div>
-        
         <!-- Performance Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('performance')">
@@ -2944,137 +2520,6 @@
         <!-- Color options will be dynamically inserted here -->
     </div>
 
-    <!-- Viewer-Integrated Print Mask -->
-    <div id="printMaskOverlay" class="print-mask-overlay" style="display: none;">
-        <div class="print-mask-frame">
-            <div class="print-mask-inner"></div>
-        </div>
-    </div>
-
-    <!-- Map Export Tool Interface -->
-    <div class="map-export-overlay" id="mapExportOverlay" style="display: none;">
-        <div class="map-export-container">
-            <div class="map-export-header">
-                <h3>Map Export Tool</h3>
-                <button onclick="closeMapExportTool()" class="close-btn">✕</button>
-            </div>
-            
-            <div class="map-export-content">
-                <!-- Export Settings Panel -->
-                <div class="export-settings-panel">
-                    <div class="settings-section">
-                        <h4>Format</h4>
-                        <div class="setting-group">
-                            <select id="paperSize" onchange="updatePrintPreview()">
-                                <option value="A4" selected>A4 Landscape</option>
-                                <option value="A3">A3 Landscape</option>
-                                <option value="A4-portrait">A4 Portrait</option>
-                            </select>
-                        </div>
-                        <div class="setting-group">
-                            <select id="dpiSetting">
-                                <option value="150">150 DPI (Web)</option>
-                                <option value="300" selected>300 DPI (Print)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h4>Title</h4>
-                        <div class="setting-group">
-                            <input type="text" id="mapTitle" placeholder="Map title (optional)" onchange="updatePrintPreview()">
-                        </div>
-                    </div>
-
-                    <div class="settings-section">
-                        <h4>Elements</h4>
-                        <div class="setting-group checkbox-group">
-                            <label>
-                                <input type="checkbox" id="includeScaleBar" checked onchange="updatePrintPreview()">
-                                Scale bar
-                            </label>
-                            <label>
-                                <input type="checkbox" id="includeNorthArrow" checked onchange="updatePrintPreview()">
-                                North arrow
-                            </label>
-                            <label>
-                                <input type="checkbox" id="includeCoordinateGrid" onchange="updatePrintPreview()">
-                                Coordinate grid
-                            </label>
-                            <label>
-                                <input type="checkbox" id="includeLegend" onchange="updatePrintPreview()">
-                                Legend
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="export-actions">
-                        <button class="export-btn primary" onclick="exportAsPDF()">Export PDF</button>
-                        <button class="export-btn secondary" onclick="exportAsPNG()">Export PNG</button>
-                    </div>
-                </div>
-
-                <!-- Print Preview Panel -->
-                <div class="print-preview-panel">
-                    <div class="preview-header">
-                        <h4>Print Preview</h4>
-                        <span id="previewScale">Scale: 1:50,000</span>
-                    </div>
-                    <div class="preview-container" id="printPreviewContainer">
-                        <div class="preview-page" id="previewPage">
-                            <!-- Map image will be inserted here -->
-                            <div class="preview-map-area" id="previewMapArea">
-                                <canvas id="previewMapCanvas" style="width: 100%; height: 100%; display: block;"></canvas>
-                                <div class="preview-map-mask"></div>
-                            </div>
-                            
-                            <!-- Map metadata and layout elements -->
-                            <div class="preview-title" id="previewTitle">Map Export</div>
-                            
-                            <div class="preview-metadata">
-                                <span id="previewCoordinates" style="font-size: 11px;">0.00°, 0.00°</span>
-                                <span style="margin: 0 10px;">|</span>
-                                <span id="previewDate" style="font-size: 11px;"></span>
-                                <span style="margin: 0 10px;">|</span>
-                                <span id="previewLayers" style="font-size: 11px;">OpenStreetMap</span>
-                            </div>
-
-                            <div class="preview-scale-bar" id="previewScaleBar">
-                                <div class="scale-line"></div>
-                                <span class="scale-text">5 km</span>
-                            </div>
-
-                            <div class="preview-north-arrow">
-                                <svg width="30" height="30" viewBox="0 0 24 24">
-                                    <path d="M12 2L15 8H13V22H11V8H9L12 2Z" fill="black"/>
-                                    <text x="12" y="20" text-anchor="middle" font-size="6" fill="black">N</text>
-                                </svg>
-                            </div>
-
-                            <div class="preview-legend" id="previewLegend">
-                                <h5>Legend</h5>
-                                <div class="legend-item">
-                                    <div class="legend-color" style="background: #4CAF50;"></div>
-                                    <span>Base Map</span>
-                                </div>
-                            </div>
-
-                            <div class="preview-notes" id="previewNotes"></div>
-                            
-                            <div class="preview-logo" id="previewLogo"></div>
-                            
-                            <div class="preview-qr" id="previewQR"></div>
-
-                            <div class="preview-attribution">
-                                © OpenStreetMap contributors, CesiumJS
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="drag-drop-overlay" id="dragDropOverlay" style="display: none;">
         <div class="drag-drop-content">
             <div class="drag-drop-icon">
@@ -3108,19 +2553,8 @@
                 <polygon points="12,22 8,12 12,14 16,12" fill="white" stroke="black" stroke-width="1"/>
             </svg>
         </div>
-        
-        <!-- 2. Flat Earth Mode Toggle -->
-        <div class="tool-icon" id="flatEarthTool" title="Toggle Flat Earth Mode" onclick="toggleFlatEarthMode()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <rect x="2" y="6" width="20" height="12" fill="none" stroke="currentColor" stroke-width="2"/>
-                <line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-                <line x1="7" y1="6" x2="7" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-                <line x1="12" y1="6" x2="12" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-                <line x1="17" y1="6" x2="17" y2="18" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-            </svg>
-        </div>
 
-        <!-- 3. Home Tool -->
+        <!-- 2. Home Tool -->
         <div class="tool-icon" id="resetViewTool" title="Home View" onclick="resetView()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3128,7 +2562,7 @@
             </svg>
         </div>
 
-        <!-- 4. Zoom In "+" Tool -->
+        <!-- 3. Zoom In "+" Tool -->
         <div class="tool-icon" id="zoomInTool" title="Zoom In" onclick="zoomIn()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3138,7 +2572,7 @@
             </svg>
         </div>
 
-        <!-- 5. Zoom Out "-" Tool -->
+        <!-- 4. Zoom Out "-" Tool -->
         <div class="tool-icon" id="zoomOutTool" title="Zoom Out" onclick="zoomOut()">
             <svg width="16" height="16" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -3168,8 +2602,8 @@
         <div class="tool-icon" id="helpMenuTool" title="Help & Information" onclick="toggleHelpMenu()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                <line x1="12" y1="8" x2="12" y2="12" stroke="currentColor" stroke-width="2"/>
-                <line x1="12" y1="16" x2="12.01" y2="16" stroke="currentColor" stroke-width="2"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>
             </svg>
         </div>
 
@@ -3222,12 +2656,6 @@
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
     <script>
-        // Global state variables
-        let flatEarthMode = false;
-        let globalViewer = null;
-        let terrainEnabled = true;
-        let atmosphereEnabled = true;
-        
         // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
         if (typeof Cesium !== 'undefined') {
             // Disable Ion access tokens and servers
@@ -3249,8 +2677,6 @@
         
         // Safely disable timeline and animation in viewer options only
         console.log('Preparing viewer with timeline disabled');
-        
-
         
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
@@ -3275,10 +2701,7 @@
             baseLayerPicker: false,
             geocoder: false,
             requestRenderMode: false,
-            maximumRenderTimeChange: Infinity,
-            
-            // Use Geographic projection for better cartographic display
-            mapProjection: new Cesium.GeographicProjection()
+            maximumRenderTimeChange: Infinity
         });
 
         // Hide the CesiumJS credits widget in bottom-right corner
@@ -3287,9 +2710,6 @@
             creditsElement.style.display = 'none';
         }
 
-        // Store viewer globally for access from other functions
-        globalViewer = viewer;
-        
         // Aggressively remove ALL remaining CesiumJS UI elements
         setTimeout(() => {
             const elementsToHide = [
@@ -3589,42 +3009,13 @@
         // Current base map - default to OSM Standard for clean appearance
         let currentBaseMap = 'openstreetmap';
         
-        // Remove default imagery
+        // Remove default imagery and add OSM Standard (free open-source service)
         viewer.imageryLayers.removeAll();
-        
-        // Function to load base map with appropriate projection
-        function loadBaseMapWithProjection(url, subdomains, credit, useGeographicTiles = false) {
-            // For 2D mode with Geographic projection, we need special handling
-            if (flatEarthMode && !useGeographicTiles) {
-                // Most tile servers use Web Mercator tiles even in Geographic projection
-                // We'll let Cesium handle the reprojection
-                return new Cesium.UrlTemplateImageryProvider({
-                    url: url,
-                    subdomains: subdomains,
-                    credit: credit,
-                    tilingScheme: new Cesium.WebMercatorTilingScheme()
-                });
-            } else {
-                // Standard tile loading
-                const tilingScheme = useGeographicTiles ? 
-                    new Cesium.GeographicTilingScheme() : 
-                    new Cesium.WebMercatorTilingScheme();
-                    
-                return new Cesium.UrlTemplateImageryProvider({
-                    url: url,
-                    subdomains: subdomains,
-                    credit: credit,
-                    tilingScheme: tilingScheme
-                });
-            }
-        }
-        
-        // Add default OSM base map
-        const defaultImageryProvider = loadBaseMapWithProjection(
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            ['a', 'b', 'c'],
-            '© OpenStreetMap contributors'
-        );
+        const defaultImageryProvider = new Cesium.UrlTemplateImageryProvider({
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            subdomains: ['a', 'b', 'c'],
+            credit: '© OpenStreetMap contributors'
+        });
         viewer.imageryLayers.addImageryProvider(defaultImageryProvider);
         
         console.log('✓ Using OSM Standard - free, open-source base map provider');
@@ -7358,31 +6749,6 @@ Built with CesiumJS`;
                 updatePointsUI(); // Update the correct UI
             }
         }
-
-        function updateMarkerLabel(markerId, newLabel) {
-            const marker = markers.get(markerId);
-            if (marker && newLabel.trim()) {
-                // Update marker data
-                marker.label = newLabel.trim();
-                
-                // Update the label entity in Cesium
-                if (marker.entity && marker.entity.label) {
-                    marker.entity.label.text = newLabel.trim();
-                }
-                
-                console.log(`Marker ${markerId} renamed to: ${newLabel.trim()}`);
-            }
-        }
-
-        function focusOnMarker(markerId) {
-            const marker = markers.get(markerId);
-            if (marker && marker.entity && viewer) {
-                viewer.flyTo(marker.entity, {
-                    duration: 1.0,
-                    offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-45), 5000)
-                });
-            }
-        }
         
         function updateMarkerLabel(markerId, newLabel) {
             const marker = markers.get(markerId);
@@ -8118,13 +7484,11 @@ Built with CesiumJS`;
                 type: 'tile'
             },
             protected_areas: {
-                url: 'https://tiles.arcgis.com/tiles/nzS0F0zdNLvs7nc8/arcgis/rest/services/WDPA_current/MapServer/WMSServer',
+                url: 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/tile/{z}/{y}/{x}',
                 name: 'World Database of Protected Areas',
-                type: 'wms',
-                layers: '0',
+                type: 'tile',
                 format: 'image/png',
-                transparent: true,
-                credit: 'UNEP-WCMC and IUCN (2023), Protected Planet: The World Database on Protected Areas (WDPA)'
+                transparent: true
             },
             land_degradation: {
                 url: 'https://datacore.unepgrid.ch/geoserver/MapX_UNDP/ows',
@@ -8152,73 +7516,18 @@ Built with CesiumJS`;
                     
                     if (service.type === 'wms') {
                         // Create WMS imagery provider for proper WMS services
-                        // Most WMS servers support both projections, so we can use Geographic in 2D mode
-                        const tilingScheme = flatEarthMode && globalViewer.scene.mode === Cesium.SceneMode.SCENE2D ?
-                            new Cesium.GeographicTilingScheme() : new Cesium.WebMercatorTilingScheme();
-                            
                         imageryProvider = new Cesium.WebMapServiceImageryProvider({
                             url: service.url,
                             layers: service.layers || '0',
                             parameters: {
                                 format: service.format || 'image/png',
                                 transparent: service.transparent !== false,
-                                version: '1.3.0',
-                                crs: flatEarthMode ? 'EPSG:4326' : 'EPSG:3857'
+                                version: '1.3.0'
                             },
-                            credit: service.name,
-                            tilingScheme: tilingScheme
+                            credit: service.name
                         });
-                    } else if (service.type === 'geojson') {
-                        // Handle GeoJSON/FeatureServer data sources for protected areas
-                        const featureServerUrl = service.url.includes('query?') ? service.url : service.url + '/0/query?where=1%3D1&outFields=*&returnGeometry=true&f=geojson';
-                        
-                        Cesium.GeoJsonDataSource.load(featureServerUrl, {
-                            stroke: Cesium.Color.fromCssColorString(service.styleOptions?.stroke || '#228B22').withAlpha(0.8),
-                            fill: Cesium.Color.fromCssColorString(service.styleOptions?.fill || '#90EE90').withAlpha(service.styleOptions?.fillOpacity || 0.4),
-                            strokeWidth: service.styleOptions?.strokeWidth || 2,
-                            markerSymbol: service.styleOptions?.markerSymbol || '🌲'
-                        }).then(function(dataSource) {
-                            globalViewer.dataSources.add(dataSource);
-                            
-                            predefinedWmsLayers.set(serviceKey, {
-                                dataSource: dataSource,
-                                name: service.name,
-                                serviceKey: serviceKey,
-                                type: 'geojson'
-                            });
-                            
-                            console.log(`✓ ${service.name} layer enabled`);
-                            updateLayersList();
-                            updateLegend();
-                        }).catch(error => {
-                            console.error(`Failed to load ${service.name}:`, error);
-                            // Fallback to alternative protected areas source
-                            const fallbackUrl = 'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson';
-                            Cesium.GeoJsonDataSource.load(fallbackUrl, {
-                                stroke: Cesium.Color.GREEN.withAlpha(0.8),
-                                fill: Cesium.Color.GREEN.withAlpha(0.3),
-                                strokeWidth: 2
-                            }).then(function(dataSource) {
-                                globalViewer.dataSources.add(dataSource);
-                                predefinedWmsLayers.set(serviceKey, {
-                                    dataSource: dataSource,
-                                    name: service.name + ' (Simplified)',
-                                    serviceKey: serviceKey,
-                                    type: 'geojson'
-                                });
-                                console.log(`✓ ${service.name} layer enabled with fallback data`);
-                                updateLayersList();
-                                updateLegend();
-                            }).catch(fallbackError => {
-                                console.error(`Failed to load fallback data:`, fallbackError);
-                                const checkbox = document.getElementById(`${serviceKey}Wms`);
-                                if (checkbox) checkbox.checked = false;
-                            });
-                        });
-                        return;
                     } else {
                         // Create reliable tile imagery provider for tile services
-                        // Tile services typically only support Web Mercator
                         imageryProvider = new Cesium.UrlTemplateImageryProvider({
                             url: service.url,
                             credit: service.name
@@ -8249,11 +7558,7 @@ Built with CesiumJS`;
                 // Remove layer
                 const layerInfo = predefinedWmsLayers.get(serviceKey);
                 if (layerInfo) {
-                    if (layerInfo.type === 'geojson' && layerInfo.dataSource) {
-                        globalViewer.dataSources.remove(layerInfo.dataSource);
-                    } else if (layerInfo.layer) {
-                        viewer.imageryLayers.remove(layerInfo.layer);
-                    }
+                    viewer.imageryLayers.remove(layerInfo.layer);
                     predefinedWmsLayers.delete(serviceKey);
                     console.log(`✓ ${layerInfo.name} layer disabled`);
                     updateLayersList();
@@ -8893,10 +8198,9 @@ Built with CesiumJS`;
                 listHTML += `
                     <div class="marker-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                         <input type="text" value="${marker.label}" 
-                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 100px; outline: none;"
+                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 100px;"
                                onchange="updateMarkerLabel('${marker.id}', this.value)"
-                               onblur="updateMarkerLabel('${marker.id}', this.value)"
-                               title="Click to rename marker">
+                               onblur="updateMarkerLabel('${marker.id}', this.value)">
                         <button onclick="removeMarker('${marker.id}')" style="background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 9px; cursor: pointer;">Remove</button>
                     </div>
                 `;
@@ -9118,966 +8422,6 @@ Built with CesiumJS`;
         
         // Initialize points UI
         updatePointsUI();
-
-        // Map Export Tool Functions
-        let mapExportData = {
-            userLogo: null
-        };
-        
-        // Set default A4 landscape
-        window.addEventListener('DOMContentLoaded', () => {
-            const paperSize = document.getElementById('paperSize');
-            const orientation = document.getElementById('orientation');
-            if (paperSize) paperSize.value = 'A4';
-            if (orientation) orientation.value = 'landscape';
-        });
-
-        function openMapExportTool() {
-            const overlay = document.getElementById('mapExportOverlay');
-            const printMask = document.getElementById('printMaskOverlay');
-            
-            if (overlay) {
-                overlay.style.display = 'flex';
-                
-                // Show print mask on viewer
-                if (printMask) {
-                    printMask.style.display = 'block';
-                    updatePrintMaskSize();
-                }
-                
-                // Enable flat earth mode for clean export if not already enabled
-                if (!flatEarthMode && globalViewer) {
-                    toggleFlatEarthMode();
-                }
-                
-                // Delay initialization to ensure DOM is ready
-                setTimeout(() => {
-                    initializePrintPreview();
-                }, 100);
-            }
-        }
-        
-        function updatePrintMaskSize() {
-            const printMaskInner = document.querySelector('.print-mask-inner');
-            if (!printMaskInner) return;
-            
-            const paperSize = document.getElementById('paperSize')?.value || 'A4';
-            const orientation = document.getElementById('orientation')?.value || 'landscape';
-            
-            // Remove all size classes
-            printMaskInner.className = 'print-mask-inner';
-            
-            // Add size class
-            if (paperSize === 'A3') {
-                printMaskInner.classList.add('a3');
-            } else if (paperSize === 'A5') {
-                printMaskInner.classList.add('a5');
-            }
-            
-            // Add orientation
-            if (orientation === 'portrait') {
-                printMaskInner.classList.add('portrait');
-            }
-        }
-
-        function closeMapExportTool() {
-            const overlay = document.getElementById('mapExportOverlay');
-            const printMask = document.getElementById('printMaskOverlay');
-            
-            if (overlay) {
-                overlay.style.display = 'none';
-            }
-            
-            // Hide print mask
-            if (printMask) {
-                printMask.style.display = 'none';
-            }
-            
-            // Stop live preview updates
-            stopLivePreviewUpdates();
-            
-            // Optionally restore 3D mode if it was changed
-            if (flatEarthMode && confirm('Exit flat earth mode?')) {
-                toggleFlatEarthMode();
-            }
-        }
-
-        function initializePrintPreview() {
-            // Set current date
-            const now = new Date();
-            document.getElementById('previewDate').textContent = now.toLocaleDateString();
-            
-            // Update coordinates and zoom level
-            updateMapMetadata();
-            
-            // Initialize preview canvas
-            initializePreviewCanvas();
-            
-            // Start live preview updates
-            startLivePreviewUpdates();
-            
-            // Capture initial map image
-            captureMapImageWithRetry();
-            
-            // Generate QR code if enabled
-            generateQRCode();
-            
-            // Update legend and scale
-            generateLegend();
-            calculateScaleBar();
-        }
-        
-        let livePreviewInterval = null;
-        
-        function startLivePreviewUpdates() {
-            // Clear existing interval if any
-            stopLivePreviewUpdates();
-            
-            // Update preview every 2 seconds
-            livePreviewInterval = setInterval(() => {
-                if (document.getElementById('mapExportOverlay').style.display === 'flex') {
-                    captureMapImageWithRetry();
-                    updateMapMetadata();
-                } else {
-                    stopLivePreviewUpdates();
-                }
-            }, 2000);
-        }
-        
-        function stopLivePreviewUpdates() {
-            if (livePreviewInterval) {
-                clearInterval(livePreviewInterval);
-                livePreviewInterval = null;
-            }
-        }
-
-        function initializePreviewCanvas() {
-            const mapArea = document.getElementById('previewMapArea');
-            const previewCanvas = document.getElementById('previewMapCanvas');
-            
-            if (mapArea && previewCanvas) {
-                // Set canvas size to match container
-                previewCanvas.width = mapArea.offsetWidth - 2;
-                previewCanvas.height = mapArea.offsetHeight - 2;
-                previewCanvas.style.width = '100%';
-                previewCanvas.style.height = '100%';
-                previewCanvas.style.display = 'block';
-            }
-        }
-
-        function captureMapImageWithRetry(retryCount = 0) {
-            const maxRetries = 5;
-            
-            if (retryCount >= maxRetries) {
-                console.warn('Max retries reached for map capture');
-                showMapPlaceholder();
-                return;
-            }
-            
-            if (!viewer || !viewer.scene || !viewer.scene.canvas) {
-                setTimeout(() => captureMapImageWithRetry(retryCount + 1), 1000);
-                return;
-            }
-            
-            // Use requestAnimationFrame to ensure we capture after a full render cycle
-            requestAnimationFrame(() => {
-                // Force a complete render
-                viewer.scene.render();
-                
-                // Use another animation frame to ensure rendering is complete
-                requestAnimationFrame(() => {
-                    const success = attemptMapCapture();
-                    if (!success && retryCount < maxRetries - 1) {
-                        console.log(`Map capture attempt ${retryCount + 1} failed, retrying...`);
-                        setTimeout(() => captureMapImageWithRetry(retryCount + 1), 1000);
-                    } else if (!success) {
-                        console.warn('All capture attempts failed, showing fallback');
-                        showMapPlaceholder();
-                    }
-                });
-            });
-        }
-
-        function attemptMapCapture() {
-            try {
-                const canvas = viewer.scene.canvas;
-                const previewCanvas = document.getElementById('previewMapCanvas');
-                const mapArea = document.getElementById('previewMapArea');
-                
-                if (!canvas || !previewCanvas || !mapArea) {
-                    console.warn('Required elements not available');
-                    return false;
-                }
-                
-                // Ensure preview canvas has proper dimensions
-                const mapWidth = mapArea.offsetWidth - 2;
-                const mapHeight = mapArea.offsetHeight - 2;
-                previewCanvas.width = mapWidth;
-                previewCanvas.height = mapHeight;
-                
-                // Force a full render of the Cesium scene
-                viewer.scene.render();
-                
-                // Method 1: Use toDataURL to properly extract WebGL content
-                // Use the enhanced capture function with top-down view
-                captureMapForExport((dataURL) => {
-                    if (dataURL) {
-                        const img = new Image();
-                        img.onload = function() {
-                            const ctx = previewCanvas.getContext('2d', { alpha: false });
-                            
-                            // Fill with light gray background first
-                            ctx.fillStyle = '#f0f0f0';
-                            ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
-                            
-                            // Draw the captured image
-                            ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
-                            console.log('Map successfully drawn to preview canvas');
-                        };
-                        img.onerror = function() {
-                            console.error('Failed to load captured image');
-                            showMapPlaceholder();
-                        };
-                        img.src = dataURL;
-                    } else {
-                        console.warn('Failed to capture map data');
-                        showMapPlaceholder();
-                    }
-                }, true); // Force top-down view
-                return true;
-                
-                // Method 2: Direct canvas drawing (fallback)
-                try {
-                    const ctx = previewCanvas.getContext('2d');
-                    ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                    ctx.drawImage(canvas, 0, 0, previewCanvas.width, previewCanvas.height);
-                    
-                    // Validate the capture by checking for non-black pixels
-                    const imageData = ctx.getImageData(0, 0, Math.min(previewCanvas.width, 100), Math.min(previewCanvas.height, 100));
-                    const pixels = imageData.data;
-                    let colorSum = 0;
-                    
-                    for (let i = 0; i < pixels.length; i += 4) {
-                        colorSum += pixels[i] + pixels[i + 1] + pixels[i + 2];
-                    }
-                    
-                    if (colorSum > 1000) { // Threshold for non-black content
-                        console.log('Map successfully captured via direct drawing');
-                        return true;
-                    } else {
-                        console.warn('Captured image appears to be black/empty');
-                        return false;
-                    }
-                } catch (drawError) {
-                    console.warn('Direct canvas drawing failed:', drawError);
-                    return false;
-                }
-                
-            } catch (error) {
-                console.warn('Error during map capture:', error);
-                return false;
-            }
-        }
-
-        function updatePrintPreview() {
-            const paperSizeSetting = document.getElementById('paperSize').value;
-            const title = document.getElementById('mapTitle').value || '';
-            
-            // Parse paper size and orientation from value
-            let paperSize = 'A4';
-            let orientation = 'landscape';
-            
-            if (paperSizeSetting === 'A4') {
-                paperSize = 'A4';
-                orientation = 'landscape';
-            } else if (paperSizeSetting === 'A3') {
-                paperSize = 'A3';
-                orientation = 'landscape';
-            } else if (paperSizeSetting === 'A4-portrait') {
-                paperSize = 'A4';
-                orientation = 'portrait';
-            }
-            
-            // Update preview page layout
-            const previewPage = document.getElementById('previewPage');
-            previewPage.className = 'preview-page';
-            if (orientation === 'landscape') {
-                previewPage.classList.add('landscape');
-            }
-            if (paperSize === 'A3') {
-                previewPage.classList.add('a3');
-            }
-            
-            // Update print mask on viewer
-            updatePrintMaskSize();
-            
-            // Update title
-            const titleElement = document.getElementById('previewTitle');
-            if (title) {
-                titleElement.textContent = title;
-                titleElement.style.display = 'block';
-            } else {
-                titleElement.style.display = 'none';
-            }
-            
-            // Update element visibility based on checkboxes
-            updatePreviewElements();
-            
-            // Update metadata
-            updateMapMetadata();
-            
-            // Update legend
-            generateLegend();
-            
-            // Recalculate scale
-            calculateScaleBar();
-            
-            // Recapture map image when settings change
-            setTimeout(() => {
-                captureMapImageWithRetry();
-            }, 100);
-        }
-        
-        function updatePreviewElements() {
-            // Update scale bar visibility
-            const scaleBar = document.getElementById('previewScaleBar');
-            const includeScaleBar = document.getElementById('includeScaleBar');
-            if (scaleBar && includeScaleBar) {
-                scaleBar.style.display = includeScaleBar.checked ? 'flex' : 'none';
-            }
-            
-            // Update north arrow visibility
-            const northArrow = document.querySelector('.preview-north-arrow');
-            const includeNorthArrow = document.getElementById('includeNorthArrow');
-            if (northArrow && includeNorthArrow) {
-                northArrow.style.display = includeNorthArrow.checked ? 'block' : 'none';
-            }
-            
-            // Update coordinate grid (if implemented)
-            // const coordGrid = document.getElementById('previewCoordinateGrid');
-            // const includeCoordinateGrid = document.getElementById('includeCoordinateGrid');
-            // if (coordGrid && includeCoordinateGrid) {
-            //     coordGrid.style.display = includeCoordinateGrid.checked ? 'block' : 'none';
-            // }
-            
-            // Update legend visibility
-            const legend = document.getElementById('previewLegend');
-            const includeLegend = document.getElementById('includeLegend');
-            if (legend && includeLegend) {
-                legend.style.display = includeLegend.checked ? 'block' : 'none';
-            }
-        }
-
-        function updateMapMetadata() {
-            if (!viewer || !viewer.camera) return;
-            
-            const cartographic = viewer.camera.positionCartographic;
-            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-            const height = cartographic.height;
-            
-            // Update coordinates
-            document.getElementById('previewCoordinates').textContent = 
-                `${latitude.toFixed(6)}°, ${longitude.toFixed(6)}°`;
-            
-            // Update date
-            document.getElementById('previewDate').textContent = new Date().toLocaleDateString();
-        }
-
-        function captureMapImageDirect() {
-            if (!viewer || !viewer.scene) return false;
-            
-            try {
-                const canvas = viewer.scene.canvas;
-                const previewCanvas = document.getElementById('previewMapCanvas');
-                
-                if (!canvas || !previewCanvas) {
-                    console.warn('Canvas elements not available');
-                    return false;
-                }
-                
-                // Force render to ensure latest frame
-                viewer.scene.requestRender();
-                
-                // Wait a moment then capture using toDataURL
-                setTimeout(() => {
-                    try {
-                        const dataURL = canvas.toDataURL('image/png');
-                        
-                        if (dataURL && dataURL.length > 1000) {
-                            const img = new Image();
-                            img.onload = function() {
-                                const ctx = previewCanvas.getContext('2d');
-                                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-                                ctx.drawImage(img, 0, 0, previewCanvas.width, previewCanvas.height);
-                                console.log('Direct map capture successful');
-                            };
-                            img.onerror = function() {
-                                console.warn('Failed to load captured image');
-                                showMapPlaceholder();
-                            };
-                            img.src = dataURL;
-                            return true;
-                        } else {
-                            console.warn('Captured data appears empty');
-                            showMapPlaceholder();
-                            return false;
-                        }
-                    } catch (captureError) {
-                        console.warn('Canvas capture failed:', captureError);
-                        showMapPlaceholder();
-                        return false;
-                    }
-                }, 300);
-                
-                return true;
-            } catch (error) {
-                console.warn('Direct capture error:', error);
-                return false;
-            }
-        }
-
-        function showMapPlaceholder() {
-            const mapArea = document.getElementById('previewMapArea');
-            if (mapArea) {
-                const canvas = document.getElementById('previewMapCanvas');
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#f0f0f0';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    ctx.fillStyle = '#666';
-                    ctx.font = '14px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('📍 Preparing map view...', canvas.width / 2, canvas.height / 2 - 10);
-                    
-                    ctx.font = '11px Arial';
-                    ctx.fillStyle = '#999';
-                    ctx.fillText(getCurrentViewDescription(), canvas.width / 2, canvas.height / 2 + 10);
-                }
-                
-                // Keep the mask overlay
-                if (!mapArea.querySelector('.preview-map-mask')) {
-                    mapArea.innerHTML += '<div class="preview-map-mask"></div>';
-                }
-            }
-        }
-
-        function getCurrentViewDescription() {
-            if (!viewer || !viewer.camera) return 'Loading...';
-            
-            const cartographic = viewer.camera.positionCartographic;
-            const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-            const height = cartographic.height;
-            
-            const zoomLevel = Math.round(Math.log2(156543.03392 * Math.cos(latitude * Math.PI / 180) / height * 256));
-            
-            return `${latitude.toFixed(2)}°, ${longitude.toFixed(2)}° (Zoom ${Math.max(0, zoomLevel)})`;
-        }
-
-        function calculateScaleBar() {
-            if (!viewer || !viewer.camera) return;
-            
-            const cartographic = viewer.camera.positionCartographic;
-            const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-            let scale;
-            
-            if (flatEarthMode) {
-                // For Equirectangular projection in 2D mode
-                const viewRectangle = viewer.camera.computeViewRectangle();
-                if (viewRectangle) {
-                    // Calculate scale based on view width
-                    const west = Cesium.Math.toDegrees(viewRectangle.west);
-                    const east = Cesium.Math.toDegrees(viewRectangle.east);
-                    const viewWidthDegrees = Math.abs(east - west);
-                    
-                    // Convert degrees to meters at the center latitude
-                    const metersPerDegree = 111320 * Math.cos(latitude * Math.PI / 180);
-                    const viewWidthMeters = viewWidthDegrees * metersPerDegree;
-                    
-                    // Get viewport width in pixels
-                    const viewportWidth = viewer.canvas.clientWidth;
-                    
-                    // Calculate scale
-                    const metersPerPixel = viewWidthMeters / viewportWidth;
-                    scale = Math.round(metersPerPixel * 96 / 0.0254); // Convert to map scale (96 DPI)
-                }
-            } else {
-                // For 3D mode - original calculation
-                const height = cartographic.height;
-                const metersPerPixel = height / 256;
-                scale = Math.round(metersPerPixel * 1000);
-            }
-            
-            // Update scale display
-            if (scale) {
-                document.getElementById('previewScale').textContent = `Scale: 1:${scale.toLocaleString()}`;
-                
-                // Update scale bar
-                let scaleDistance;
-                if (scale < 10000) {
-                    scaleDistance = '1 km';
-                } else if (scale < 100000) {
-                    scaleDistance = '5 km';
-                } else if (scale < 500000) {
-                    scaleDistance = '10 km';
-                } else if (scale < 1000000) {
-                    scaleDistance = '50 km';
-                } else {
-                    scaleDistance = '100 km';
-                }
-                
-                const scaleTextElement = document.querySelector('.scale-text');
-                if (scaleTextElement) {
-                    scaleTextElement.textContent = scaleDistance;
-                }
-            }
-        }
-
-        function generateLegend() {
-            const legendContainer = document.getElementById('previewLegend');
-            if (!legendContainer) return;
-            
-            // Get current base map
-            const baseMapSelector = document.getElementById('baseMapSelector');
-            const currentBaseMap = baseMapSelector ? baseMapSelector.value : 'osm';
-            
-            let legendHTML = '<h5>Legend</h5>';
-            
-            // Add base map to legend
-            legendHTML += `
-                <div class="legend-item">
-                    <div class="legend-color" style="background: #4CAF50;"></div>
-                    <span>Base Map</span>
-                </div>
-            `;
-            
-            // Add active overlays
-            const activeOverlays = getActiveOverlays();
-            activeOverlays.forEach(overlay => {
-                legendHTML += `
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: ${overlay.color};"></div>
-                        <span>${overlay.name}</span>
-                    </div>
-                `;
-            });
-            
-            legendContainer.innerHTML = legendHTML;
-        }
-
-        function getActiveOverlays() {
-            // Return list of active overlay layers
-            const overlays = [];
-            
-            // Check WMS layers
-            if (typeof activeWmsLayers !== 'undefined') {
-                activeWmsLayers.forEach(layer => {
-                    overlays.push({
-                        name: layer.name || 'WMS Layer',
-                        color: '#FF6B6B'
-                    });
-                });
-            }
-            
-            // Add markers if any exist
-            if (markers && markers.size > 0) {
-                overlays.push({
-                    name: `Markers (${markers.size})`,
-                    color: '#FF0000'
-                });
-            }
-            
-            return overlays;
-        }
-
-        function generateQRCode() {
-            // QR code functionality removed for simplified export layout
-            const qrContainer = document.getElementById('previewQR');
-            if (qrContainer) {
-                qrContainer.style.display = 'none';
-            }
-        }
-
-        function handleLogoUpload() {
-            // Logo upload functionality removed for simplified export layout
-            const logoContainer = document.getElementById('previewLogo');
-            if (logoContainer) {
-                logoContainer.style.display = 'none';
-            }
-        }
-
-        function exportAsPDF() {
-            // First ensure we have a fresh map capture
-            captureMapImageWithRetry();
-            
-            setTimeout(() => {
-                alert('PDF export functionality would require a PDF library like jsPDF or html2pdf.js\n\nFor production use, install: npm install jspdf html2canvas');
-                // Production implementation would be:
-                // const { jsPDF } = window.jspdf;
-                // const pdf = new jsPDF();
-                // html2canvas(document.getElementById('previewPage')).then(canvas => {
-                //     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0);
-                //     pdf.save('map-export.pdf');
-                // });
-            }, 1000);
-        }
-
-        function exportAsPNG() {
-            // First ensure we have a fresh map capture
-            captureMapImageWithRetry();
-            
-            setTimeout(() => {
-                // Try to export the preview canvas directly
-                const previewCanvas = document.getElementById('previewMapCanvas');
-                if (previewCanvas) {
-                    try {
-                        const link = document.createElement('a');
-                        link.download = `map-export-${new Date().toISOString().split('T')[0]}.png`;
-                        link.href = previewCanvas.toDataURL('image/png');
-                        link.click();
-                        console.log('Map exported as PNG');
-                    } catch (error) {
-                        console.warn('Direct PNG export failed:', error);
-                        alert('PNG export functionality would require a library like html2canvas or dom-to-image\n\nFor production use, install: npm install html2canvas');
-                        // Production implementation would be:
-                        // html2canvas(document.getElementById('previewPage')).then(canvas => {
-                        //     const link = document.createElement('a');
-                        //     link.download = 'map-export.png';
-                        //     link.href = canvas.toDataURL();
-                        //     link.click();
-                        // });
-                    }
-                } else {
-                    alert('No map preview available to export');
-                }
-            }, 1000);
-        }
-
-        // Test function to debug map capture
-        function testMapCapture() {
-            console.log('Testing map capture...');
-            if (!viewer || !viewer.scene) {
-                alert('Viewer not ready');
-                return;
-            }
-            
-            const canvas = viewer.scene.canvas;
-            console.log('Canvas found:', !!canvas);
-            console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
-            
-            // Force render before capture
-            viewer.scene.render();
-            
-            setTimeout(() => {
-                try {
-                    const dataURL = canvas.toDataURL('image/png');
-                    console.log('DataURL length:', dataURL.length);
-                    console.log('DataURL preview:', dataURL.substring(0, 100));
-                    
-                    if (dataURL.length > 1000) {
-                        // Show preview in a new window
-                        const win = window.open('', '_blank');
-                        win.document.write(`<img src="${dataURL}" style="max-width: 100%;">`);
-                        alert('Map capture test successful! DataURL length: ' + dataURL.length);
-                    } else {
-                        alert('Map capture test failed - empty data');
-                    }
-                } catch (error) {
-                    console.error('Capture test error:', error);
-                    alert('Map capture test failed: ' + error.message);
-                }
-            }, 100);
-        }
-
-        // Enhanced map capture with proper WebGL handling and top-down view
-        function captureMapForExport(callback, forceTopDown = true) {
-            if (!viewer || !viewer.scene || !viewer.scene.canvas) {
-                console.warn('Viewer not ready for capture');
-                if (callback) callback(null);
-                return;
-            }
-            
-            // Store current camera state
-            const originalCamera = {
-                position: viewer.camera.position.clone(),
-                heading: viewer.camera.heading,
-                pitch: viewer.camera.pitch,
-                roll: viewer.camera.roll
-            };
-            
-            // Force top-down view for print if requested
-            if (forceTopDown) {
-                if (flatEarthMode) {
-                    // In 2D mode, ensure north is up
-                    viewer.camera.setView({
-                        orientation: {
-                            heading: 0,
-                            pitch: Cesium.Math.toRadians(-90), // Top-down
-                            roll: 0
-                        }
-                    });
-                } else {
-                    // In 3D mode, adjust pitch to be more vertical
-                    viewer.camera.setView({
-                        destination: viewer.camera.position,
-                        orientation: {
-                            heading: 0,
-                            pitch: Cesium.Math.toRadians(-90), // Top-down
-                            roll: 0
-                        }
-                    });
-                }
-            }
-            
-            // Ensure scene is fully rendered
-            viewer.scene.render();
-            
-            // Use multiple animation frames for stability
-            requestAnimationFrame(() => {
-                viewer.scene.render();
-                requestAnimationFrame(() => {
-                    try {
-                        const canvas = viewer.scene.canvas;
-                        const dataURL = canvas.toDataURL('image/png');
-                        
-                        if (dataURL && dataURL.length > 1000) {
-                            console.log('Map captured successfully, size:', dataURL.length);
-                            if (callback) callback(dataURL);
-                        } else {
-                            console.warn('Captured image is too small or empty');
-                            if (callback) callback(null);
-                        }
-                    } catch (error) {
-                        console.error('Error capturing map:', error);
-                        if (callback) callback(null);
-                    } finally {
-                        // Restore original camera if we changed it
-                        if (forceTopDown && flatEarthMode) {
-                            viewer.camera.setView({
-                                destination: originalCamera.position,
-                                orientation: {
-                                    heading: originalCamera.heading,
-                                    pitch: originalCamera.pitch,
-                                    roll: originalCamera.roll
-                                }
-                            });
-                        }
-                    }
-                });
-            });
-        }
-
-        // Direct test to verify WebGL capture works
-        function directMapTest() {
-            if (!viewer || !viewer.scene) {
-                alert('Viewer not ready');
-                return;
-            }
-            
-            // Create a test div
-            const testDiv = document.createElement('div');
-            testDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border: 2px solid black; z-index: 20000;';
-            testDiv.innerHTML = '<h3>Map Capture Test</h3><canvas id="testCanvas" style="border: 1px solid #ccc;"></canvas><br><button onclick="this.parentElement.remove()">Close</button>';
-            document.body.appendChild(testDiv);
-            
-            const testCanvas = document.getElementById('testCanvas');
-            const sourceCanvas = viewer.scene.canvas;
-            
-            // Set dimensions
-            testCanvas.width = 400;
-            testCanvas.height = 300;
-            
-            // Force render
-            viewer.scene.render();
-            
-            // Capture after a moment
-            setTimeout(() => {
-                try {
-                    const ctx = testCanvas.getContext('2d');
-                    ctx.drawImage(sourceCanvas, 0, 0, testCanvas.width, testCanvas.height);
-                    console.log('Direct canvas test completed');
-                } catch (error) {
-                    console.error('Direct test error:', error);
-                    ctx.fillStyle = 'red';
-                    ctx.fillText('Error: ' + error.message, 10, 50);
-                }
-            }, 100);
-        }
-
-        // Toggle between 3D globe and 2D flat Earth mode with Equirectangular projection
-        function toggleFlatEarthMode() {
-            if (!globalViewer) {
-                console.warn('Viewer not initialized');
-                return;
-            }
-            
-            // Store current camera position
-            const camera = globalViewer.camera;
-            const position = camera.position.clone();
-            const heading = camera.heading;
-            const pitch = camera.pitch;
-            const roll = camera.roll;
-            
-            // Toggle mode
-            flatEarthMode = !flatEarthMode;
-            
-            if (flatEarthMode) {
-                // Switch to 2D mode
-                globalViewer.scene.mode = Cesium.SceneMode.SCENE2D;
-                
-                // Force Geographic projection (EPSG:4326)
-                globalViewer.scene.mapProjection = new Cesium.GeographicProjection();
-                
-                // Reload all imagery layers with Geographic tiling scheme
-                const imageryLayers = globalViewer.imageryLayers;
-                const layersToReload = [];
-                
-                // Collect layer info
-                for (let i = 0; i < imageryLayers.length; i++) {
-                    const layer = imageryLayers.get(i);
-                    const provider = layer.imageryProvider;
-                    layersToReload.push({
-                        url: provider._url || provider.url,
-                        subdomains: provider._subdomains,
-                        credit: provider._credit
-                    });
-                }
-                
-                // Remove all layers
-                imageryLayers.removeAll();
-                
-                // Re-add with Geographic tiling
-                layersToReload.forEach(layerInfo => {
-                    if (layerInfo.url) {
-                        const newProvider = new Cesium.UrlTemplateImageryProvider({
-                            url: layerInfo.url,
-                            subdomains: layerInfo.subdomains || ['a', 'b', 'c'],
-                            credit: layerInfo.credit || '',
-                            tilingScheme: new Cesium.GeographicTilingScheme(),
-                            rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90)
-                        });
-                        imageryLayers.addImageryProvider(newProvider);
-                    }
-                });
-                
-                // Disable terrain and shadows for clean 2D view
-                globalViewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-                globalViewer.scene.globe.enableLighting = false;
-                if (globalViewer.scene.sun) globalViewer.scene.sun.show = false;
-                if (globalViewer.scene.moon) globalViewer.scene.moon.show = false;
-                if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = false;
-                
-                // Disable rotation and tilt for stable cartographic display
-                globalViewer.scene.screenSpaceCameraController.enableRotate = false;
-                globalViewer.scene.screenSpaceCameraController.enableTilt = false;
-                
-                console.log('Switched to Flat Earth Mode (2D) with Equirectangular projection (EPSG:4326)');
-            } else {
-                // Switch back to 3D mode
-                globalViewer.scene.mode = Cesium.SceneMode.SCENE3D;
-                
-                // Reset map projection to Web Mercator for 3D
-                globalViewer.scene.mapProjection = new Cesium.WebMercatorProjection();
-                
-                // Reload imagery layers with proper 3D tiling scheme
-                const imageryLayers = globalViewer.imageryLayers;
-                imageryLayers.removeAll();
-                
-                // Add OSM base layer with Web Mercator tiling scheme for 3D
-                const osmProvider = new Cesium.UrlTemplateImageryProvider({
-                    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: [],
-                    credit: '© OpenStreetMap contributors',
-                    tilingScheme: new Cesium.WebMercatorTilingScheme(),
-                    rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90),
-                    maximumLevel: 19
-                });
-                imageryLayers.addImageryProvider(osmProvider);
-                
-                // Re-enable terrain if it was enabled before
-                if (terrainEnabled) {
-                    // Use enhanced terrain (free alternative to Cesium World Terrain)
-                    globalViewer.scene.terrainExaggeration = 1.5;
-                    globalViewer.scene.globe.enableLighting = true;
-                }
-                
-                // Re-enable atmosphere and lighting
-                globalViewer.scene.globe.enableLighting = true;
-                if (globalViewer.scene.sun) globalViewer.scene.sun.show = true;
-                if (globalViewer.scene.moon) globalViewer.scene.moon.show = true;
-                if (globalViewer.scene.skyAtmosphere) globalViewer.scene.skyAtmosphere.show = atmosphereEnabled;
-                
-                // Re-enable rotation and tilt
-                globalViewer.scene.screenSpaceCameraController.enableRotate = true;
-                globalViewer.scene.screenSpaceCameraController.enableTilt = true;
-                
-                // Force scene update to fix rendering issues
-                globalViewer.scene.requestRender();
-                setTimeout(() => {
-                    globalViewer.scene.requestRender();
-                }, 100);
-                
-                console.log('Switched to Globe Mode (3D)');
-            }
-            
-            // Update tool icon appearance
-            const flatEarthTool = document.getElementById('flatEarthTool');
-            if (flatEarthTool) {
-                if (flatEarthMode) {
-                    flatEarthTool.classList.add('active');
-                } else {
-                    flatEarthTool.classList.remove('active');
-                }
-            }
-            
-            // Try to preserve camera view after mode switch
-            setTimeout(() => {
-                try {
-                    if (flatEarthMode) {
-                        // In 2D mode with Equirectangular projection, set a global view
-                        const cartographic = Cesium.Cartographic.fromCartesian(position);
-                        const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                        const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-                        
-                        // Set view to show entire world or region based on previous zoom
-                        const height = cartographic.height;
-                        let viewRectangle;
-                        
-                        if (height > 10000000) {
-                            // Global view
-                            viewRectangle = Cesium.Rectangle.fromDegrees(-180, -90, 180, 90);
-                        } else {
-                            // Regional view - calculate bounds based on height
-                            const degrees = Math.min(180, height / 111000); // rough conversion
-                            viewRectangle = Cesium.Rectangle.fromDegrees(
-                                Math.max(-180, longitude - degrees),
-                                Math.max(-90, latitude - degrees),
-                                Math.min(180, longitude + degrees),
-                                Math.min(90, latitude + degrees)
-                            );
-                        }
-                        
-                        globalViewer.scene.camera.setView({
-                            destination: viewRectangle
-                        });
-                    } else {
-                        // Restore 3D view
-                        camera.setView({
-                            destination: position,
-                            orientation: {
-                                heading: heading,
-                                pitch: pitch,
-                                roll: roll
-                            }
-                        });
-                    }
-                } catch (error) {
-                    console.warn('Could not restore camera position:', error);
-                }
-            }, 100);
-        }
         
     </script>
 </body>

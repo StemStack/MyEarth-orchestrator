@@ -1,2 +1,0 @@
-[console_scripts]
-cesiumjs-app = main:main

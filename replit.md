@@ -97,44 +97,14 @@ The CesiumJS globe viewer is now fully functional with:
 - Minimal UI with disabled optional widgets
 - Clean full-screen design
 
-## Recent Changes (July 23, 2025)
+## Recent Changes (July 17, 2025)
 
-- **Deployment Issues Fixed**: Resolved deployment configuration problems by creating proper Python project structure
-- **Created pyproject.toml**: Added proper Python project definition with entry points and metadata
-- **Added Procfile**: Created deployment process file for cloud platforms (web: python main.py)
-- **Created Runtime Configuration**: Added runtime.txt specifying Python 3.11 for deployment systems
-- **Fixed Main Entry Point**: Updated main.py with proper main() function for deployment system compatibility
-- **Added Project Package Structure**: Created __init__.py to make project a proper Python package
-- **Created Deployment Config**: Added replit_deploy.toml with proper deployment settings and environment variables
-- **Added Documentation**: Created comprehensive README.md with setup and deployment instructions
-
-## Previous Changes (July 18, 2025)
-
-- **Deployment Configuration Fixed**: Created proper deployment setup with `main.py` and `server.py` for static file serving
-- **Custom HTTP Server**: Implemented Python server with CORS headers, security headers, and optimized static file serving
-- **Production Ready**: Added proper cache control, MIME type handling, and PORT environment variable support
-- **Deployment Documentation**: Created comprehensive `DEPLOYMENT.md` guide for various cloud platforms
-- **Workflow Update**: Updated CesiumJS Server workflow to use new `main.py` entry point
-
-## Previous Changes (July 17, 2025)
-
-- **Marker Renaming Feature**: Added inline editing capability for marker labels with proper UI integration
-- **Professional Map Export Tool**: Complete geo.admin-style print/export system with live preview
-- **Map Capture Enhancement**: Fixed WebGL canvas rendering in print preview with retry mechanism
-- **Swiss-Style Export Interface**: Professional layout settings, metadata, scale bar, legend, and QR code support
 - **Panel Transparency Fixed**: Resolved transparency rendering issues that caused panels to appear dark
 - **Updated to 85% White Opacity**: All panels now use rgba(255, 255, 255, 0.85) for bright white appearance
 - **Enhanced Backdrop Filters**: Added blur(30px) saturate(200%) brightness(1.5) for maximum brightness
 - **Right Panel Frame Removed**: Made right panel background transparent - tools now float without frame
 - **Mobile Sidebar Fix**: Fixed Performance section accessibility by adjusting height calculation and adding proper spacing
 - **Professional Visual Effect**: Clean white transparency with blur effects for modern UI appearance
-- **EPSG:4326 Projection Fix**: Implemented proper Equirectangular (Geographic) projection for 2D Flat Earth Mode
-- **WMS Layer Projection Support**: Added dynamic tilingScheme switching for WMS layers based on projection mode
-- **Protected Areas Layer Restored**: Fixed WDPA (World Database of Protected Areas) using official UNEP-WCMC WMS service with multiple layer support
-- **Clean Export Layout**: Simplified export panel to match geo.admin.ch style with minimal controls
-- **Export UI Improvements**: Removed visual overload, cleaner format selection (A4/A3 Landscape, A4 Portrait)
-- **Simplified Print Preview**: Minimalist metadata display with coordinates, date, and layers only
-- **2D/3D Mode Fix**: Fixed critical issue where half the globe became invisible when exiting flat mode by properly resetting map projection and imagery layers with correct tiling schemes
 
 ## Previous Changes (July 16, 2025)
 

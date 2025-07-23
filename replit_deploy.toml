@@ -1,9 +1,0 @@
-[deployment]
-run = ["python", "main.py"]
-deploymentTarget = "cloudrun"
-ignorePorts = false
-
-[env]
-PORT = "5000"
-PYTHONPATH = "."
-PYTHONUNBUFFERED = "1"
