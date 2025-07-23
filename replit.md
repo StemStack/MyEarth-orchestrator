@@ -97,7 +97,25 @@ The CesiumJS globe viewer is now fully functional with:
 - Minimal UI with disabled optional widgets
 - Clean full-screen design
 
-## Recent Changes (July 17, 2025)
+## Recent Changes (July 23, 2025)
+
+### Deployment Configuration
+- **Production Server**: Created main.py with enhanced HTTP server for Cloud Run deployment
+- **Docker Support**: Added Dockerfile and .dockerignore for containerized deployment
+- **Port Configuration**: Server listens on 0.0.0.0:5000 with automatic port detection for development
+- **Cloud Run Ready**: Added app.yaml with proper resource allocation and scaling configuration
+- **CORS Headers**: Enhanced server with proper Cross-Origin Resource Sharing headers
+- **Error Handling**: Robust port conflict resolution and graceful error handling
+- **Deployment Target**: Configured for Google Cloud Run with automatic scaling
+
+### Server Features
+- **Static File Serving**: Optimized for serving CesiumJS static assets
+- **Automatic Routing**: Root path automatically serves index.html
+- **Production Logging**: Enhanced request logging for deployment monitoring
+- **Socket Reuse**: Prevents "address already in use" errors during development
+- **Environment Variables**: Respects PORT environment variable for cloud deployment
+
+## Previous Changes (July 17, 2025)
 
 - **Panel Transparency Fixed**: Resolved transparency rendering issues that caused panels to appear dark
 - **Updated to 85% White Opacity**: All panels now use rgba(255, 255, 255, 0.85) for bright white appearance

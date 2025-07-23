@@ -1,0 +1,13 @@
+# Google Cloud Run configuration for CesiumJS application
+runtime: python311
+
+env_variables:
+  PORT: 5000
+
+automatic_scaling:
+  min_instances: 0
+  max_instances: 10
+
+resources:
+  cpu: 1
+  memory_gb: 0.5
