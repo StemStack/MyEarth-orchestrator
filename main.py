@@ -1,91 +1,84 @@
-#!/usr/bin/env python3
 """
-Production HTTP server for serving the CesiumJS application.
-Configured for Cloud Run deployment with proper port handling and error recovery.
+FastAPI server for MyEarth:
+- Serves CesiumJS static files
+- Provides API endpoints for DB connection and health checks
+- Replaces old Flask + custom HTTP server setup
 """
 
-import http.server
-import socketserver
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+import psycopg2
+
+# --------------------
+# Database configuration
+# --------------------
+from dotenv import load_dotenv
 import os
-import time
-import socket
-from functools import partial
+import psycopg2
 
-# Configure server for deployment
-PORT = int(os.environ.get('PORT', 5000))
-HOST = '0.0.0.0'
+# Load environment variables
+load_dotenv()
 
-class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
-    """Custom handler that serves index.html for root requests and handles CORS."""
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory='.', **kwargs)
-    
-    def end_headers(self):
-        """Add CORS headers for better compatibility."""
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.send_header('Cache-Control', 'no-cache')
-        super().end_headers()
-    
-    def do_GET(self):
-        """Handle GET requests with proper routing."""
-        if self.path == '/':
-            self.path = '/index.html'
-        return super().do_GET()
-    
-    def log_message(self, format, *args):
-        """Override to provide better logging for deployment."""
-        print(f"[{self.address_string()}] {format % args}")
+DB_CONFIG = {
+    "dbname": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("DB_HOST"),
+    "port": os.getenv("DB_PORT")
+}
 
-class ReusableSocketTCPServer(socketserver.TCPServer):
-    """TCP Server that allows address reuse to prevent port conflicts."""
-    
-    def __init__(self, *args, **kwargs):
-        self.allow_reuse_address = True
-        super().__init__(*args, **kwargs)
+def get_db_connection():
+    """Connect to PostgreSQL using psycopg2"""
+    return psycopg2.connect(**DB_CONFIG)
 
-def find_available_port(start_port=5000, max_attempts=10):
-    """Find an available port starting from start_port."""
-    for port in range(start_port, start_port + max_attempts):
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.bind((HOST, port))
-                return port
-        except OSError:
-            continue
-    return None
+# --------------------
+# Initialize FastAPI
+# --------------------
+app = FastAPI()
 
-def run_server():
-    """Start the HTTP server with proper configuration for deployment."""
-    global PORT
-    
-    # For deployment, always use the PORT env variable
-    # For development, find available port only if not explicitly set via environment
-    if 'PORT' not in os.environ and PORT == 5000:
-        available_port = find_available_port(PORT)
-        if available_port and available_port != PORT:
-            print(f"Port {PORT} is busy, using port {available_port}")
-            PORT = available_port
-    
-    print(f"Starting CesiumJS production server on {HOST}:{PORT}")
-    print(f"Serving application from: {os.getcwd()}")
-    
+# Enable CORS (all origins allowed)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# --------------------
+# Serve Cesium static files
+# --------------------
+# Mount current folder (where index.html & Cesium files are located)
+app.mount("/static", StaticFiles(directory="."), name="static")
+
+# Root route → serves index.html directly
+@app.get("/")
+def serve_index():
+    return FileResponse("index.html")
+
+# --------------------
+# Health check endpoint
+# --------------------
+@app.get("/api/ping")
+def ping():
+    """Quick test endpoint"""
+    return {"message": "pong"}
+
+# --------------------
+# Test DB connection endpoint
+# --------------------
+@app.get("/api/test-db")
+def test_db():
+    """Check if DB connection works"""
     try:
-        with ReusableSocketTCPServer((HOST, PORT), CustomHTTPRequestHandler) as httpd:
-            print(f"✓ Server running at http://{HOST}:{PORT}/")
-            print("✓ Ready for deployment")
-            print("Press Ctrl+C to stop the server")
-            httpd.serve_forever()
-    except OSError as e:
-        print(f"Error starting server: {e}")
-        print("This may be due to port conflicts in development environment.")
-        print("For deployment, Cloud Run will handle port assignment automatically.")
-        return 1
-    except KeyboardInterrupt:
-        print("\n✓ Server stopped gracefully")
-        return 0
-
-if __name__ == "__main__":
-    exit(run_server())
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT NOW()")
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+        return {"db_time": result[0]}
+    except Exception as e:
+        return {"error": str(e)}
