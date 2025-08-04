@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Install Tailscale and authenticate
+      # 1. Install Tailscale and authenticate 
       - name: Install Tailscale
         run: |
           curl -fsSL https://tailscale.com/install.sh | sh
