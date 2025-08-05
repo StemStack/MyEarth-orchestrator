@@ -14,7 +14,7 @@ jobs:
       - name: Install Tailscale
         run: |
           curl -fsSL https://tailscale.com/install.sh | sh
-          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh
+          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh=false
           sleep 5  # Wait for Tailscale to fully connect
 
       # 2. Debug: Check Tailscale status and connectivity
@@ -101,3 +101,30 @@ jobs:
             sleep 3
             sudo systemctl status myearth --no-pager
             exit 0
+
+      # 5. Emergency fallback: Direct SSH without Tailscale
+      - name: Emergency deployment via direct SSH
+        if: failure()
+        run: |
+          # Try connecting directly to the server's SSH port
+          echo "${{ secrets.DEPLOY_KEY }}" > /tmp/emergency_key
+          chmod 600 /tmp/emergency_key
+          
+          ssh -o ConnectTimeout=30 \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -i /tmp/emergency_key \
+              jc@100.69.50.87 << 'EOF'
+            cd /home/jc/MyEarth
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt --break-system-packages
+            sudo systemctl stop myearth || true
+            sudo cp myearth.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable myearth
+            sudo systemctl start myearth
+            echo "Emergency deployment completed"
+          EOF
+          
+          rm -f /tmp/emergency_key

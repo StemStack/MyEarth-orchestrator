@@ -12,7 +12,7 @@ jobs:
       - name: Install Tailscale
         run: |
           curl -fsSL https://tailscale.com/install.sh | sh
-          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh
+          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh=false
           sleep 10  # Wait longer for connection
 
       # 2. Debug Tailscale
