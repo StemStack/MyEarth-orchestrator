@@ -4,3 +4,4 @@
 ```bash
 git clone https://github.com/StemStack/MyEarth.git
 cd MyEarth
+# Test deployment
