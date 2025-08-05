@@ -6,3 +6,4 @@ git clone https://github.com/StemStack/MyEarth.git
 cd MyEarth
 # Test deployment
 # Test deployment after Tailscale SSH fix
+# Test deployment after sudo fix
