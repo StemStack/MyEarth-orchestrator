@@ -7,3 +7,4 @@ cd MyEarth
 # Test deployment
 # Test deployment after Tailscale SSH fix
 # Test deployment after sudo fix
+# Test deployment after server repo fix
