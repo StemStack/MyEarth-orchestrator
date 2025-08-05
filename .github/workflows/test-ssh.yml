@@ -1,0 +1,62 @@
+name: Test SSH Connection
+
+on:
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Install Tailscale
+      - name: Install Tailscale
+        run: |
+          curl -fsSL https://tailscale.com/install.sh | sh
+          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh
+          sleep 10  # Wait longer for connection
+
+      # 2. Debug Tailscale
+      - name: Debug Tailscale
+        run: |
+          echo "=== Tailscale Status ==="
+          tailscale status
+          echo "=== Tailscale IP ==="
+          tailscale ip -4
+          echo "=== Network Info ==="
+          ip route show
+
+      # 3. Test connectivity
+      - name: Test connectivity
+        run: |
+          echo "=== Testing ping ==="
+          ping -c 3 100.69.50.87 || echo "Ping failed"
+          
+          echo "=== Testing telnet ==="
+          timeout 5 telnet 100.69.50.87 22 || echo "Telnet failed"
+          
+          echo "=== Testing SSH with verbose output ==="
+          echo "${{ secrets.DEPLOY_KEY }}" > /tmp/test_key
+          chmod 600 /tmp/test_key
+          
+          ssh -v -o ConnectTimeout=10 \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -i /tmp/test_key \
+              jc@100.69.50.87 "echo 'SSH connection successful'" || echo "SSH failed"
+          
+          rm -f /tmp/test_key
+
+      # 4. Test appleboy/ssh-action
+      - name: Test appleboy/ssh-action
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 100.69.50.87
+          username: jc
+          key: ${{ secrets.DEPLOY_KEY }}
+          debug: true
+          script: |
+            echo "=== Server Info ==="
+            uname -a
+            echo "=== Current directory ==="
+            pwd
+            echo "=== Test successful ===" 

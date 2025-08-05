@@ -1,0 +1,15 @@
+[Unit]
+Description=MyEarth FastAPI Application
+After=network.target
+
+[Service]
+Type=simple
+User=jc
+WorkingDirectory=/home/jc/MyEarth
+Environment=PATH=/home/jc/MyEarth/venv/bin
+ExecStart=/home/jc/MyEarth/venv/bin/python main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target 

@@ -15,19 +15,89 @@ jobs:
         run: |
           curl -fsSL https://tailscale.com/install.sh | sh
           sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh
+          sleep 5  # Wait for Tailscale to fully connect
 
-      # 2. SSH into server and deploy app
+      # 2. Debug: Check Tailscale status and connectivity
+      - name: Debug Tailscale connectivity
+        run: |
+          echo "=== Tailscale Status ==="
+          tailscale status
+          echo "=== Testing ping to server ==="
+          ping -c 3 100.69.50.87 || echo "Ping failed, but SSH might still work"
+          echo "=== Testing SSH connection ==="
+          timeout 10 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i <(echo "${{ secrets.DEPLOY_KEY }}") jc@100.69.50.87 "echo 'SSH test successful'" || echo "SSH test failed"
+
+      # 3. Deploy using native SSH (more reliable than appleboy/ssh-action)
       - name: Deploy to server via SSH
+        run: |
+          # Create temporary key file
+          echo "${{ secrets.DEPLOY_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          
+          # Deploy with detailed error handling
+          ssh -o ConnectTimeout=30 \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -i /tmp/deploy_key \
+              jc@100.69.50.87 << 'EOF'
+            set -e  # Exit on any error
+            
+            echo "=== Starting deployment ==="
+            cd /home/jc/MyEarth
+            
+            echo "=== Pulling latest code ==="
+            git pull origin main
+            
+            echo "=== Activating virtual environment ==="
+            source venv/bin/activate
+            
+            echo "=== Installing dependencies ==="
+            pip install -r requirements.txt --break-system-packages
+            
+            echo "=== Stopping existing app ==="
+            sudo systemctl stop myearth || echo "Service not running"
+            pkill -f "python3 main.py" || echo "No existing process found"
+            sleep 2
+            
+            echo "=== Installing systemd service ==="
+            sudo cp myearth.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable myearth
+            
+            echo "=== Starting new app ==="
+            sudo systemctl start myearth
+            
+            echo "=== Deployment completed ==="
+            sleep 3
+            echo "=== Checking if app is running ==="
+            sudo systemctl status myearth --no-pager
+            curl -f http://localhost:5000/api/ping || echo "App health check failed"
+            
+            exit 0
+          EOF
+          
+          # Clean up
+          rm -f /tmp/deploy_key
+
+      # 4. Fallback: If native SSH fails, try appleboy/ssh-action
+      - name: Deploy via appleboy/ssh-action (fallback)
+        if: failure()
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 100.69.50.87
           username: jc
           key: ${{ secrets.DEPLOY_KEY }}
+          debug: true
           script: |
             cd /home/jc/MyEarth
             git pull origin main
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
-            pkill -f "python3 main.py" || true
-            nohup python3 main.py > myearth.log 2>&1 &
+            sudo systemctl stop myearth || true
+            sudo cp myearth.service /etc/systemd/system/
+            sudo systemctl daemon-reload
+            sudo systemctl enable myearth
+            sudo systemctl start myearth
+            sleep 3
+            sudo systemctl status myearth --no-pager
             exit 0
