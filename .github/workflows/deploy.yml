@@ -35,7 +35,7 @@ jobs:
           chmod 600 /tmp/deploy_key
           
           # Deploy with detailed error handling
-          ssh -o ConnectTimeout=30 \
+          DEPLOY_RESULT=$(ssh -o ConnectTimeout=30 \
               -o StrictHostKeyChecking=no \
               -o UserKnownHostsFile=/dev/null \
               -i /tmp/deploy_key \
@@ -85,14 +85,22 @@ jobs:
             if curl -f http://localhost:5000/api/ping; then
                 echo "✅ App health check passed"
                 echo "=== Deployment completed successfully ==="
-                exit 0
+                echo "SUCCESS"
             else
                 echo "❌ App health check failed"
-                exit 1
+                echo "FAILED"
             fi
-            
-            exit 0
           EOF
+          )
+          
+          # Check the result and exit accordingly
+          if echo "$DEPLOY_RESULT" | grep -q "SUCCESS"; then
+              echo "✅ Deployment completed successfully"
+              exit 0
+          else
+              echo "❌ Deployment failed"
+              exit 1
+          fi
           
           # Clean up
           rm -f /tmp/deploy_key
