@@ -48,7 +48,9 @@ jobs:
             echo "=== Pulling latest code ==="
             git pull origin main
             
-            echo "=== Activating virtual environment ==="
+            echo "=== Recreating virtual environment ==="
+            rm -rf venv
+            python3 -m venv venv
             source venv/bin/activate
             
             echo "=== Installing dependencies ==="
@@ -98,6 +100,8 @@ jobs:
           script: |
             cd /home/jc/MyEarth
             git pull origin main
+            rm -rf venv
+            python3 -m venv venv
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
             sudo systemctl stop myearth || true
@@ -131,6 +135,8 @@ jobs:
               jc@100.69.50.87 << 'EOF'
             cd /home/jc/MyEarth
             git pull origin main
+            rm -rf venv
+            python3 -m venv venv
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
             sudo systemctl stop myearth || true
