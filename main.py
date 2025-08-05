@@ -18,20 +18,24 @@ from dotenv import load_dotenv
 import os
 import psycopg2
 
-# Load environment variables
+# Load environment variables (optional)
 load_dotenv()
 
 DB_CONFIG = {
-    "dbname": os.getenv("DB_NAME"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASSWORD"),
-    "host": os.getenv("DB_HOST"),
-    "port": os.getenv("DB_PORT")
+    "dbname": os.getenv("DB_NAME", "myearth"),
+    "user": os.getenv("DB_USER", "postgres"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "host": os.getenv("DB_HOST", "localhost"),
+    "port": os.getenv("DB_PORT", "5432")
 }
 
 def get_db_connection():
     """Connect to PostgreSQL using psycopg2"""
-    return psycopg2.connect(**DB_CONFIG)
+    try:
+        return psycopg2.connect(**DB_CONFIG)
+    except Exception as e:
+        print(f"Database connection failed: {e}")
+        return None
 
 # --------------------
 # Initialize FastAPI
@@ -74,6 +78,8 @@ def test_db():
     """Check if DB connection works"""
     try:
         conn = get_db_connection()
+        if conn is None:
+            return {"error": "Database connection failed"}
         cur = conn.cursor()
         cur.execute("SELECT NOW()")
         result = cur.fetchone()
