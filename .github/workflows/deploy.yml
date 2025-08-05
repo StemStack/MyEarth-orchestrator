@@ -46,6 +46,8 @@ jobs:
             cd /home/jc/MyEarth
             
             echo "=== Pulling latest code ==="
+            # Clean up any untracked files that might cause conflicts
+            git clean -fd || echo "No untracked files to clean"
             git pull origin main
             
             echo "=== Recreating virtual environment ==="
@@ -116,6 +118,8 @@ jobs:
           debug: true
           script: |
             cd /home/jc/MyEarth
+            # Clean up any untracked files that might cause conflicts
+            git clean -fd || echo "No untracked files to clean"
             git pull origin main
             rm -rf venv
             python3 -m venv venv
@@ -160,6 +164,8 @@ jobs:
               -i /tmp/emergency_key \
               jc@100.69.50.87 << 'EOF'
             cd /home/jc/MyEarth
+            # Clean up any untracked files that might cause conflicts
+            git clean -fd || echo "No untracked files to clean"
             git pull origin main
             rm -rf venv
             python3 -m venv venv
