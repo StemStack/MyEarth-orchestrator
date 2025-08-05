@@ -79,11 +79,17 @@ jobs:
             echo "=== Deployment completed ==="
             sleep 3
             echo "=== Checking if app is running ==="
-            sudo systemctl status myearth --no-pager
+            sudo systemctl status myearth --no-pager || true
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
-            curl -f http://localhost:5000/api/ping && echo "✅ App health check passed" || echo "❌ App health check failed"
-            echo "=== Deployment completed successfully ==="
+            if curl -f http://localhost:5000/api/ping; then
+                echo "✅ App health check passed"
+                echo "=== Deployment completed successfully ==="
+                exit 0
+            else
+                echo "❌ App health check failed"
+                exit 1
+            fi
             
             exit 0
           EOF
@@ -120,12 +126,17 @@ jobs:
             sudo systemctl enable myearth
             sudo systemctl start myearth
             sleep 3
-            sudo systemctl status myearth --no-pager
+            sudo systemctl status myearth --no-pager || true
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
-            curl -f http://localhost:5000/api/ping && echo "✅ App health check passed" || echo "❌ App health check failed"
-            echo "=== Deployment completed successfully ==="
-            exit 0
+            if curl -f http://localhost:5000/api/ping; then
+                echo "✅ App health check passed"
+                echo "=== Deployment completed successfully ==="
+                exit 0
+            else
+                echo "❌ App health check failed"
+                exit 1
+            fi
 
       # 5. Emergency fallback: Direct SSH without Tailscale
       - name: Emergency deployment via direct SSH
@@ -153,8 +164,15 @@ jobs:
             sudo systemctl start myearth
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
-            curl -f http://localhost:5000/api/ping && echo "✅ App health check passed" || echo "❌ App health check failed"
-            echo "Emergency deployment completed"
+            if curl -f http://localhost:5000/api/ping; then
+                echo "✅ App health check passed"
+                echo "Emergency deployment completed successfully"
+                exit 0
+            else
+                echo "❌ App health check failed"
+                echo "Emergency deployment completed with errors"
+                exit 1
+            fi
           EOF
           
           rm -f /tmp/emergency_key
