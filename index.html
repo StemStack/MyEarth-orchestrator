@@ -4343,9 +4343,27 @@ Built with CesiumJS`;
                 
                 console.log(`Placing model at: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}, height: ${height.toFixed(2)}m`);
                 
-                // Create blob URL for the file
-                const modelUrl = URL.createObjectURL(file);
-                console.log('Created blob URL:', modelUrl);
+                // Upload file to server first
+                console.log('Uploading file to server...');
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const uploadResponse = await fetch('/api/upload-model', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!uploadResponse.ok) {
+                    const errorData = await uploadResponse.json();
+                    throw new Error(errorData.detail || 'Upload failed');
+                }
+                
+                const uploadResult = await uploadResponse.json();
+                console.log('Upload successful:', uploadResult);
+                
+                // Use the server URL for the model
+                const modelUrl = uploadResult.url;
+                console.log('Using server URL:', modelUrl);
                 
                 // Show loading indicator
                 const loadingMessage = document.createElement('div');
@@ -4442,8 +4460,6 @@ Built with CesiumJS`;
                                 console.warn('Error removing failed model entity:', e);
                             }
                         }
-                        
-                        URL.revokeObjectURL(modelUrl);
                         
                         // Clear any pending timeouts
                         if (errorRecoveryTimeout) {
@@ -4600,7 +4616,6 @@ Built with CesiumJS`;
                                     
                                     restoreCameraControls();
                                     console.error = originalConsoleError;
-                                    URL.revokeObjectURL(modelUrl);
                                     
                                     // Show compatibility error
                                     showCompatibilityError(file.name);
@@ -4691,8 +4706,6 @@ Built with CesiumJS`;
                             // Restore console.error
                             console.error = originalConsoleError;
                             
-                            URL.revokeObjectURL(modelUrl);
-                            
                             // Show timeout modal
                             showErrorModal(
                                 'Model Loading Timeout',
@@ -4729,7 +4742,6 @@ Built with CesiumJS`;
                     });
                     
                     showErrorModal('Model Loading Error', 'Could not load 3D model. A marker has been placed at the location.');
-                    URL.revokeObjectURL(modelUrl);
                 }
                 
             } catch (error) {
