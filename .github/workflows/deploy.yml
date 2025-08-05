@@ -60,7 +60,8 @@ jobs:
             sleep 2
             
             echo "=== Installing systemd service ==="
-            sudo cp myearth.service /etc/systemd/system/
+            # Copy service file from repository to systemd directory
+            sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
             sudo systemctl daemon-reload
             sudo systemctl enable myearth
             
@@ -94,7 +95,7 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
             sudo systemctl stop myearth || true
-            sudo cp myearth.service /etc/systemd/system/
+            sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
             sudo systemctl daemon-reload
             sudo systemctl enable myearth
             sudo systemctl start myearth
@@ -120,7 +121,7 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
             sudo systemctl stop myearth || true
-            sudo cp myearth.service /etc/systemd/system/
+            sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
             sudo systemctl daemon-reload
             sudo systemctl enable myearth
             sudo systemctl start myearth
