@@ -60,6 +60,12 @@ jobs:
             sleep 2
             
             echo "=== Installing systemd service ==="
+            # Debug: Check if service file exists
+            echo "=== Checking for service file ==="
+            ls -la /home/jc/MyEarth/myearth.service || echo "Service file not found!"
+            echo "=== Current directory contents ==="
+            ls -la /home/jc/MyEarth/
+            
             # Copy service file from repository to systemd directory
             sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
             sudo systemctl daemon-reload
@@ -95,6 +101,13 @@ jobs:
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
             sudo systemctl stop myearth || true
+            
+            # Debug: Check if service file exists
+            echo "=== Checking for service file ==="
+            ls -la /home/jc/MyEarth/myearth.service || echo "Service file not found!"
+            echo "=== Current directory contents ==="
+            ls -la /home/jc/MyEarth/
+            
             sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
             sudo systemctl daemon-reload
             sudo systemctl enable myearth
