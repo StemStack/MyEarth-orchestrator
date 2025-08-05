@@ -4219,18 +4219,23 @@ Built with CesiumJS`;
          */
         function showCompatibilityError(fileName) {
             const message = `
-                <p>This GLB file includes features CesiumJS cannot render, such as:</p>
+                <p>This 3D model (${fileName}) includes features that CesiumJS cannot render properly. Common issues include:</p>
                 <ul style="margin: 12px 0; padding-left: 20px; color: #666;">
-                    <li>Rigging or animation</li>
-                    <li>Advanced shaders/materials</li>
+                    <li>Complex animations or rigging</li>
+                    <li>Advanced shaders or materials</li>
                     <li>Unsupported glTF extensions</li>
-                    <li>Too many polygons</li>
+                    <li>Too many polygons or vertices</li>
+                    <li>Non-standard coordinate systems</li>
                 </ul>
                 <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
                     <strong style="color: #007bff;">💡 Quick Fix Tips:</strong>
                     <div style="margin-top: 8px; font-size: 14px; color: #555;">
-                        Export a basic GLB with no animations, simplified materials, and under 5MB using Blender.
+                        <strong>For Blender:</strong> Export as GLB with "Apply Modifiers" checked, disable animations, and use simple materials.<br>
+                        <strong>For other software:</strong> Simplify the model, remove animations, and ensure it's under 5MB.
                     </div>
+                </div>
+                <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin: 16px 0; border-left: 4px solid #ffc107;">
+                    <strong>Note:</strong> The model was uploaded successfully, but CesiumJS couldn't display it. A marker has been placed at the location.
                 </div>
             `;
             
@@ -4546,7 +4551,7 @@ Built with CesiumJS`;
                 try {
                     console.log('Attempting to load 3D model...');
                     
-                    // Use readyPromise for proper error handling
+                    // Create model with minimal settings for maximum compatibility
                     modelEntity = viewer.entities.add({
                         name: `3D Model - ${file.name}`,
                         position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
@@ -4558,12 +4563,15 @@ Built with CesiumJS`;
                             runAnimations: false,
                             clampAnimations: true,
                             heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-                            // Enhanced compatibility settings
+                            // Minimal settings for compatibility
                             silhouetteColor: Cesium.Color.TRANSPARENT,
                             silhouetteSize: 0,
                             incrementallyLoadTextures: false,
-                            backFaceCulling: true,
-                            shadows: Cesium.ShadowMode.DISABLED
+                            backFaceCulling: false,
+                            shadows: Cesium.ShadowMode.DISABLED,
+                            // Additional compatibility settings
+                            debugShowBoundingVolume: false,
+                            debugWireframe: false
                         }
                     });
                     
@@ -4598,27 +4606,117 @@ Built with CesiumJS`;
                             })
                             .catch((error) => {
                                 if (!modelLoadFailed) {
-                                    console.warn('Model readyPromise failed:', error);
-                                    modelLoadFailed = true;
+                                    console.warn('Model readyPromise failed, trying simplified approach:', error);
                                     
-                                    // Clean up
-                                    if (document.body.contains(loadingMessage)) {
-                                        document.body.removeChild(loadingMessage);
-                                    }
-                                    
-                                    if (modelEntity) {
-                                        try {
+                                    // Try a second time with even more basic settings
+                                    try {
+                                        // Remove the failed model
+                                        if (modelEntity) {
                                             viewer.entities.remove(modelEntity);
-                                        } catch (e) {
-                                            console.warn('Error removing failed model:', e);
                                         }
+                                        
+                                        // Try with absolute minimal settings
+                                        modelEntity = viewer.entities.add({
+                                            name: `3D Model (Simple) - ${file.name}`,
+                                            position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
+                                            model: {
+                                                uri: modelUrl,
+                                                scale: 1.0,
+                                                minimumPixelSize: 32,
+                                                maximumScale: 1000,
+                                                runAnimations: false,
+                                                clampAnimations: true,
+                                                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                                                // Absolute minimal settings
+                                                silhouetteColor: Cesium.Color.TRANSPARENT,
+                                                silhouetteSize: 0,
+                                                incrementallyLoadTextures: false,
+                                                backFaceCulling: false,
+                                                shadows: Cesium.ShadowMode.DISABLED,
+                                                debugShowBoundingVolume: false,
+                                                debugWireframe: false,
+                                                // Disable all advanced features
+                                                enableCollision: false,
+                                                distanceDisplayCondition: undefined
+                                            }
+                                        });
+                                        
+                                        // Try the readyPromise again
+                                        if (modelEntity.model.readyPromise) {
+                                            modelEntity.model.readyPromise
+                                                .then(() => {
+                                                    if (!modelLoadFailed) {
+                                                        console.log('Model loaded successfully with simplified settings');
+                                                        
+                                                        // Clean up loading indicator
+                                                        if (document.body.contains(loadingMessage)) {
+                                                            document.body.removeChild(loadingMessage);
+                                                        }
+                                                        
+                                                        // Remove fallback marker
+                                                        viewer.entities.remove(fallbackEntity);
+                                                        
+                                                        // Restore console.error
+                                                        console.error = originalConsoleError;
+                                                        
+                                                        // Fly to model
+                                                        viewer.camera.setView({
+                                                            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
+                                                            orientation: {
+                                                                heading: 0,
+                                                                pitch: Cesium.Math.toRadians(-30),
+                                                                roll: 0
+                                                            }
+                                                        });
+                                                    }
+                                                })
+                                                .catch((secondError) => {
+                                                    console.warn('Second attempt also failed:', secondError);
+                                                    modelLoadFailed = true;
+                                                    
+                                                    // Clean up
+                                                    if (document.body.contains(loadingMessage)) {
+                                                        document.body.removeChild(loadingMessage);
+                                                    }
+                                                    
+                                                    if (modelEntity) {
+                                                        try {
+                                                            viewer.entities.remove(modelEntity);
+                                                        } catch (e) {
+                                                            console.warn('Error removing failed model:', e);
+                                                        }
+                                                    }
+                                                    
+                                                    restoreCameraControls();
+                                                    console.error = originalConsoleError;
+                                                    
+                                                    // Show compatibility error
+                                                    showCompatibilityError(file.name);
+                                                });
+                                        }
+                                    } catch (secondAttemptError) {
+                                        console.warn('Second attempt failed:', secondAttemptError);
+                                        modelLoadFailed = true;
+                                        
+                                        // Clean up
+                                        if (document.body.contains(loadingMessage)) {
+                                            document.body.removeChild(loadingMessage);
+                                        }
+                                        
+                                        if (modelEntity) {
+                                            try {
+                                                viewer.entities.remove(modelEntity);
+                                            } catch (e) {
+                                                console.warn('Error removing failed model:', e);
+                                            }
+                                        }
+                                        
+                                        restoreCameraControls();
+                                        console.error = originalConsoleError;
+                                        
+                                        // Show compatibility error
+                                        showCompatibilityError(file.name);
                                     }
-                                    
-                                    restoreCameraControls();
-                                    console.error = originalConsoleError;
-                                    
-                                    // Show compatibility error
-                                    showCompatibilityError(file.name);
                                 }
                             });
                     }
