@@ -1017,6 +1017,16 @@
             margin-left: 2px;
         }
 
+        .app-version {
+            font-weight: 400;
+            color: #999;
+            font-size: 0.8rem;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            opacity: 0.6;
+            margin-top: 2px;
+            letter-spacing: 0.2px;
+        }
+
         .top-panel-middle {
             flex: 1;
             display: flex;
@@ -2351,6 +2361,7 @@
                     <span class="title-earth">Earth</span>
                     <span class="title-app">.app</span>
                 </div>
+                <div class="app-version" id="appVersion">v0.3 – 06 Aug 2025 09:30</div>
             </div>
         </div>
         <div class="top-panel-middle">
@@ -2857,6 +2868,50 @@
     <script src="PrintOverlay.js"></script>
     
     <script>
+        // Version management and cache busting
+        (function() {
+            // Generate version with timestamp
+            const version = '0.3';
+            const now = new Date();
+            const timestamp = now.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) + ' ' + now.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            
+            const versionString = `v${version} – ${timestamp}`;
+            
+            // Update version display
+            const versionElement = document.getElementById('appVersion');
+            if (versionElement) {
+                versionElement.textContent = versionString;
+            }
+            
+            // Cache busting for static assets
+            const cacheBuster = `?v=${version}&t=${Date.now()}`;
+            
+            // Update CSS and JS file references with cache buster
+            const links = document.querySelectorAll('link[href*="printOverlayStyles.css"]');
+            links.forEach(link => {
+                if (!link.href.includes('?')) {
+                    link.href += cacheBuster;
+                }
+            });
+            
+            const scripts = document.querySelectorAll('script[src*="PrintOverlay.js"], script[src*="CesiumModelImporter.js"], script[src*="CesiumGizmo.js"]');
+            scripts.forEach(script => {
+                if (!script.src.includes('?')) {
+                    script.src += cacheBuster;
+                }
+            });
+            
+            console.log('✓ Version management initialized:', versionString);
+        })();
+        
         // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
         if (typeof Cesium !== 'undefined') {
             // Disable Ion access tokens and servers
@@ -8386,7 +8441,7 @@ Built with CesiumJS`;
         
         console.log('✓ Swiss-style sidebar initialized');
         
-        // Predefined overlay services using reliable tile providers
+        // Predefined overlay services using reliable tile providers and WMS
         const predefinedWmsServices = {
             satellite: {
                 url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -8416,7 +8471,8 @@ Built with CesiumJS`;
                 type: 'wms',
                 layers: 'MapX_UNDP:Bare_ground_change_1982-2016',
                 format: 'image/png',
-                transparent: true
+                transparent: true,
+                version: '1.3.0'
             }
         };
         
@@ -8435,17 +8491,50 @@ Built with CesiumJS`;
                     let imageryProvider;
                     
                     if (service.type === 'wms') {
-                        // Create WMS imagery provider for proper WMS services
-                        imageryProvider = new Cesium.WebMapServiceImageryProvider({
-                            url: service.url,
-                            layers: service.layers || '0',
-                            parameters: {
-                                format: service.format || 'image/png',
-                                transparent: service.transparent !== false,
-                                version: '1.3.0'
-                            },
-                            credit: service.name
-                        });
+                        // Create WMS imagery provider for proper WMS services with enhanced error handling
+                        try {
+                            imageryProvider = new Cesium.WebMapServiceImageryProvider({
+                                url: service.url,
+                                layers: service.layers || '0',
+                                parameters: {
+                                    format: service.format || 'image/png',
+                                    transparent: service.transparent !== false,
+                                    version: service.version || '1.3.0',
+                                    service: 'WMS',
+                                    request: 'GetMap'
+                                },
+                                credit: service.name,
+                                enablePickFeatures: false,
+                                getFeatureInfoParameters: {
+                                    service: 'WMS',
+                                    version: service.version || '1.3.0',
+                                    request: 'GetFeatureInfo'
+                                }
+                            });
+                            
+                            // Test WMS service availability
+                            const testUrl = `${service.url}?service=WMS&version=${service.version || '1.3.0'}&request=GetCapabilities`;
+                            fetch(testUrl, { 
+                                method: 'GET',
+                                mode: 'cors',
+                                headers: {
+                                    'Accept': 'application/xml, text/xml'
+                                }
+                            }).then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`WMS service unavailable: ${response.status} ${response.statusText}`);
+                                }
+                                console.log(`✓ WMS service ${service.name} is available`);
+                            }).catch(error => {
+                                console.warn(`⚠️ WMS service ${service.name} may be unavailable:`, error.message);
+                                showMessage(`⚠️ WMS service "${service.name}" unavailable: ${error.message}`, 'warning');
+                                // Continue anyway - Cesium will handle the actual tile requests
+                            });
+                            
+                        } catch (error) {
+                            console.error(`Failed to create WMS provider for ${service.name}:`, error);
+                            throw error;
+                        }
                     } else {
                         // Create reliable tile imagery provider for tile services
                         imageryProvider = new Cesium.UrlTemplateImageryProvider({
@@ -8471,6 +8560,7 @@ Built with CesiumJS`;
                     
                 } catch (error) {
                     console.error(`Failed to load ${service.name}:`, error);
+                    showMessage(`❌ Failed to load "${service.name}": ${error.message}`, 'error');
                     const checkbox = document.getElementById(`${serviceKey}Wms`);
                     if (checkbox) checkbox.checked = false;
                 }
