@@ -262,7 +262,7 @@
             transform: translateY(-1px) scale(1.1) !important;
         }
         
-        /* Hide only unwanted elements but keep the main toolbar buttons */
+        /* Hide ALL old Cesium buttons and elements */
         .cesium-viewer-navigationContainer,
         .cesium-sceneModePicker-wrapper,
         .cesium-baseLayerPicker-dropDown,
@@ -275,10 +275,30 @@
         .cesium-viewer-cesium3DTilesInspectorContainer,
         .cesium-viewer-animationContainer,
         .cesium-viewer-bottomContainer,
-        .cesium-viewer-timelineContainer {
+        .cesium-viewer-timelineContainer,
+        .cesium-viewer-toolbar .cesium-navigation-help-button,
+        .cesium-viewer-toolbar .cesium-home-button,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker,
+        .cesium-viewer-toolbar .cesium-base-layer-picker,
+        .cesium-viewer-toolbar .cesium-geocoder-container,
+        .cesium-compass,
+        .cesium-compass-wrapper,
+        .cesium-compass-outer,
+        .cesium-compass-inner,
+        .cesium-compass-rose,
+        .cesium-compass-roseN,
+        .cesium-compass-roseE,
+        .cesium-compass-roseS,
+        .cesium-compass-roseW {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
         }
         
         /* Tooltip styles for better UX */
@@ -3513,17 +3533,6 @@
             // Create all custom tool buttons
             const tools = [
                 {
-                    id: 'northArrowTool',
-                    title: 'North Arrow',
-                    icon: '⬆️',
-                    onClick: () => {
-                        const northArrow = document.getElementById('northArrow');
-                        if (northArrow) {
-                            northArrow.style.display = northArrow.style.display === 'none' ? 'block' : 'none';
-                        }
-                    }
-                },
-                {
                     id: 'coordinatesTool',
                     title: 'Coordinates',
                     icon: '📍',
@@ -3600,6 +3609,23 @@
             });
             
             console.log('✅ All custom tools added to right toolbar');
+            
+            // Forcefully remove any remaining old Cesium buttons
+            setTimeout(() => {
+                const oldButtons = document.querySelectorAll('.cesium-navigation-help-button, .cesium-home-button, .cesium-scene-mode-picker, .cesium-base-layer-picker, .cesium-geocoder-container, .cesium-compass, .cesium-compass-wrapper');
+                oldButtons.forEach(btn => {
+                    btn.style.display = 'none';
+                    btn.style.visibility = 'hidden';
+                    btn.style.opacity = '0';
+                    btn.style.pointerEvents = 'none';
+                    btn.style.position = 'absolute';
+                    btn.style.top = '-9999px';
+                    btn.style.left = '-9999px';
+                    btn.style.width = '0';
+                    btn.style.height = '0';
+                });
+                console.log(`✅ Removed ${oldButtons.length} old Cesium buttons`);
+            }, 100);
         }
         
         // Initialize Print Overlay System
