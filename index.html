@@ -2872,6 +2872,18 @@
         (function() {
             console.log('🔄 Starting version management...');
             
+            // Consistent version formatting function
+            function formatVersionString(version, buildDate) {
+                const date = new Date(buildDate);
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = date.toLocaleDateString('en-GB', { month: 'short' });
+                const year = date.getFullYear();
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                
+                return `v${version} – ${day} ${month} ${year} ${hours}:${minutes}`;
+            }
+            
             // Load version from version.json (server-generated)
             async function loadVersion() {
                 const versionElement = document.getElementById('appVersion');
@@ -2903,19 +2915,8 @@
                     const versionData = await response.json();
                     console.log('📦 Version data received:', versionData);
                     
-                    // Format version string
-                    const buildDate = new Date(versionData.buildDate);
-                    const formattedTimestamp = buildDate.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    }) + ' ' + buildDate.toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-                    
-                    const versionString = `v${versionData.version} – ${formattedTimestamp}`;
+                    // Format version string consistently using server timestamp
+                    const versionString = formatVersionString(versionData.version, versionData.buildDate);
                     console.log('🏷️ Formatted version string:', versionString);
                     
                     // Update version display
@@ -2948,20 +2949,10 @@
                     console.error('❌ Failed to load version.json:', error);
                     console.error('❌ Error details:', error.message);
                     
-                    // Fallback version
+                    // Fallback version using consistent formatting
                     const version = '0.3';
                     const now = new Date();
-                    const fallbackTimestamp = now.toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric'
-                    }) + ' ' + now.toLocaleTimeString('en-GB', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false
-                    });
-                    
-                    const versionString = `v${version} – ${fallbackTimestamp} (fallback)`;
+                    const versionString = formatVersionString(version, now.toISOString()) + ' (fallback)';
                     console.log('🔄 Using fallback version:', versionString);
                     
                     // Update version display
