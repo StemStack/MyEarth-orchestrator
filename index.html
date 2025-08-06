@@ -293,7 +293,38 @@
         /* Additional aggressive hiding for any remaining old buttons */
         .cesium-viewer-toolbar > *:not([data-custom-tool]),
         .cesium-viewer-toolbar > button:not([data-custom-tool]),
-        .cesium-viewer-toolbar > div:not([data-custom-tool]) {
+        .cesium-viewer-toolbar > div:not([data-custom-tool]),
+        /* ULTRA-AGGRESSIVE: Hide ALL Cesium UI elements regardless of location */
+        .cesium-navigationHelpButton,
+        .cesium-homeButton,
+        .cesium-sceneModePicker,
+        .cesium-baseLayerPicker,
+        .cesium-geocoder,
+        .cesium-infoBox,
+        .cesium-selectionIndicator,
+        .cesium-viewer-navigationContainer,
+        div[class*="cesium-navigation"],
+        div[class*="cesium-home"],
+        div[class*="cesium-compass"],
+        div[class*="cesium-scene"],
+        div[class*="cesium-base"],
+        div[class*="cesium-geocoder"],
+        button[class*="cesium-navigation"],
+        button[class*="cesium-home"],
+        button[class*="cesium-compass"],
+        button[class*="cesium-scene"],
+        button[class*="cesium-base"],
+        button[class*="cesium-geocoder"],
+        /* Target the specific hamburger menu that's visible */
+        .cesium-viewer .cesium-navigationHelpButton,
+        .cesium-viewer .cesium-homeButton,
+        .cesium-viewer .cesium-sceneModePicker,
+        .cesium-viewer .cesium-baseLayerPicker,
+        .cesium-viewer .cesium-geocoder,
+        .cesium-viewer .cesium-compass,
+        /* Any toolbar elements not marked as custom */
+        .cesium-toolbar-button:not([data-custom-tool]),
+        .cesium-button:not([data-custom-tool]) {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -3114,11 +3145,12 @@
             creditsElement.style.display = 'none';
         }
 
-        // IMMEDIATE removal of any existing toolbar
-        const immediateRemoval = () => {
-            // Remove all possible Cesium UI elements
+        // ULTRA-AGGRESSIVE removal of any existing toolbar and UI elements
+        const ultraAggressiveRemoval = () => {
+            // Remove all possible Cesium UI elements with expanded selectors
             const cesiumSelectors = [
-                '.cesium-viewer-toolbar',
+                // Original toolbar elements
+                '.cesium-viewer-toolbar:not([data-custom-toolbar])',
                 '.cesium-navigationHelpButton',
                 '.cesium-homeButton', 
                 '.cesium-sceneModePicker',
@@ -3137,34 +3169,121 @@
                 '.cesium-compass-wrapper',
                 '.cesium-compass-outer',
                 '.cesium-compass-inner',
-                // Additional possible classes
-                '[class*="cesium-navigation"]',
-                '[class*="cesium-zoom"]',
-                '[class*="cesium-compass"]',
-                '[class*="cesium-info"]',
-                '[class*="cesium-help"]',
-                '[class*="cesium-home"]',
-                '[class*="cesium-scene"]',
-                '[class*="cesium-base"]',
-                '[class*="cesium-geocoder"]'
+                '.cesium-compass-needle',
+                '.cesium-compass-gyro',
+                '.cesium-compass-rose',
+                
+                // Additional wildcard selectors for any remaining elements
+                '[class*="cesium-navigation"]:not([data-custom-tool])',
+                '[class*="cesium-zoom"]:not([data-custom-tool])',
+                '[class*="cesium-compass"]:not([data-custom-tool])',
+                '[class*="cesium-info"]:not([data-custom-tool])',
+                '[class*="cesium-help"]:not([data-custom-tool])',
+                '[class*="cesium-home"]:not([data-custom-tool])',
+                '[class*="cesium-scene"]:not([data-custom-tool])',
+                '[class*="cesium-base"]:not([data-custom-tool])',
+                '[class*="cesium-geocoder"]:not([data-custom-tool])',
+                
+                // Target any buttons that don't have our custom marker
+                '.cesium-button:not([data-custom-tool])',
+                '.cesium-toolbar-button:not([data-custom-tool])',
+                
+                // Specific problematic elements that might still show
+                'div[title*="Navigation"]',
+                'div[title*="Home"]',
+                'div[title*="Scene"]',
+                'button[title*="Navigation"]',
+                'button[title*="Home"]',
+                'button[title*="Scene"]'
             ];
             
+            let removedCount = 0;
             cesiumSelectors.forEach(selector => {
-                const elements = document.querySelectorAll(selector);
-                elements.forEach(el => {
-                    console.log(`Removing element: ${selector}`, el);
-                    el.remove();
-                });
+                try {
+                    const elements = document.querySelectorAll(selector);
+                    elements.forEach(el => {
+                        // Double-check it's not our custom toolbar
+                        if (!el.hasAttribute('data-custom-toolbar') && !el.hasAttribute('data-custom-tool')) {
+                            console.log(`🗑️ Removing unwanted UI element: ${selector}`, el);
+                            el.style.display = 'none !important';
+                            el.style.visibility = 'hidden !important';
+                            el.style.opacity = '0 !important';
+                            el.style.position = 'absolute !important';
+                            el.style.top = '-9999px !important';
+                            el.style.left = '-9999px !important';
+                            el.remove();
+                            removedCount++;
+                        }
+                    });
+                } catch (e) {
+                    // Ignore selector errors
+                }
             });
+            
+            if (removedCount > 0) {
+                console.log(`🧹 Removed ${removedCount} unwanted Cesium UI elements`);
+            }
         };
         
-        // Remove immediately
-        immediateRemoval();
+        // Remove immediately and continuously
+        ultraAggressiveRemoval();
         
-        // And keep removing
-        setTimeout(immediateRemoval, 10);
-        setTimeout(immediateRemoval, 50);
-        setTimeout(immediateRemoval, 100);
+        // Keep removing at different intervals
+        setTimeout(ultraAggressiveRemoval, 10);
+        setTimeout(ultraAggressiveRemoval, 50);
+        setTimeout(ultraAggressiveRemoval, 100);
+        setTimeout(ultraAggressiveRemoval, 250);
+        setTimeout(ultraAggressiveRemoval, 500);
+        setTimeout(ultraAggressiveRemoval, 1000);
+        
+        // Set up continuous monitoring every 2 seconds
+        const continuousCleanup = setInterval(() => {
+            ultraAggressiveRemoval();
+        }, 2000);
+        
+        // Stop continuous cleanup after 30 seconds to avoid performance impact
+        setTimeout(() => {
+            clearInterval(continuousCleanup);
+            console.log('🛑 Stopped continuous UI cleanup - should be clean now');
+        }, 30000);
+        
+        // Set up MutationObserver to catch dynamically added Cesium UI elements
+        const observer = new MutationObserver((mutations) => {
+            let shouldClean = false;
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        // Check if the added node is a Cesium UI element
+                        if (node.className && typeof node.className === 'string' && 
+                            (node.className.includes('cesium-') || 
+                             node.getAttribute && (
+                                 (node.getAttribute('title') && 
+                                  (node.getAttribute('title').includes('Navigation') || 
+                                   node.getAttribute('title').includes('Home') || 
+                                   node.getAttribute('title').includes('Scene')))
+                             )) &&
+                            !node.hasAttribute('data-custom-toolbar') && 
+                            !node.hasAttribute('data-custom-tool')) {
+                            shouldClean = true;
+                        }
+                    }
+                });
+            });
+            
+            if (shouldClean) {
+                console.log('🔍 Detected new Cesium UI elements, cleaning up...');
+                setTimeout(ultraAggressiveRemoval, 10);
+            }
+        });
+        
+        // Start observing the document with the configured parameters
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: false
+        });
+        
+        console.log('👀 MutationObserver active - will catch any new Cesium UI elements');
 
         // Completely disable and remove ALL CesiumJS UI elements
         setTimeout(() => {
