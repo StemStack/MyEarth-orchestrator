@@ -906,4 +906,15 @@ async def serve_uploaded_file(filename: str):
 # --------------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    import sys
+    
+    # Get port from command line argument or default to 5001
+    port = 5001
+    if len(sys.argv) > 1 and sys.argv[1] == "--port":
+        try:
+            port = int(sys.argv[2])
+        except (IndexError, ValueError):
+            pass
+    
+    print(f"Starting MyEarth server on port {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
