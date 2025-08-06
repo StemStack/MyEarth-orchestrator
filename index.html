@@ -3092,6 +3092,10 @@
             selectionIndicator: false,  // Remove selection indicator
             navigationInstructionsInitiallyVisible: false, // Remove navigation instructions
             
+            // CRITICAL: Disable the toolbar completely
+            showRenderLoopErrors: false,
+            useDefaultRenderLoop: true,
+            
             // Use ellipsoid terrain initially, will be upgraded after initialization
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
             
@@ -3110,10 +3114,36 @@
             creditsElement.style.display = 'none';
         }
 
-        // Aggressively remove ALL remaining CesiumJS UI elements
+        // IMMEDIATE removal of any existing toolbar
+        const immediateRemoval = () => {
+            const existingToolbars = document.querySelectorAll('.cesium-viewer-toolbar');
+            existingToolbars.forEach(toolbar => toolbar.remove());
+            
+            const allCesiumButtons = document.querySelectorAll('[class*="cesium-"], [class*="Cesium"]');
+            allCesiumButtons.forEach(btn => {
+                if (btn.tagName === 'BUTTON' || btn.classList.contains('cesium-button')) {
+                    btn.remove();
+                }
+            });
+        };
+        
+        // Remove immediately
+        immediateRemoval();
+        
+        // And keep removing
+        setTimeout(immediateRemoval, 10);
+        setTimeout(immediateRemoval, 50);
+        setTimeout(immediateRemoval, 100);
+
+        // Completely disable and remove ALL CesiumJS UI elements
         setTimeout(() => {
+            // First, completely remove the original toolbar
+            const originalToolbar = document.querySelector('.cesium-viewer-toolbar');
+            if (originalToolbar && !originalToolbar.hasAttribute('data-custom-toolbar')) {
+                originalToolbar.remove();
+            }
+            
             const elementsToHide = [
-                '.cesium-viewer-toolbar',
                 '.cesium-viewer-navigationContainer', 
                 '.cesium-navigation-help-button',
                 '.cesium-home-button',
@@ -3130,7 +3160,7 @@
                 '.cesium-fullscreenButton',
                 '.cesium-vrButton',
                 '.cesium-widget-toolbar',
-                '.cesium-button',
+                '.cesium-button:not([data-custom-tool])',
                 '.cesium-toolbar-button',
                 '.cesium-compass',
                 '.cesium-compass-wrapper'
@@ -3529,7 +3559,11 @@
                 // Create fallback toolbar if none exists
                 toolbar = document.createElement('div');
                 toolbar.className = 'cesium-viewer-toolbar';
+                toolbar.setAttribute('data-custom-toolbar', 'true');
                 document.body.appendChild(toolbar);
+            } else {
+                // Mark existing toolbar as custom
+                toolbar.setAttribute('data-custom-toolbar', 'true');
             }
             
             // Clear existing custom buttons (keep Cesium buttons)
@@ -3651,6 +3685,20 @@
             setTimeout(removeOldButtons, 500);
             setTimeout(removeOldButtons, 1000);
             setTimeout(removeOldButtons, 2000);
+            
+            // Continuous monitoring to prevent old buttons from reappearing
+            setInterval(() => {
+                // Remove any toolbar that doesn't have our custom attribute
+                const allToolbars = document.querySelectorAll('.cesium-viewer-toolbar');
+                allToolbars.forEach(tb => {
+                    if (!tb.hasAttribute('data-custom-toolbar')) {
+                        tb.remove();
+                    }
+                });
+                
+                // Remove any buttons without our custom attribute
+                removeOldButtons();
+            }, 1000);
         }
         
         // Initialize Print Overlay System
