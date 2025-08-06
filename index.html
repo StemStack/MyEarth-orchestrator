@@ -8889,8 +8889,8 @@ Built with CesiumJS`;
             if (!legendSection || !legendContainer) return;
             
             // Check which layers are active
-            const hasProtectedAreas = predefinedWmsLayers.has('protected_areas');
-            const hasLandDegradation = predefinedWmsLayers.has('land_degradation');
+                    const hasProtectedAreas = predefinedLayers.has('protected_areas');
+        const hasLandDegradation = predefinedLayers.has('land_degradation');
             
             if (hasProtectedAreas || hasLandDegradation) {
                 legendSection.style.display = 'block';
@@ -8987,8 +8987,8 @@ Built with CesiumJS`;
          * Reorder imagery layers in CesiumJS viewer
          */
         function reorderImageryLayers(draggedKey, targetKey) {
-            const draggedLayerInfo = predefinedWmsLayers.get(draggedKey);
-            const targetLayerInfo = predefinedWmsLayers.get(targetKey);
+            const draggedLayerInfo = predefinedLayers.get(draggedKey);
+            const targetLayerInfo = predefinedLayers.get(targetKey);
             
             if (!draggedLayerInfo || !targetLayerInfo) {
                 console.error('Layer info not found for reordering');
