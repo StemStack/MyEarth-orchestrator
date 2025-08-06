@@ -2361,7 +2361,7 @@
                     <span class="title-earth">Earth</span>
                     <span class="title-app">.app</span>
                 </div>
-                <div class="app-version" id="appVersion">v0.3 – 06 Aug 2025 09:30</div>
+                <div class="app-version" id="appVersion">Loading version...</div>
             </div>
         </div>
         <div class="top-panel-middle">
@@ -2870,22 +2870,42 @@
     <script>
         // Version management and cache busting
         (function() {
+            console.log('🔄 Starting version management...');
+            
             // Load version from version.json (server-generated)
             async function loadVersion() {
+                const versionElement = document.getElementById('appVersion');
+                if (!versionElement) {
+                    console.error('❌ Version element not found!');
+                    return;
+                }
+                
+                console.log('📍 Version element found, attempting to load version.json...');
+                
                 try {
-                    const response = await fetch('/version.json?t=' + Date.now(), {
-                        cache: 'no-cache' // Prevent caching
+                    const timestamp = Date.now();
+                    const versionUrl = `/version.json?t=${timestamp}`;
+                    console.log('🌐 Fetching version from:', versionUrl);
+                    
+                    const response = await fetch(versionUrl, {
+                        cache: 'no-cache',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
                     });
                     
+                    console.log('📡 Response status:', response.status, response.statusText);
+                    
                     if (!response.ok) {
-                        throw new Error(`Failed to load version: ${response.status}`);
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
                     
                     const versionData = await response.json();
+                    console.log('📦 Version data received:', versionData);
                     
                     // Format version string
                     const buildDate = new Date(versionData.buildDate);
-                    const timestamp = buildDate.toLocaleDateString('en-GB', {
+                    const formattedTimestamp = buildDate.toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
@@ -2895,16 +2915,16 @@
                         hour12: false
                     });
                     
-                    const versionString = `v${versionData.version} – ${timestamp}`;
+                    const versionString = `v${versionData.version} – ${formattedTimestamp}`;
+                    console.log('🏷️ Formatted version string:', versionString);
                     
                     // Update version display
-                    const versionElement = document.getElementById('appVersion');
-                    if (versionElement) {
-                        versionElement.textContent = versionString;
-                    }
+                    versionElement.textContent = versionString;
+                    console.log('✅ Version display updated successfully');
                     
                     // Cache busting for static assets using version and timestamp
                     const cacheBuster = `?v=${versionData.version}&t=${versionData.buildTimestamp}`;
+                    console.log('🔄 Applying cache buster:', cacheBuster);
                     
                     // Update CSS and JS file references with cache buster
                     const links = document.querySelectorAll('link[href*="printOverlayStyles.css"]');
@@ -2921,16 +2941,17 @@
                         }
                     });
                     
-                    console.log('✓ Version management initialized:', versionString);
-                    console.log('✓ Build info:', versionData);
+                    console.log('✅ Version management initialized successfully:', versionString);
+                    console.log('✅ Build info:', versionData);
                     
                 } catch (error) {
-                    console.warn('⚠️ Failed to load version.json, using fallback:', error.message);
+                    console.error('❌ Failed to load version.json:', error);
+                    console.error('❌ Error details:', error.message);
                     
                     // Fallback version
                     const version = '0.3';
                     const now = new Date();
-                    const timestamp = now.toLocaleDateString('en-GB', {
+                    const fallbackTimestamp = now.toLocaleDateString('en-GB', {
                         day: '2-digit',
                         month: 'short',
                         year: 'numeric'
@@ -2940,13 +2961,11 @@
                         hour12: false
                     });
                     
-                    const versionString = `v${version} – ${timestamp} (fallback)`;
+                    const versionString = `v${version} – ${fallbackTimestamp} (fallback)`;
+                    console.log('🔄 Using fallback version:', versionString);
                     
                     // Update version display
-                    const versionElement = document.getElementById('appVersion');
-                    if (versionElement) {
-                        versionElement.textContent = versionString;
-                    }
+                    versionElement.textContent = versionString;
                     
                     // Fallback cache busting
                     const cacheBuster = `?v=${version}&t=${Date.now()}`;
@@ -2966,12 +2985,16 @@
                         }
                     });
                     
-                    console.log('✓ Version management initialized (fallback):', versionString);
+                    console.log('✅ Version management initialized (fallback):', versionString);
                 }
             }
             
-            // Load version immediately
-            loadVersion();
+            // Load version immediately when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', loadVersion);
+            } else {
+                loadVersion();
+            }
         })();
         
         // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
@@ -8546,25 +8569,36 @@ Built with CesiumJS`;
          */
         function togglePredefinedLayer(serviceKey, enabled) {
             const service = predefinedWmsServices[serviceKey];
-            console.log(`Attempting to ${enabled ? 'enable' : 'disable'} ${service.name}`);
+            console.log(`🔄 Attempting to ${enabled ? 'enable' : 'disable'} ${service.name}`);
+            console.log(`📍 Service details:`, service);
             
             if (enabled) {
                 try {
                     let imageryProvider;
                     
                     if (service.type === 'wms') {
+                        console.log(`🌐 Creating WMS provider for: ${service.name}`);
+                        console.log(`🔗 WMS URL: ${service.url}`);
+                        console.log(`📋 Layers: ${service.layers}`);
+                        console.log(`📄 Format: ${service.format}`);
+                        console.log(`🔢 Version: ${service.version}`);
+                        
                         // Create WMS imagery provider for proper WMS services with enhanced error handling
                         try {
+                            const wmsParameters = {
+                                format: service.format || 'image/png',
+                                transparent: service.transparent !== false,
+                                version: service.version || '1.3.0',
+                                service: 'WMS',
+                                request: 'GetMap'
+                            };
+                            
+                            console.log(`⚙️ WMS Parameters:`, wmsParameters);
+                            
                             imageryProvider = new Cesium.WebMapServiceImageryProvider({
                                 url: service.url,
                                 layers: service.layers || '0',
-                                parameters: {
-                                    format: service.format || 'image/png',
-                                    transparent: service.transparent !== false,
-                                    version: service.version || '1.3.0',
-                                    service: 'WMS',
-                                    request: 'GetMap'
-                                },
+                                parameters: wmsParameters,
                                 credit: service.name,
                                 enablePickFeatures: false,
                                 getFeatureInfoParameters: {
@@ -8574,31 +8608,42 @@ Built with CesiumJS`;
                                 }
                             });
                             
+                            console.log(`✅ WMS provider created successfully for ${service.name}`);
+                            
                             // Test WMS service availability with enhanced error handling
                             const testUrl = `${service.url}?service=WMS&version=${service.version || '1.3.0'}&request=GetCapabilities`;
+                            console.log(`🧪 Testing WMS service availability: ${testUrl}`);
                             
                             // Enhanced WMS service testing
                             fetch(testUrl, { 
                                 method: 'GET',
                                 mode: 'cors',
                                 headers: {
-                                    'Accept': 'application/xml, text/xml, */*'
+                                    'Accept': 'application/xml, text/xml, */*',
+                                    'User-Agent': 'MyEarth/1.0'
                                 },
                                 cache: 'no-cache'
                             }).then(response => {
+                                console.log(`📡 WMS test response: ${response.status} ${response.statusText}`);
+                                console.log(`📋 Response headers:`, Object.fromEntries(response.headers.entries()));
+                                
                                 if (!response.ok) {
                                     throw new Error(`WMS service unavailable: ${response.status} ${response.statusText}`);
                                 }
-                                console.log(`✓ WMS service ${service.name} is available`);
+                                console.log(`✅ WMS service ${service.name} is available`);
                                 return response.text();
                             }).then(data => {
+                                console.log(`📄 WMS capabilities response length: ${data.length} characters`);
+                                console.log(`📄 First 500 chars:`, data.substring(0, 500));
+                                
                                 // Basic XML validation
                                 if (!data.includes('<WMS_Capabilities') && !data.includes('<wms:WMS_Capabilities')) {
-                                    throw new Error('Invalid WMS capabilities response');
+                                    throw new Error('Invalid WMS capabilities response - no WMS_Capabilities found');
                                 }
-                                console.log(`✓ WMS service ${service.name} returned valid capabilities`);
+                                console.log(`✅ WMS service ${service.name} returned valid capabilities`);
                             }).catch(error => {
-                                console.warn(`⚠️ WMS service ${service.name} may be unavailable:`, error.message);
+                                console.error(`❌ WMS service ${service.name} test failed:`, error);
+                                console.error(`❌ Error details:`, error.message);
                                 
                                 // Show user-friendly error message
                                 let errorMessage = error.message;
@@ -8608,6 +8653,8 @@ Built with CesiumJS`;
                                     errorMessage = 'WMS service endpoint not found';
                                 } else if (error.message.includes('500')) {
                                     errorMessage = 'WMS service internal error';
+                                } else if (error.message.includes('timeout')) {
+                                    errorMessage = 'WMS service request timeout';
                                 }
                                 
                                 showMessage(`⚠️ WMS service "${service.name}" unavailable: ${errorMessage}`, 'warning');
@@ -8628,20 +8675,32 @@ Built with CesiumJS`;
                         });
                     }
                     
+                    console.log(`🎯 Adding imagery layer to Cesium viewer...`);
                     const imageryLayer = viewer.imageryLayers.addImageryProvider(imageryProvider);
+                    console.log(`✅ Imagery layer added successfully`);
+                    
+                    // Configure layer properties
                     imageryLayer.alpha = 0.7;
                     imageryLayer.brightness = 1.0;
                     imageryLayer.contrast = 1.1;
+                    console.log(`⚙️ Layer properties set: alpha=${imageryLayer.alpha}, brightness=${imageryLayer.brightness}, contrast=${imageryLayer.contrast}`);
                     
+                    // Store layer reference
                     predefinedWmsLayers.set(serviceKey, {
                         layer: imageryLayer,
                         name: service.name,
                         serviceKey: serviceKey
                     });
                     
-                    console.log(`✓ ${service.name} layer enabled`);
+                    console.log(`✅ ${service.name} layer enabled successfully`);
+                    console.log(`📊 Total active layers: ${predefinedWmsLayers.size}`);
+                    
+                    // Update UI
                     updateLayersList();
                     updateLegend();
+                    
+                    // Show success message
+                    showMessage(`✅ ${service.name} layer loaded successfully`, 'success');
                     
                 } catch (error) {
                     console.error(`Failed to load ${service.name}:`, error);
