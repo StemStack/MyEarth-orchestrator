@@ -103,6 +103,23 @@ async def serve_print_overlay_styles():
     """Serve the printOverlayStyles.css file"""
     return FileResponse("printOverlayStyles.css")
 
+@app.get("/version.json")
+async def serve_version():
+    """Serve the version.json file with current build information"""
+    try:
+        with open("version.json", "r") as f:
+            version_data = json.load(f)
+        return JSONResponse(content=version_data)
+    except FileNotFoundError:
+        # Fallback if version.json doesn't exist
+        return JSONResponse(content={
+            "version": "0.3",
+            "buildDate": "unknown",
+            "buildTimestamp": 0,
+            "commitHash": "unknown",
+            "environment": "development"
+        })
+
 # --------------------
 # Health check endpoint
 # --------------------
@@ -129,6 +146,69 @@ def test_db():
         return {"db_time": result[0]}
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/api/test-wms")
+async def test_wms():
+    """Test WMS service availability"""
+    import requests
+    
+    wms_services = {
+        "land_degradation": {
+            "url": "https://datacore.unepgrid.ch/geoserver/MapX_UNDP/ows",
+            "name": "Global Land Degradation"
+        }
+    }
+    
+    results = {}
+    
+    for service_key, service in wms_services.items():
+        try:
+            test_url = f"{service['url']}?service=WMS&version=1.3.0&request=GetCapabilities"
+            response = requests.get(test_url, timeout=10, headers={
+                'User-Agent': 'MyEarth/1.0'
+            })
+            
+            if response.status_code == 200:
+                # Basic XML validation
+                if '<WMS_Capabilities' in response.text or '<wms:WMS_Capabilities' in response.text:
+                    results[service_key] = {
+                        "status": "available",
+                        "name": service['name'],
+                        "response_time": response.elapsed.total_seconds()
+                    }
+                else:
+                    results[service_key] = {
+                        "status": "invalid_response",
+                        "name": service['name'],
+                        "error": "Invalid WMS capabilities response"
+                    }
+            else:
+                results[service_key] = {
+                    "status": "error",
+                    "name": service['name'],
+                    "error": f"HTTP {response.status_code}: {response.reason}"
+                }
+                
+        except requests.exceptions.Timeout:
+            results[service_key] = {
+                "status": "timeout",
+                "name": service['name'],
+                "error": "Request timeout"
+            }
+        except requests.exceptions.ConnectionError:
+            results[service_key] = {
+                "status": "connection_error",
+                "name": service['name'],
+                "error": "Connection failed"
+            }
+        except Exception as e:
+            results[service_key] = {
+                "status": "error",
+                "name": service['name'],
+                "error": str(e)
+            }
+    
+    return {"wms_services": results}
 
 # --------------------
 # 3D Model Upload endpoint
