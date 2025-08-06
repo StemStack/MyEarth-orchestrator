@@ -179,15 +179,13 @@
             top: 50% !important;
             right: 20px !important;
             transform: translateY(-50%) !important;
-            background: rgba(255, 255, 255, 0.85) !important;
+            background: rgba(255, 255, 255, 0.5) !important;
             backdrop-filter: blur(10px) !important;
             border-radius: 12px !important;
             padding: 8px !important;
             flex-direction: column !important;
             display: flex !important;
             gap: 6px !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
             z-index: 1000 !important;
         }
         
@@ -199,19 +197,18 @@
         .cesium-viewer-toolbar .cesium-base-layer-picker,
         .cesium-viewer-toolbar .cesium-geocoder-container,
         .cesium-viewer-toolbar button {
-            width: 40px !important;
-            height: 40px !important;
+            width: 30px !important;
+            height: 30px !important;
             border-radius: 50% !important;
-            background: rgba(255, 255, 255, 0.9) !important;
+            background: rgba(255, 255, 255, 0.5) !important;
             color: #333 !important;
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            border: none !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             margin: 0 !important;
-            font-size: 18px !important;
+            font-size: 14px !important;
             cursor: pointer !important;
             position: relative !important;
         }
@@ -223,10 +220,8 @@
         .cesium-viewer-toolbar .cesium-base-layer-picker:hover,
         .cesium-viewer-toolbar .cesium-geocoder-container:hover,
         .cesium-viewer-toolbar button:hover {
-            background: rgba(255, 255, 255, 1) !important;
-            border-color: rgba(0, 0, 0, 0.2) !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
-            transform: translateY(-2px) scale(1.05) !important;
+            background: rgba(255, 255, 255, 0.8) !important;
+            transform: translateY(-1px) scale(1.1) !important;
         }
         
         /* Ensure all button icons are dark */
@@ -251,10 +246,8 @@
         .cesium-viewer-toolbar .cesium-geocoder-container.active,
         .cesium-viewer-toolbar button.active,
         .cesium-viewer-toolbar .cesium-button.print-active {
-            background: rgba(59, 130, 246, 0.9) !important;
+            background: rgba(59, 130, 246, 0.8) !important;
             color: white !important;
-            border-color: rgba(59, 130, 246, 0.8) !important;
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
         }
         
         .cesium-viewer-toolbar .cesium-button.active:hover,
@@ -266,8 +259,7 @@
         .cesium-viewer-toolbar button.active:hover,
         .cesium-viewer-toolbar .cesium-button.print-active:hover {
             background: rgba(59, 130, 246, 1) !important;
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
-            transform: translateY(-2px) scale(1.05) !important;
+            transform: translateY(-1px) scale(1.1) !important;
         }
         
         /* Hide only unwanted elements but keep the main toolbar buttons */
@@ -339,9 +331,9 @@
             .cesium-viewer-toolbar .cesium-base-layer-picker,
             .cesium-viewer-toolbar .cesium-geocoder-container,
             .cesium-viewer-toolbar button {
-                width: 36px !important;
-                height: 36px !important;
-                font-size: 16px !important;
+                width: 28px !important;
+                height: 28px !important;
+                font-size: 12px !important;
             }
             
             .cesium-viewer-toolbar .cesium-button::before,
@@ -3072,6 +3064,7 @@
             timeline: false,            // Remove timeline slider
             navigationHelpButton: false, // Remove help button
             selectionIndicator: false,  // Remove selection indicator
+            navigationInstructionsInitiallyVisible: false, // Remove navigation instructions
             
             // Use ellipsoid terrain initially, will be upgraded after initialization
             terrainProvider: new Cesium.EllipsoidTerrainProvider(),
@@ -3522,7 +3515,7 @@
                 {
                     id: 'northArrowTool',
                     title: 'North Arrow',
-                    icon: '🧭',
+                    icon: '⬆️',
                     onClick: () => {
                         const northArrow = document.getElementById('northArrow');
                         if (northArrow) {
@@ -3538,17 +3531,6 @@
                         const coordinatesInfo = document.getElementById('coordinatesInfo');
                         if (coordinatesInfo) {
                             coordinatesInfo.style.display = coordinatesInfo.style.display === 'none' ? 'block' : 'none';
-                        }
-                    }
-                },
-                {
-                    id: 'scaleTool',
-                    title: 'Scale Bar',
-                    icon: '📏',
-                    onClick: () => {
-                        const scaleLine = document.getElementById('scaleLine');
-                        if (scaleLine) {
-                            scaleLine.style.display = scaleLine.style.display === 'none' ? 'block' : 'none';
                         }
                     }
                 },
@@ -3732,13 +3714,16 @@
                     fallbackToolbar.className = 'cesium-viewer-toolbar';
                     fallbackToolbar.style.cssText = `
                         position: fixed;
-                        bottom: 80px;
-                        right: 10px;
-                        background: rgba(255, 255, 255, 0.3);
-                        border-radius: 8px;
-                        padding: 4px;
+                        top: 50%;
+                        right: 20px;
+                        transform: translateY(-50%);
+                        background: rgba(255, 255, 255, 0.5);
+                        backdrop-filter: blur(10px);
+                        border-radius: 12px;
+                        padding: 8px;
                         flex-direction: column;
                         display: flex;
+                        gap: 6px;
                         z-index: 1000;
                     `;
                     fallbackToolbar.appendChild(printButton);
