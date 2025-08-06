@@ -8552,8 +8552,8 @@ Built with CesiumJS`;
             }
         };
         
-        // Store predefined WMS layer references
-        const predefinedWmsLayers = new Map();
+        // Store predefined layer references (both WMS and tile services)
+        const predefinedLayers = new Map();
         
         /**
          * Toggle predefined overlay layers on/off
@@ -8677,14 +8677,14 @@ Built with CesiumJS`;
                     console.log(`⚙️ Layer properties set: alpha=${imageryLayer.alpha}, brightness=${imageryLayer.brightness}, contrast=${imageryLayer.contrast}`);
                     
                     // Store layer reference
-                    predefinedWmsLayers.set(serviceKey, {
+                    predefinedLayers.set(serviceKey, {
                         layer: imageryLayer,
                         name: service.name,
                         serviceKey: serviceKey
                     });
                     
                     console.log(`✅ ${service.name} layer enabled successfully`);
-                    console.log(`📊 Total active layers: ${predefinedWmsLayers.size}`);
+                    console.log(`📊 Total active layers: ${predefinedLayers.size}`);
                     
                     // Update UI
                     updateLayersList();
@@ -8701,11 +8701,11 @@ Built with CesiumJS`;
                 }
             } else {
                 // Remove layer
-                const layerInfo = predefinedWmsLayers.get(serviceKey);
+                const layerInfo = predefinedLayers.get(serviceKey);
                 if (layerInfo) {
                     viewer.imageryLayers.remove(layerInfo.layer);
-                    predefinedWmsLayers.delete(serviceKey);
-                    console.log(`✓ ${layerInfo.name} layer disabled`);
+                    predefinedLayers.delete(serviceKey);
+                    console.log(`✅ ${layerInfo.name} layer disabled`);
                     updateLayersList();
                     updateLegend();
                 }
@@ -8721,13 +8721,13 @@ Built with CesiumJS`;
             
             layersContainer.innerHTML = '';
             
-            if (predefinedWmsLayers.size === 0) {
-                layersContainer.innerHTML = '<div style="font-size: 11px; color: #666; padding: 8px;">No active WMS layers</div>';
+            if (predefinedLayers.size === 0) {
+                layersContainer.innerHTML = '<div style="font-size: 11px; color: #666; padding: 8px;">No active layers</div>';
                 return;
             }
             
             // Create sortable list of active layers ordered by their position in CesiumJS
-            const layerArray = Array.from(predefinedWmsLayers.entries());
+            const layerArray = Array.from(predefinedLayers.entries());
             
             // Sort by layer index in CesiumJS viewer
             layerArray.sort((a, b) => {
@@ -8780,7 +8780,7 @@ Built with CesiumJS`;
          * Update layer opacity
          */
         function updateLayerOpacity(serviceKey, opacity) {
-            const layerInfo = predefinedWmsLayers.get(serviceKey);
+            const layerInfo = predefinedLayers.get(serviceKey);
             if (layerInfo) {
                 layerInfo.layer.alpha = opacity / 100;
             }
