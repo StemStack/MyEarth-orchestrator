@@ -3116,14 +3116,45 @@
 
         // IMMEDIATE removal of any existing toolbar
         const immediateRemoval = () => {
-            const existingToolbars = document.querySelectorAll('.cesium-viewer-toolbar');
-            existingToolbars.forEach(toolbar => toolbar.remove());
+            // Remove all possible Cesium UI elements
+            const cesiumSelectors = [
+                '.cesium-viewer-toolbar',
+                '.cesium-navigationHelpButton',
+                '.cesium-homeButton', 
+                '.cesium-sceneModePicker',
+                '.cesium-baseLayerPicker',
+                '.cesium-geocoder',
+                '.cesium-infoBox',
+                '.cesium-selectionIndicator',
+                '.cesium-viewer-navigationContainer',
+                '.cesium-compass',
+                '.cesium-distance-legend',
+                '.cesium-navigation-help-button',
+                '.cesium-home-button',
+                '.cesium-scene-mode-picker',
+                '.cesium-base-layer-picker',
+                '.cesium-geocoder-container',
+                '.cesium-compass-wrapper',
+                '.cesium-compass-outer',
+                '.cesium-compass-inner',
+                // Additional possible classes
+                '[class*="cesium-navigation"]',
+                '[class*="cesium-zoom"]',
+                '[class*="cesium-compass"]',
+                '[class*="cesium-info"]',
+                '[class*="cesium-help"]',
+                '[class*="cesium-home"]',
+                '[class*="cesium-scene"]',
+                '[class*="cesium-base"]',
+                '[class*="cesium-geocoder"]'
+            ];
             
-            const allCesiumButtons = document.querySelectorAll('[class*="cesium-"], [class*="Cesium"]');
-            allCesiumButtons.forEach(btn => {
-                if (btn.tagName === 'BUTTON' || btn.classList.contains('cesium-button')) {
-                    btn.remove();
-                }
+            cesiumSelectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    console.log(`Removing element: ${selector}`, el);
+                    el.remove();
+                });
             });
         };
         

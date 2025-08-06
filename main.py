@@ -64,8 +64,8 @@ app.add_middleware(
 # --------------------
 # Serve static files
 # --------------------
-# Mount current folder (where index.html & Cesium files are located)
-app.mount("/static", StaticFiles(directory="."), name="static")
+# Mount static folder for assets (favicon, logos, etc.)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Root route → serves index.html directly
 @app.get("/")
