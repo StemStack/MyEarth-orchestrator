@@ -289,7 +289,11 @@
         .cesium-compass-roseN,
         .cesium-compass-roseE,
         .cesium-compass-roseS,
-        .cesium-compass-roseW {
+        .cesium-compass-roseW,
+        /* Additional aggressive hiding for any remaining old buttons */
+        .cesium-viewer-toolbar > *:not([data-custom-tool]),
+        .cesium-viewer-toolbar > button:not([data-custom-tool]),
+        .cesium-viewer-toolbar > div:not([data-custom-tool]) {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -299,6 +303,8 @@
             left: -9999px !important;
             width: 0 !important;
             height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         /* Tooltip styles for better UX */
@@ -3626,6 +3632,25 @@
                 });
                 console.log(`✅ Removed ${oldButtons.length} old Cesium buttons`);
             }, 100);
+            
+            // Additional aggressive removal with multiple attempts
+            const removeOldButtons = () => {
+                const toolbar = document.querySelector('.cesium-viewer-toolbar');
+                if (toolbar) {
+                    const allButtons = toolbar.querySelectorAll('button, div');
+                    allButtons.forEach(btn => {
+                        if (!btn.hasAttribute('data-custom-tool')) {
+                            btn.remove();
+                        }
+                    });
+                }
+            };
+            
+            // Try multiple times to ensure removal
+            setTimeout(removeOldButtons, 200);
+            setTimeout(removeOldButtons, 500);
+            setTimeout(removeOldButtons, 1000);
+            setTimeout(removeOldButtons, 2000);
         }
         
         // Initialize Print Overlay System
