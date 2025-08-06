@@ -173,20 +173,25 @@
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
 
-        /* Move CesiumJS toolbar to bottom right corner instead of hiding */
+        /* Modern Right-Side Tool Menu */
         .cesium-viewer-toolbar {
             position: fixed !important;
-            top: auto !important;
-            bottom: 80px !important;
-            right: 10px !important;
-            background: rgba(255, 255, 255, 0.3) !important;
-            border-radius: 8px !important;
-            padding: 4px !important;
+            top: 50% !important;
+            right: 20px !important;
+            transform: translateY(-50%) !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 12px !important;
+            padding: 8px !important;
             flex-direction: column !important;
             display: flex !important;
+            gap: 6px !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            z-index: 1000 !important;
         }
         
-        /* Unified button styling for all Cesium toolbar buttons */
+        /* Unified Modern Button Styling */
         .cesium-viewer-toolbar .cesium-button,
         .cesium-viewer-toolbar .cesium-navigation-help-button,
         .cesium-viewer-toolbar .cesium-home-button,
@@ -194,21 +199,21 @@
         .cesium-viewer-toolbar .cesium-base-layer-picker,
         .cesium-viewer-toolbar .cesium-geocoder-container,
         .cesium-viewer-toolbar button {
-            width: 32px !important;
-            height: 32px !important;
+            width: 40px !important;
+            height: 40px !important;
             border-radius: 50% !important;
             background: rgba(255, 255, 255, 0.9) !important;
             color: #333 !important;
-            border: 1px solid rgba(0, 0, 0, 0.2) !important;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-            transition: all 0.3s ease !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            margin: 2px !important;
-            font-size: 16px !important;
+            margin: 0 !important;
+            font-size: 18px !important;
             cursor: pointer !important;
-            backdrop-filter: blur(5px) !important;
+            position: relative !important;
         }
         
         .cesium-viewer-toolbar .cesium-button:hover,
@@ -218,10 +223,10 @@
         .cesium-viewer-toolbar .cesium-base-layer-picker:hover,
         .cesium-viewer-toolbar .cesium-geocoder-container:hover,
         .cesium-viewer-toolbar button:hover {
-            background: rgba(240, 240, 240, 0.95) !important;
-            border-color: rgba(0, 0, 0, 0.3) !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-            transform: translateY(-1px) !important;
+            background: rgba(255, 255, 255, 1) !important;
+            border-color: rgba(0, 0, 0, 0.2) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+            transform: translateY(-2px) scale(1.05) !important;
         }
         
         /* Ensure all button icons are dark */
@@ -237,17 +242,32 @@
             stroke: #333 !important;
         }
         
-        /* Print button active state when print mode is enabled */
+        /* Active state for any button */
+        .cesium-viewer-toolbar .cesium-button.active,
+        .cesium-viewer-toolbar .cesium-navigation-help-button.active,
+        .cesium-viewer-toolbar .cesium-home-button.active,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker.active,
+        .cesium-viewer-toolbar .cesium-base-layer-picker.active,
+        .cesium-viewer-toolbar .cesium-geocoder-container.active,
+        .cesium-viewer-toolbar button.active,
         .cesium-viewer-toolbar .cesium-button.print-active {
-            background: rgba(76, 175, 80, 0.9) !important;
+            background: rgba(59, 130, 246, 0.9) !important;
             color: white !important;
-            border-color: rgba(76, 175, 80, 0.8) !important;
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4) !important;
+            border-color: rgba(59, 130, 246, 0.8) !important;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3) !important;
         }
         
+        .cesium-viewer-toolbar .cesium-button.active:hover,
+        .cesium-viewer-toolbar .cesium-navigation-help-button.active:hover,
+        .cesium-viewer-toolbar .cesium-home-button.active:hover,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker.active:hover,
+        .cesium-viewer-toolbar .cesium-base-layer-picker.active:hover,
+        .cesium-viewer-toolbar .cesium-geocoder-container.active:hover,
+        .cesium-viewer-toolbar button.active:hover,
         .cesium-viewer-toolbar .cesium-button.print-active:hover {
-            background: rgba(76, 175, 80, 1) !important;
-            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5) !important;
+            background: rgba(59, 130, 246, 1) !important;
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4) !important;
+            transform: translateY(-2px) scale(1.05) !important;
         }
         
         /* Hide only unwanted elements but keep the main toolbar buttons */
@@ -268,6 +288,72 @@
             visibility: hidden !important;
             opacity: 0 !important;
         }
+        
+        /* Tooltip styles for better UX */
+        .cesium-viewer-toolbar .cesium-button::before,
+        .cesium-viewer-toolbar .cesium-navigation-help-button::before,
+        .cesium-viewer-toolbar .cesium-home-button::before,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker::before,
+        .cesium-viewer-toolbar .cesium-base-layer-picker::before,
+        .cesium-viewer-toolbar .cesium-geocoder-container::before,
+        .cesium-viewer-toolbar button::before {
+            content: attr(title);
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1001;
+        }
+        
+        .cesium-viewer-toolbar .cesium-button:hover::before,
+        .cesium-viewer-toolbar .cesium-navigation-help-button:hover::before,
+        .cesium-viewer-toolbar .cesium-home-button:hover::before,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker:hover::before,
+        .cesium-viewer-toolbar .cesium-base-layer-picker:hover::before,
+        .cesium-viewer-toolbar .cesium-geocoder-container:hover::before,
+        .cesium-viewer-toolbar button:hover::before {
+            opacity: 1;
+        }
+        
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .cesium-viewer-toolbar {
+                right: 10px !important;
+                padding: 6px !important;
+                gap: 4px !important;
+            }
+            
+            .cesium-viewer-toolbar .cesium-button,
+            .cesium-viewer-toolbar .cesium-navigation-help-button,
+            .cesium-viewer-toolbar .cesium-home-button,
+            .cesium-viewer-toolbar .cesium-scene-mode-picker,
+            .cesium-viewer-toolbar .cesium-base-layer-picker,
+            .cesium-viewer-toolbar .cesium-geocoder-container,
+            .cesium-viewer-toolbar button {
+                width: 36px !important;
+                height: 36px !important;
+                font-size: 16px !important;
+            }
+            
+            .cesium-viewer-toolbar .cesium-button::before,
+            .cesium-viewer-toolbar .cesium-navigation-help-button::before,
+            .cesium-viewer-toolbar .cesium-home-button::before,
+            .cesium-viewer-toolbar .cesium-scene-mode-picker::before,
+            .cesium-viewer-toolbar .cesium-base-layer-picker::before,
+            .cesium-viewer-toolbar .cesium-geocoder-container::before,
+            .cesium-viewer-toolbar button::before {
+                display: none !important;
+            }
+        }
 
         /* Loading indicator styling */
         .cesium-viewer-loadingIndicator {
@@ -277,40 +363,7 @@
             transform: translate(-50%, -50%) !important;
         }
 
-        /* Custom zoom controls */
-        .zoom-controls {
-            position: absolute;
-            top: 60px;
-            right: 10px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
 
-        .zoom-button {
-            width: 40px;
-            height: 40px;
-            background-color: rgba(255, 255, 255, 0.3);
-            border: 1px solid rgba(0, 0, 0, 0.2);
-            border-radius: 4px;
-            color: #333;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s ease;
-        }
-
-        .zoom-button:hover {
-            background-color: rgba(255, 255, 255, 0.5);
-        }
-
-        .zoom-button:active {
-            background-color: rgba(255, 255, 255, 0.7);
-        }
 
 
 
@@ -982,9 +1035,10 @@
 
         .app-title {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            flex-direction: row;
+            align-items: baseline;
             line-height: 1;
+            gap: 8px;
         }
 
         .title-main {
@@ -1023,7 +1077,6 @@
             font-size: 0.8rem;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             opacity: 0.6;
-            margin-top: 2px;
             letter-spacing: 0.2px;
         }
 
@@ -2381,11 +2434,7 @@
     <!-- Main Cesium container -->
     <div id="cesiumContainer"></div>
     
-    <!-- Custom zoom controls -->
-    <div class="zoom-controls">
-        <button class="zoom-button" id="zoomIn" title="Zoom In">+</button>
-        <button class="zoom-button" id="zoomOut" title="Zoom Out">−</button>
-    </div>
+
 
 
 
@@ -3453,6 +3502,124 @@
         
         console.log('✅ Gizmo system initialized successfully!');
         
+        // Function to add all custom tools to the toolbar
+        function addAllToolsToToolbar() {
+            let toolbar = document.querySelector('.cesium-viewer-toolbar');
+            
+            if (!toolbar) {
+                // Create fallback toolbar if none exists
+                toolbar = document.createElement('div');
+                toolbar.className = 'cesium-viewer-toolbar';
+                document.body.appendChild(toolbar);
+            }
+            
+            // Clear existing custom buttons (keep Cesium buttons)
+            const existingCustomButtons = toolbar.querySelectorAll('[data-custom-tool]');
+            existingCustomButtons.forEach(btn => btn.remove());
+            
+            // Create all custom tool buttons
+            const tools = [
+                {
+                    id: 'northArrowTool',
+                    title: 'North Arrow',
+                    icon: '🧭',
+                    onClick: () => {
+                        const northArrow = document.getElementById('northArrow');
+                        if (northArrow) {
+                            northArrow.style.display = northArrow.style.display === 'none' ? 'block' : 'none';
+                        }
+                    }
+                },
+                {
+                    id: 'coordinatesTool',
+                    title: 'Coordinates',
+                    icon: '📍',
+                    onClick: () => {
+                        const coordinatesInfo = document.getElementById('coordinatesInfo');
+                        if (coordinatesInfo) {
+                            coordinatesInfo.style.display = coordinatesInfo.style.display === 'none' ? 'block' : 'none';
+                        }
+                    }
+                },
+                {
+                    id: 'scaleTool',
+                    title: 'Scale Bar',
+                    icon: '📏',
+                    onClick: () => {
+                        const scaleLine = document.getElementById('scaleLine');
+                        if (scaleLine) {
+                            scaleLine.style.display = scaleLine.style.display === 'none' ? 'block' : 'none';
+                        }
+                    }
+                },
+                {
+                    id: 'measureTool',
+                    title: 'Measure Tool',
+                    icon: '📐',
+                    onClick: () => toggleMeasurementTool()
+                },
+                {
+                    id: 'gizmoTool',
+                    title: '3D Gizmo',
+                    icon: '🎯',
+                    onClick: () => {
+                        if (window.toggleGizmo) {
+                            window.toggleGizmo();
+                        }
+                    }
+                },
+                {
+                    id: 'zoomInTool',
+                    title: 'Zoom In',
+                    icon: '🔍+',
+                    onClick: () => {
+                        if (window.zoomIn) {
+                            window.zoomIn();
+                        } else {
+                            viewer.camera.zoomIn(1000000.0);
+                        }
+                    }
+                },
+                {
+                    id: 'zoomOutTool',
+                    title: 'Zoom Out',
+                    icon: '🔍-',
+                    onClick: () => {
+                        if (window.zoomOut) {
+                            window.zoomOut();
+                        } else {
+                            viewer.camera.zoomOut(1000000.0);
+                        }
+                    }
+                },
+                {
+                    id: 'resetNorthTool',
+                    title: 'Reset to North',
+                    icon: '⬆️',
+                    onClick: () => {
+                        if (window.resetViewToNorth) {
+                            window.resetViewToNorth();
+                        }
+                    }
+                }
+            ];
+            
+            // Create and add each tool button
+            tools.forEach(tool => {
+                const button = document.createElement('button');
+                button.className = 'cesium-button';
+                button.setAttribute('data-custom-tool', tool.id);
+                button.title = tool.title;
+                button.innerHTML = tool.icon;
+                button.onclick = tool.onClick;
+                
+                // Add to toolbar
+                toolbar.appendChild(button);
+            });
+            
+            console.log('✅ All custom tools added to right toolbar');
+        }
+        
         // Initialize Print Overlay System
         console.log('🖨️ Initializing Print Overlay System...');
         
@@ -3507,6 +3674,9 @@
                 // Make printOverlay globally accessible
                 window.printOverlay = printOverlay;
                 console.log('✅ Print overlay system initialized successfully!');
+                
+                // Add all tools to toolbar after print overlay is ready
+                setTimeout(addAllToolsToToolbar, 500);
             } else {
                 console.error('❌ Cannot initialize PrintOverlay: jsPDF not available');
             }
@@ -3584,6 +3754,9 @@
             setTimeout(addToToolbar, 1000);
             setTimeout(addToToolbar, 3000);
             
+            // Add all custom tools to the toolbar
+            addAllToolsToToolbar();
+            
         }, 2000);
         
         console.log('✅ Print overlay system initialized successfully!');
@@ -3625,9 +3798,7 @@
         // Hide credit container for cleaner look
         viewer.cesiumWidget.creditContainer.style.display = "none";
 
-        // Add zoom button functionality
-        const zoomInButton = document.getElementById('zoomIn');
-        const zoomOutButton = document.getElementById('zoomOut');
+
         
         // Add search elements
         const searchInput = document.getElementById('searchInput');
@@ -3655,43 +3826,7 @@
         let currentSuggestions = [];
         let selectedSuggestionIndex = -1;
 
-        zoomInButton.addEventListener('click', function() {
-            const camera = viewer.camera;
-            const currentHeight = camera.positionCartographic.height;
-            const newHeight = Math.max(currentHeight * 0.5, 1000); // Zoom in by 50%, minimum 1km
-            
-            camera.setView({
-                destination: Cesium.Cartesian3.fromRadians(
-                    camera.positionCartographic.longitude,
-                    camera.positionCartographic.latitude,
-                    newHeight
-                ),
-                orientation: {
-                    heading: camera.heading,
-                    pitch: camera.pitch,
-                    roll: camera.roll
-                }
-            });
-        });
 
-        zoomOutButton.addEventListener('click', function() {
-            const camera = viewer.camera;
-            const currentHeight = camera.positionCartographic.height;
-            const newHeight = Math.min(currentHeight * 2.0, 50000000); // Zoom out by 100%, maximum 50,000km
-            
-            camera.setView({
-                destination: Cesium.Cartesian3.fromRadians(
-                    camera.positionCartographic.longitude,
-                    camera.positionCartographic.latitude,
-                    newHeight
-                ),
-                orientation: {
-                    heading: camera.heading,
-                    pitch: camera.pitch,
-                    roll: camera.roll
-                }
-            });
-        });
 
         // Function to check if input is coordinates
         function isCoordinates(input) {
