@@ -12,6 +12,77 @@
     <!-- CesiumJS CSS -->
     <link href="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
     
+    <!-- Print Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- Gizmo System CSS -->
+    <style>
+        .gizmo-controls {
+            background: transparent;
+            color: var(--text-color);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 10px;
+            border: 1px solid var(--sidebar-border);
+        }
+        
+        .gizmo-controls h4 {
+            margin: 0 0 8px 0;
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .gizmo-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
+        }
+        
+        .gizmo-btn {
+            background: rgba(52, 152, 219, 0.3);
+            color: #3498db;
+            border: 1px solid #3498db;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.3s;
+            margin: 2px;
+        }
+        
+        .gizmo-btn:hover {
+            background: rgba(52, 152, 219, 0.5);
+            border-color: #2980b9;
+        }
+        
+        .gizmo-btn.active {
+            background: rgba(52, 152, 219, 0.7);
+            border-color: #2980b9;
+            color: white;
+        }
+        
+        .gizmo-btn.secondary {
+            background: rgba(230, 126, 34, 0.3);
+            color: #e67e22;
+            border-color: #e67e22;
+        }
+        
+        .gizmo-btn.secondary:hover {
+            background: rgba(230, 126, 34, 0.5);
+            border-color: #d35400;
+        }
+        
+        .gizmo-status {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+    
     <style>
         /* CSS Variables for Theme System */
         :root {
@@ -115,20 +186,65 @@
             display: flex !important;
         }
         
-        /* Hide other unwanted elements but keep the main toolbar */
+        /* Unified button styling for all Cesium toolbar buttons */
+        .cesium-viewer-toolbar .cesium-button,
+        .cesium-viewer-toolbar .cesium-navigation-help-button,
+        .cesium-viewer-toolbar .cesium-home-button,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker,
+        .cesium-viewer-toolbar .cesium-base-layer-picker,
+        .cesium-viewer-toolbar .cesium-geocoder-container,
+        .cesium-viewer-toolbar button {
+            width: 32px !important;
+            height: 32px !important;
+            border-radius: 50% !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            color: #333 !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.3s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 2px !important;
+            font-size: 16px !important;
+            cursor: pointer !important;
+            backdrop-filter: blur(5px) !important;
+        }
+        
+        .cesium-viewer-toolbar .cesium-button:hover,
+        .cesium-viewer-toolbar .cesium-navigation-help-button:hover,
+        .cesium-viewer-toolbar .cesium-home-button:hover,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker:hover,
+        .cesium-viewer-toolbar .cesium-base-layer-picker:hover,
+        .cesium-viewer-toolbar .cesium-geocoder-container:hover,
+        .cesium-viewer-toolbar button:hover {
+            background: rgba(240, 240, 240, 0.95) !important;
+            border-color: rgba(0, 0, 0, 0.3) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        /* Ensure all button icons are dark */
+        .cesium-viewer-toolbar .cesium-button *,
+        .cesium-viewer-toolbar .cesium-navigation-help-button *,
+        .cesium-viewer-toolbar .cesium-home-button *,
+        .cesium-viewer-toolbar .cesium-scene-mode-picker *,
+        .cesium-viewer-toolbar .cesium-base-layer-picker *,
+        .cesium-viewer-toolbar .cesium-geocoder-container *,
+        .cesium-viewer-toolbar button * {
+            color: #333 !important;
+            fill: #333 !important;
+            stroke: #333 !important;
+        }
+        
+        /* Hide only unwanted elements but keep the main toolbar buttons */
         .cesium-viewer-navigationContainer,
-        .cesium-navigation-help-button,
         .cesium-sceneModePicker-wrapper,
         .cesium-baseLayerPicker-dropDown,
         .cesium-animation-container,
         .cesium-timeline-main,
         .cesium-fullscreenButton,
         .cesium-vrButton,
-        .cesium-compass,
-        .cesium-compass-wrapper,
-        .cesium-compass-outerRing,
-        .cesium-compass-rotation-marker,
-        .cesium-compass-gyro,
         .cesium-sceneModePicker-dropDown-icon,
         .cesium-navigationHelp-button,
         .cesium-viewer-cesium3DTilesInspectorContainer,
@@ -2385,7 +2501,30 @@
                     Upload 3D Model
                 </button>
                 <div style="font-size: 11px; color: #666; margin-top: 4px;">
-                    Drag & drop GLB/GLTF files or click to browse
+                    Drag & drop any 3D format: 3D Tiles, glTF, OBJ, FBX, LAS, KML, IFC, archives, images, and more
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gizmo Controls Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('gizmo')">
+                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 22V12" stroke="currentColor" stroke-width="2"/><path d="M2 7L12 12L22 7" stroke="currentColor" stroke-width="2"/></svg>Gizmo Controls</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
+            </div>
+            <div class="section-content" id="gizmo">
+                <div class="gizmo-controls">
+                    <h4>🎮 3D Manipulation</h4>
+                    <div class="gizmo-buttons">
+                        <button class="gizmo-btn active" onclick="setGizmoMode('translate')">↔️ T</button>
+                        <button class="gizmo-btn" onclick="setGizmoMode('rotate')">🔄 R</button>
+                        <button class="gizmo-btn" onclick="setGizmoMode('scale')">📏 S</button>
+                    </div>
+                    <div class="gizmo-buttons">
+                        <button class="gizmo-btn secondary" onclick="toggleGizmo()">🎯 Toggle</button>
+                        <button class="gizmo-btn secondary" onclick="selectNextModel()">⏭️ Next</button>
+                    </div>
+                    <div class="gizmo-status" id="gizmoStatus">Ready for 3D models</div>
                 </div>
             </div>
         </div>
@@ -2695,6 +2834,14 @@
 
     <!-- CesiumJS JavaScript -->
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
+    
+    <!-- Gizmo System JavaScript -->
+    <script src="CesiumModelImporter.js"></script>
+    <script src="CesiumGizmo.js"></script>
+    
+    <!-- Print Overlay System -->
+    <link rel="stylesheet" href="printOverlayStyles.css">
+    <script src="PrintOverlay.js"></script>
     
     <script>
         // Simple Ion service blocking - no prototype manipulation to avoid cyclic errors
@@ -3081,6 +3228,273 @@
         viewer.camera.setView(europeHomeView);
 
         // Home button is disabled - no need for override
+        
+        // Initialize Gizmo System
+        console.log('🚀 Initializing Universal 3D Model Importer and Gizmo System...');
+        
+        // Initialize Model Importer
+        const modelImporter = new CesiumModelImporter(viewer, {
+            autoSelect: true,
+            showBoundingBox: true,
+            onModelImported: (model, file, fileType) => {
+                console.log('✅ Model imported:', file.name, 'Type:', fileType);
+                showMessage(`✅ Imported: ${file.name} (${fileType})`, 'success');
+            },
+            onError: (error, file) => {
+                console.error('❌ Import error:', error, file);
+                showMessage(`❌ Failed to import ${file.name}: ${error.message}`, 'error');
+            }
+        });
+        
+        // Initialize Gizmo
+        const gizmo = new CesiumGizmo(viewer, {
+            size: 40,
+            snapping: {
+                translate: 1.0,
+                rotate: 15.0,
+                scale: 0.5
+            }
+        });
+        
+        // Gizmo controls are now integrated into the left sidebar
+        // No need to create separate UI elements
+        
+        // Gizmo control functions
+        window.setGizmoMode = function(mode) {
+            gizmo.setMode(mode);
+            
+            // Update button states
+            document.querySelectorAll('.gizmo-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            updateGizmoStatus(`Mode: ${mode}`);
+        };
+        
+        window.toggleGizmo = function() {
+            if (gizmo.isVisible()) {
+                gizmo.hide();
+                updateGizmoStatus('Gizmo hidden');
+            } else {
+                gizmo.show();
+                updateGizmoStatus('Gizmo visible');
+            }
+        };
+        
+        window.selectNextModel = function() {
+            const models = Array.from(modelImporter.getImportedModels().values());
+            if (models.length === 0) {
+                updateGizmoStatus('No models to select');
+                return;
+            }
+            
+            // For now, just select the first model
+            const model = models[0];
+            modelImporter.selectModel(model.entity);
+            updateGizmoStatus(`Selected: ${model.file.name}`);
+        };
+        
+        function updateGizmoStatus(message) {
+            const statusElement = document.getElementById('gizmoStatus');
+            if (statusElement) {
+                statusElement.textContent = message;
+            }
+        }
+        
+        // Listen for model selection events
+        viewer.canvas.addEventListener('modelSelected', (e) => {
+            const model = e.detail.model;
+            updateGizmoStatus('Model selected for manipulation');
+            gizmo.setSelectedEntity(model);
+        });
+        
+        console.log('✅ Gizmo system initialized successfully!');
+        
+        // Initialize Print Overlay System
+        console.log('🖨️ Initializing Print Overlay System...');
+        
+        // Ensure jsPDF is available before initializing
+        const ensureJsPDF = async () => {
+            // Check if jsPDF is already available
+            if (typeof window.jspdf !== 'undefined' || typeof jsPDF !== 'undefined') {
+                console.log('✅ jsPDF already available');
+                return true;
+            }
+            
+            // Wait a bit for scripts to load
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check again
+            if (typeof window.jspdf !== 'undefined' || typeof jsPDF !== 'undefined') {
+                console.log('✅ jsPDF loaded after delay');
+                return true;
+            }
+            
+            console.warn('⚠️ jsPDF not available, attempting to load...');
+            
+            // Try to load jsPDF manually
+            return new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = () => {
+                    console.log('✅ jsPDF loaded manually');
+                    resolve(true);
+                };
+                script.onerror = () => {
+                    console.error('❌ Failed to load jsPDF manually');
+                    resolve(false);
+                };
+                document.head.appendChild(script);
+            });
+        };
+        
+        // Initialize PrintOverlay after ensuring jsPDF is available
+        ensureJsPDF().then((jsPDFAvailable) => {
+            if (jsPDFAvailable) {
+                const printOverlay = new PrintOverlay(viewer, {
+                    defaultPaperSize: 'A4',
+                    defaultOrientation: 'portrait',
+                    defaultScale: '1:1\'500\'000', // Swiss standard default
+                    includeLegend: true,
+                    includeGrid: false,
+                    includeTitle: true,
+                    includeCopyright: true
+                });
+                
+                // Make printOverlay globally accessible
+                window.printOverlay = printOverlay;
+                console.log('✅ Print overlay system initialized successfully!');
+            } else {
+                console.error('❌ Cannot initialize PrintOverlay: jsPDF not available');
+            }
+        });
+        
+        // Add print button integrated into the right toolbar
+        setTimeout(() => {
+            // Create print button with circular toolbar styling
+            const printButton = document.createElement('button');
+            printButton.innerHTML = '🖨️';
+            printButton.title = 'Print to PDF';
+            printButton.style.cssText = `
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.9);
+                color: #333;
+                border: 1px solid rgba(0, 0, 0, 0.2);
+                cursor: pointer;
+                font-size: 16px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 2px 0;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            `;
+            
+            // Hover effects
+            printButton.onmouseover = () => {
+                printButton.style.background = 'rgba(255, 255, 255, 1)';
+                printButton.style.transform = 'scale(1.1)';
+                printButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+            };
+            printButton.onmouseout = () => {
+                printButton.style.background = 'rgba(255, 255, 255, 0.9)';
+                printButton.style.transform = 'scale(1)';
+                printButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+            };
+            
+            printButton.onclick = () => {
+                console.log('🖨️ Print button clicked');
+                if (window.printOverlay) {
+                    window.printOverlay.togglePrintMode();
+                } else {
+                    alert('Print overlay not found! Check console for errors.');
+                }
+            };
+            
+            // Find the right toolbar and add the print button
+            const addToToolbar = () => {
+                // Look for the Cesium viewer toolbar
+                let toolbar = document.querySelector('.cesium-viewer-toolbar');
+                
+                if (!toolbar) {
+                    // Try alternative selectors
+                    toolbar = document.querySelector('.cesium-viewer-toolbar-container');
+                }
+                
+                if (!toolbar) {
+                    // Look for any container with multiple circular buttons
+                    const containers = document.querySelectorAll('div');
+                    for (let container of containers) {
+                        const buttons = container.querySelectorAll('button');
+                        if (buttons.length >= 6 && buttons[0].style.borderRadius === '50%') {
+                            toolbar = container;
+                            break;
+                        }
+                    }
+                }
+                
+                if (toolbar) {
+                    // Apply unified styling to all existing Cesium buttons
+                    const existingButtons = toolbar.querySelectorAll('button');
+                    existingButtons.forEach(btn => {
+                        btn.style.cssText = `
+                            width: 32px;
+                            height: 32px;
+                            border-radius: 50%;
+                            background: rgba(255, 255, 255, 0.9);
+                            color: #333;
+                            border: 1px solid rgba(0, 0, 0, 0.2);
+                            cursor: pointer;
+                            font-size: 16px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 2px 0;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+                        `;
+                        
+                        // Add hover effects to existing buttons
+                        btn.onmouseover = () => {
+                            btn.style.background = 'rgba(255, 255, 255, 1)';
+                            btn.style.transform = 'scale(1.1)';
+                            btn.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
+                        };
+                        btn.onmouseout = () => {
+                            btn.style.background = 'rgba(255, 255, 255, 0.9)';
+                            btn.style.transform = 'scale(1)';
+                            btn.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
+                        };
+                    });
+                    
+                    // Insert the print button at the bottom of the toolbar
+                    toolbar.appendChild(printButton);
+                    console.log('✅ Print button integrated into right toolbar with unified styling');
+                } else {
+                    // Fallback: position it where the toolbar should be
+                    printButton.style.cssText += `
+                        position: fixed;
+                        top: 50%;
+                        right: 20px;
+                        transform: translateY(-50%);
+                        z-index: 1000;
+                    `;
+                    document.body.appendChild(printButton);
+                    console.log('⚠️ Toolbar not found, positioned print button on right side');
+                }
+            };
+            
+            // Try to add to toolbar
+            addToToolbar();
+            
+            // Retry after a delay in case toolbar loads later
+            setTimeout(addToToolbar, 1000);
+            setTimeout(addToToolbar, 3000);
+            
+        }, 2000);
+        
+        console.log('✅ Print overlay system initialized successfully!');
 
         // Handle window resize events for responsiveness
         window.addEventListener('resize', function() {
@@ -3997,19 +4411,39 @@ Built with CesiumJS`;
         }
 
         /**
-         * Validate file format (only GLB/GLTF allowed)
+         * Validate file format (universal 3D model support)
          * @param {File} file - The file to validate
          * @returns {object} - Validation result with isValid and message
          */
         function validateFileFormat(file) {
             const fileName = file.name.toLowerCase();
-            const isGLB = fileName.endsWith('.glb');
-            const isGLTF = fileName.endsWith('.gltf');
+            const universalFormats = [
+                // Cesium 3D Tiles
+                '.json', '.cmpt', '.b3dm', '.i3dm', '.pnts',
+                // glTF formats
+                '.glb', '.gltf',
+                // Traditional 3D formats
+                '.obj', '.fbx', '.dae', '.3ds', '.blend', '.stl', '.ply', '.max', '.ma', '.mb',
+                // Point cloud formats
+                '.las', '.laz',
+                // Gaussian Splatting
+                '.splat',
+                // Geospatial formats
+                '.kml', '.kmz', '.citygml', '.gml',
+                // Archive formats
+                '.zip', '.7z', '.rar',
+                // Image formats for photogrammetry
+                '.jpg', '.jpeg', '.png', '.tiff', '.tif',
+                // BIM formats
+                '.ifc', '.rvt', '.dwg'
+            ];
             
-            if (!isGLB && !isGLTF) {
+            const isValid = universalFormats.some(format => fileName.endsWith(format));
+            
+            if (!isValid) {
                 return {
                     isValid: false,
-                    message: "Only .glb or .gltf files are supported. Please convert your model before uploading."
+                    message: `Unsupported format. We support 30+ formats including 3D Tiles, glTF, OBJ, FBX, LAS, KML, and more. We'll try to process your file automatically.`
                 };
             }
             
@@ -4017,18 +4451,18 @@ Built with CesiumJS`;
         }
 
         /**
-         * Validate file size (5MB limit)
+         * Validate file size (increased to 500MB for large models)
          * @param {File} file - The file to validate
          * @returns {object} - Validation result with isValid and message
          */
         function validateFileSize(file) {
-            const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+            const maxSize = 500 * 1024 * 1024; // 500MB in bytes
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
             
             if (file.size > maxSize) {
                 return {
                     isValid: false,
-                    message: `This model (${fileSizeMB}MB) may be too large for CesiumJS to handle efficiently. Try reducing the file below 5MB.`,
+                    message: `This model (${fileSizeMB}MB) exceeds the 500MB limit. Please reduce the file size or simplify the model.`,
                     size: fileSizeMB
                 };
             }
@@ -4137,6 +4571,14 @@ Built with CesiumJS`;
                     from { transform: translateY(-20px); opacity: 0; }
                     to { transform: translateY(0); opacity: 1; }
                 }
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+                @keyframes slideOut {
+                    from { transform: translateX(0); opacity: 1; }
+                    to { transform: translateX(100%); opacity: 0; }
+                }
             `;
             document.head.appendChild(style);
             
@@ -4214,10 +4656,24 @@ Built with CesiumJS`;
         }
 
         /**
-         * Show compatibility error modal with detailed guidance
+         * Show compatibility error modal with detailed guidance and multi-format support
          * @param {string} fileName - Name of the failed file
          */
         function showCompatibilityError(fileName) {
+            const fileExt = fileName.split('.').pop().toLowerCase();
+            const isConverted = fileName.includes('converted_');
+            
+            let formatSpecificTips = '';
+            if (fileExt === 'obj') {
+                formatSpecificTips = '<strong>For OBJ files:</strong> Try converting to GLB using Blender or online converters.';
+            } else if (fileExt === 'fbx') {
+                formatSpecificTips = '<strong>For FBX files:</strong> Export from your 3D software as GLB or simplify the model.';
+            } else if (fileExt === 'dae') {
+                formatSpecificTips = '<strong>For DAE files:</strong> Use Blender to import and re-export as GLB with simplified settings.';
+            } else if (fileExt === 'stl') {
+                formatSpecificTips = '<strong>For STL files:</strong> These are typically simple geometry and should work. Try reducing polygon count.';
+            }
+            
             const message = `
                 <p>This 3D model (${fileName}) includes features that CesiumJS cannot render properly. Common issues include:</p>
                 <ul style="margin: 12px 0; padding-left: 20px; color: #666;">
@@ -4226,16 +4682,18 @@ Built with CesiumJS`;
                     <li>Unsupported glTF extensions</li>
                     <li>Too many polygons or vertices</li>
                     <li>Non-standard coordinate systems</li>
+                    <li>Format-specific compatibility issues</li>
                 </ul>
                 <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
                     <strong style="color: #007bff;">💡 Quick Fix Tips:</strong>
                     <div style="margin-top: 8px; font-size: 14px; color: #555;">
                         <strong>For Blender:</strong> Export as GLB with "Apply Modifiers" checked, disable animations, and use simple materials.<br>
-                        <strong>For other software:</strong> Simplify the model, remove animations, and ensure it's under 5MB.
+                        <strong>For other software:</strong> Simplify the model, remove animations, and ensure it's under 50MB.<br>
+                        ${formatSpecificTips}
                     </div>
                 </div>
                 <div style="background: #fff3cd; padding: 12px; border-radius: 6px; margin: 16px 0; border-left: 4px solid #ffc107;">
-                    <strong>Note:</strong> The model was uploaded successfully, but CesiumJS couldn't display it. A marker has been placed at the location.
+                    <strong>Note:</strong> The model was uploaded successfully${isConverted ? ' and converted to GLB' : ''}, but CesiumJS couldn't display it. A marker has been placed at the location.
                 </div>
             `;
             
@@ -4248,7 +4706,7 @@ Built with CesiumJS`;
                 {
                     text: 'How to Fix',
                     action: () => {
-                        window.open('https://docs.blender.org/manual/en/latest/addons/import_export/scene_gltf2.html', '_blank');
+                        showModelHelp();
                     },
                     style: 'secondary'
                 }
@@ -4258,21 +4716,368 @@ Built with CesiumJS`;
         }
 
         /**
-         * Load a 3D model at the current camera center position
-         * @param {File} file - The GLTF/GLB file to load
+         * Show message function for user feedback
+         */
+        function showMessage(message, type = 'info') {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: bold;
+                z-index: 10000;
+                max-width: 400px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideIn 0.3s ease-out;
+            `;
+            
+            switch(type) {
+                case 'success':
+                    messageDiv.style.background = '#4CAF50';
+                    break;
+                case 'error':
+                    messageDiv.style.background = '#f44336';
+                    break;
+                case 'warning':
+                    messageDiv.style.background = '#ff9800';
+                    break;
+                default:
+                    messageDiv.style.background = '#2196F3';
+            }
+            
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => {
+                    if (document.body.contains(messageDiv)) {
+                        document.body.removeChild(messageDiv);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        /**
+         * Show processing success message
+         */
+        function showProcessingSuccess(uploadResult) {
+            const { processing_type, message, original_format } = uploadResult;
+            
+            let icon = '✅';
+            let color = '#4CAF50';
+            
+            if (processing_type.includes('fallback') || processing_type.includes('error')) {
+                icon = '⚠️';
+                color = '#ff9800';
+            } else if (processing_type.includes('converted')) {
+                icon = '🔄';
+                color = '#2196F3';
+            }
+            
+            showMessage(`${icon} ${message}`, 'success');
+        }
+
+        /**
+         * Load model based on processing type
+         */
+        async function loadModelByType(processingType, modelUrl, cesiumIonAssetId, filename, longitude, latitude, height) {
+            try {
+                switch (processingType) {
+                    case '3d_tiles':
+                    case 'point_cloud_3dtiles':
+                    case 'gaussian_splats_3dtiles':
+                    case 'geospatial_3dtiles':
+                        await load3DTileset(modelUrl, filename, longitude, latitude, height);
+                        break;
+                        
+                    case 'gltf':
+                    case 'converted_gltf':
+                        await loadGltfModel(modelUrl, filename, longitude, latitude, height);
+                        break;
+                        
+                    case 'cesium_ion':
+                        await loadCesiumIonAsset(cesiumIonAssetId, filename, longitude, latitude, height);
+                        break;
+                        
+                    case 'point_cloud_raw':
+                    case 'gaussian_splats_raw':
+                    case 'geospatial_raw':
+                    case 'traditional_fallback':
+                    case 'archive_raw':
+                    case 'photogrammetry_raw':
+                    case 'bim_raw':
+                    case 'unknown_raw':
+                    default:
+                        await loadFallbackModel(modelUrl, filename, longitude, latitude, height, processingType);
+                        break;
+                }
+            } catch (error) {
+                console.error('Model loading error:', error);
+                showMessage(`❌ Failed to load model: ${error.message}`, 'error');
+                // Place fallback marker
+                placeFallbackMarker(filename, longitude, latitude, height, 'error', modelUrl);
+            }
+        }
+
+        /**
+         * Load 3D Tileset
+         */
+        async function load3DTileset(modelUrl, filename, longitude, latitude, height) {
+            try {
+                console.log('Loading 3D Tileset:', modelUrl);
+                
+                let tileset;
+                if (modelUrl.startsWith('ion://')) {
+                    const assetId = modelUrl.replace('ion://', '');
+                    tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+                } else {
+                    tileset = await Cesium.Cesium3DTileset.fromUrl(modelUrl);
+                }
+                
+                // Position the tileset
+                const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+                const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
+                tileset.modelMatrix = modelMatrix;
+                
+                // Add to scene
+                viewer.scene.primitives.add(tileset);
+                
+                // Fly to the tileset
+                await viewer.flyTo(tileset);
+                
+                showMessage(`✅ 3D Tileset "${filename}" loaded successfully!`, 'success');
+                
+            } catch (error) {
+                console.error('3D Tileset loading error:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Load glTF model
+         */
+        async function loadGltfModel(modelUrl, filename, longitude, latitude, height) {
+            try {
+                console.log('Loading glTF model:', modelUrl);
+                
+                const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+                
+                const entity = viewer.entities.add({
+                    position: position,
+                    model: {
+                        uri: modelUrl,
+                        minimumPixelSize: 128,
+                        maximumScale: 20000,
+                        scale: 1.0,
+                        backFaceCulling: false,
+                        debugShowBoundingVolume: false,
+                        debugWireframe: false,
+                        enableCollision: false,
+                        distanceDisplayCondition: undefined,
+                        silhouetteColor: Cesium.Color.WHITE,
+                        silhouetteSize: 0.0
+                    }
+                });
+                
+                // Wait for model to load
+                await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => reject(new Error('Model loading timeout')), 30000);
+                    
+                    const checkReady = () => {
+                        if (entity.model && entity.model.ready) {
+                            clearTimeout(timeout);
+                            resolve();
+                        } else {
+                            setTimeout(checkReady, 100);
+                        }
+                    };
+                    checkReady();
+                });
+                
+                // Fly to the model
+                viewer.flyTo(entity);
+                
+                showMessage(`✅ glTF model "${filename}" loaded successfully!`, 'success');
+                
+            } catch (error) {
+                console.error('glTF loading error:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Load Cesium ion asset
+         */
+        async function loadCesiumIonAsset(assetId, filename, longitude, latitude, height) {
+            try {
+                console.log('Loading Cesium ion asset:', assetId);
+                
+                const tileset = await Cesium.Cesium3DTileset.fromIonAssetId(assetId);
+                
+                // Position the tileset
+                const position = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+                const modelMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(position);
+                tileset.modelMatrix = modelMatrix;
+                
+                // Add to scene
+                viewer.scene.primitives.add(tileset);
+                
+                // Fly to the tileset
+                await viewer.flyTo(tileset);
+                
+                showMessage(`✅ Cesium ion asset "${filename}" loaded successfully!`, 'success');
+                
+            } catch (error) {
+                console.error('Cesium ion asset loading error:', error);
+                throw error;
+            }
+        }
+
+        /**
+         * Load fallback model (unsupported or failed conversion)
+         */
+        async function loadFallbackModel(modelUrl, filename, longitude, latitude, height, processingType) {
+            console.log('Loading fallback model:', modelUrl, 'Type:', processingType);
+            
+            // Place a marker indicating the file location
+            placeFallbackMarker(filename, longitude, latitude, height, processingType, modelUrl);
+            
+            showMessage(`⚠️ "${filename}" uploaded but requires client-side processing. Click the marker for details.`, 'warning');
+        }
+
+        /**
+         * Place fallback marker for unsupported formats
+         */
+        function placeFallbackMarker(filename, longitude, latitude, height, processingType = 'unknown', modelUrl = null) {
+            const entity = viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
+                billboard: {
+                    image: 'data:image/svg+xml;base64,' + btoa(`
+                        <svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="64" height="64" fill="#FF9800" rx="8"/>
+                            <text x="32" y="20" text-anchor="middle" fill="white" font-size="8" font-family="Arial">3D</text>
+                            <text x="32" y="32" text-anchor="middle" fill="white" font-size="6" font-family="Arial">FILE</text>
+                            <text x="32" y="42" text-anchor="middle" fill="white" font-size="4" font-family="Arial">${filename.substring(0, 8)}...</text>
+                        </svg>
+                    `),
+                    scale: 1.0,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM
+                },
+                label: {
+                    text: `📦 ${filename}`,
+                    font: '12pt sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.TOP,
+                    pixelOffset: new Cesium.Cartesian2(0, -80)
+                }
+            });
+            
+            // Add click handler to show file info
+            const urlText = modelUrl ? `<p><strong>URL:</strong> <a href="${modelUrl}" target="_blank">View File</a></p>` : '';
+            entity.description = new Cesium.ConstantProperty(`
+                <div style="padding: 10px;">
+                    <h3>📦 3D File: ${filename}</h3>
+                    <p><strong>Type:</strong> ${processingType}</p>
+                    <p><strong>Status:</strong> <span style="color: orange;">⚠️ Requires Processing</span></p>
+                    ${urlText}
+                    <hr>
+                    <p><strong>Next Steps:</strong></p>
+                    <ul>
+                        <li>Download the file for local processing</li>
+                        <li>Convert to glTF/GLB format</li>
+                        <li>Use Cesium ion for cloud processing</li>
+                        <li>Try a different file format</li>
+                    </ul>
+                </div>
+            `);
+        }
+
+        /**
+         * Show comprehensive model help guide
+         */
+        function showModelHelp() {
+            const helpMessage = `
+                <h3 style="margin-top: 0;">🎨 How to Create CesiumJS-Compatible 3D Models</h3>
+                
+                <h4>📋 General Guidelines:</h4>
+                <ul style="margin: 12px 0; padding-left: 20px; color: #666;">
+                    <li><strong>File Size:</strong> Keep under 50MB for best performance</li>
+                    <li><strong>Format:</strong> GLB/GLTF preferred, but we support many formats</li>
+                    <li><strong>Geometry:</strong> Simple, clean meshes work best</li>
+                    <li><strong>Materials:</strong> Basic PBR materials only</li>
+                    <li><strong>Animations:</strong> Disable or remove complex animations</li>
+                </ul>
+                
+                <h4>🛠️ Software-Specific Instructions:</h4>
+                
+                <h5>Blender:</h5>
+                <ol style="margin: 12px 0; padding-left: 20px; color: #666;">
+                    <li>Apply all modifiers (Object → Apply → All Modifiers)</li>
+                    <li>Remove animations (Delete all keyframes)</li>
+                    <li>Use simple materials (Principled BSDF only)</li>
+                    <li>Export as GLB (File → Export → glTF 2.0)</li>
+                    <li>Check "Apply Modifiers" in export settings</li>
+                </ol>
+                
+                <h5>Maya/3ds Max:</h5>
+                <ol style="margin: 12px 0; padding-left: 20px; color: #666;">
+                    <li>Bake animations if needed</li>
+                    <li>Simplify materials</li>
+                    <li>Export as FBX, then convert to GLB</li>
+                </ol>
+                
+                <h5>SketchUp:</h5>
+                <ol style="margin: 12px 0; padding-left: 20px; color: #666;">
+                    <li>Use simple textures</li>
+                    <li>Export as OBJ, then convert to GLB</li>
+                </ol>
+                
+                <h4>🔧 Conversion Tools:</h4>
+                <ul style="margin: 12px 0; padding-left: 20px; color: #666;">
+                    <li><strong>Online:</strong> <a href="https://modelconverter.com" target="_blank">ModelConverter</a></li>
+                    <li><strong>Desktop:</strong> Blender (free), MeshLab (free)</li>
+                    <li><strong>Command Line:</strong> assimp, meshlabserver</li>
+                </ul>
+                
+                <div style="background: #e8f5e8; border: 1px solid #4caf50; padding: 15px; border-radius: 8px; margin: 16px 0;">
+                    <strong>✅ Pro Tip:</strong> Start with simple geometric shapes to test the system, then gradually add complexity!
+                </div>
+            `;
+            
+            const buttons = [
+                {
+                    text: 'Got It',
+                    action: () => document.querySelector('.error-modal').remove(),
+                    style: 'primary'
+                }
+            ];
+            
+            showErrorModal('3D Model Help Guide', helpMessage, buttons);
+        }
+
+        /**
+         * Universal 3D model loader with support for 30+ formats
+         * @param {File} file - The 3D model file to load (supports all major formats)
          */
         async function loadModelAtCameraCenter(file) {
             console.log('Loading 3D model:', file.name, 'Size:', file.size, 'bytes');
             
             try {
-                // Step 1: Validate file format (only .glb/.gltf allowed)
+                // Step 1: Validate file format (universal support)
                 const formatValidation = validateFileFormat(file);
                 if (!formatValidation.isValid) {
                     showErrorModal('Unsupported File Format', formatValidation.message);
                     return;
                 }
                 
-                // Step 2: Validate file size (5MB limit with warning)
+                // Step 2: Validate file size (increased to 500MB)
                 const sizeValidation = validateFileSize(file);
                 if (!sizeValidation.isValid) {
                     showErrorModal('Large File Warning', sizeValidation.message, [
@@ -4290,13 +5095,6 @@ Built with CesiumJS`;
                             style: 'secondary'
                         }
                     ]);
-                    return;
-                }
-                
-                // Step 3: Validate file integrity
-                const integrityValidation = await validateModelFile(file);
-                if (!integrityValidation.isValid) {
-                    showErrorModal('Invalid File', integrityValidation.message);
                     return;
                 }
                 
@@ -4366,9 +5164,19 @@ Built with CesiumJS`;
                 const uploadResult = await uploadResponse.json();
                 console.log('Upload successful:', uploadResult);
                 
-                // Use the server URL for the model
+                // Handle different processing types
+                const processingType = uploadResult.processing_type;
                 const modelUrl = uploadResult.url;
-                console.log('Using server URL:', modelUrl);
+                const cesiumIonAssetId = uploadResult.cesium_ion_asset_id;
+                
+                console.log('Processing type:', processingType);
+                console.log('Using URL:', modelUrl);
+                
+                // Show success message based on processing type
+                showProcessingSuccess(uploadResult);
+                
+                // Load model based on processing type
+                await loadModelByType(processingType, modelUrl, cesiumIonAssetId, file.name, longitude, latitude, height);
                 
                 // Show loading indicator
                 const loadingMessage = document.createElement('div');
@@ -4672,26 +5480,26 @@ Built with CesiumJS`;
                                                 })
                                                 .catch((secondError) => {
                                                     console.warn('Second attempt also failed:', secondError);
-                                                    modelLoadFailed = true;
-                                                    
-                                                    // Clean up
-                                                    if (document.body.contains(loadingMessage)) {
-                                                        document.body.removeChild(loadingMessage);
-                                                    }
-                                                    
-                                                    if (modelEntity) {
-                                                        try {
-                                                            viewer.entities.remove(modelEntity);
-                                                        } catch (e) {
-                                                            console.warn('Error removing failed model:', e);
-                                                        }
-                                                    }
-                                                    
-                                                    restoreCameraControls();
-                                                    console.error = originalConsoleError;
-                                                    
-                                                    // Show compatibility error
-                                                    showCompatibilityError(file.name);
+                                    modelLoadFailed = true;
+                                    
+                                    // Clean up
+                                    if (document.body.contains(loadingMessage)) {
+                                        document.body.removeChild(loadingMessage);
+                                    }
+                                    
+                                    if (modelEntity) {
+                                        try {
+                                            viewer.entities.remove(modelEntity);
+                                        } catch (e) {
+                                            console.warn('Error removing failed model:', e);
+                                        }
+                                    }
+                                    
+                                    restoreCameraControls();
+                                    console.error = originalConsoleError;
+                                    
+                                    // Show compatibility error
+                                    showCompatibilityError(file.name);
                                                 });
                                         }
                                     } catch (secondAttemptError) {
@@ -6581,7 +7389,7 @@ Built with CesiumJS`;
         }
         
         console.log('✓ Service Loader system initialized');
-
+        
         /**
          * Swiss-style Sidebar Functions
          */
