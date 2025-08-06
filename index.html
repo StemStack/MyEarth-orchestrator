@@ -237,6 +237,19 @@
             stroke: #333 !important;
         }
         
+        /* Print button active state when print mode is enabled */
+        .cesium-viewer-toolbar .cesium-button.print-active {
+            background: rgba(76, 175, 80, 0.9) !important;
+            color: white !important;
+            border-color: rgba(76, 175, 80, 0.8) !important;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4) !important;
+        }
+        
+        .cesium-viewer-toolbar .cesium-button.print-active:hover {
+            background: rgba(76, 175, 80, 1) !important;
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.5) !important;
+        }
+        
         /* Hide only unwanted elements but keep the main toolbar buttons */
         .cesium-viewer-navigationContainer,
         .cesium-sceneModePicker-wrapper,
@@ -3370,39 +3383,13 @@
         
         // Add print button integrated into the right toolbar
         setTimeout(() => {
-            // Create print button with circular toolbar styling
+            // Create print button with proper Cesium toolbar styling
             const printButton = document.createElement('button');
             printButton.innerHTML = '🖨️';
             printButton.title = 'Print to PDF';
-            printButton.style.cssText = `
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                background: rgba(255, 255, 255, 0.9);
-                color: #333;
-                border: 1px solid rgba(0, 0, 0, 0.2);
-                cursor: pointer;
-                font-size: 16px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 2px 0;
-                transition: all 0.3s ease;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            `;
+            printButton.className = 'cesium-button'; // Use Cesium's button class for consistent styling
             
-            // Hover effects
-            printButton.onmouseover = () => {
-                printButton.style.background = 'rgba(255, 255, 255, 1)';
-                printButton.style.transform = 'scale(1.1)';
-                printButton.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-            };
-            printButton.onmouseout = () => {
-                printButton.style.background = 'rgba(255, 255, 255, 0.9)';
-                printButton.style.transform = 'scale(1)';
-                printButton.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-            };
-            
+            // Add click handler
             printButton.onclick = () => {
                 console.log('🖨️ Print button clicked');
                 if (window.printOverlay) {
@@ -3435,53 +3422,27 @@
                 }
                 
                 if (toolbar) {
-                    // Apply unified styling to all existing Cesium buttons
-                    const existingButtons = toolbar.querySelectorAll('button');
-                    existingButtons.forEach(btn => {
-                        btn.style.cssText = `
-                            width: 32px;
-                            height: 32px;
-                            border-radius: 50%;
-                            background: rgba(255, 255, 255, 0.9);
-                            color: #333;
-                            border: 1px solid rgba(0, 0, 0, 0.2);
-                            cursor: pointer;
-                            font-size: 16px;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            margin: 2px 0;
-                            transition: all 0.3s ease;
-                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-                        `;
-                        
-                        // Add hover effects to existing buttons
-                        btn.onmouseover = () => {
-                            btn.style.background = 'rgba(255, 255, 255, 1)';
-                            btn.style.transform = 'scale(1.1)';
-                            btn.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.3)';
-                        };
-                        btn.onmouseout = () => {
-                            btn.style.background = 'rgba(255, 255, 255, 0.9)';
-                            btn.style.transform = 'scale(1)';
-                            btn.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.2)';
-                        };
-                    });
-                    
                     // Insert the print button at the bottom of the toolbar
                     toolbar.appendChild(printButton);
-                    console.log('✅ Print button integrated into right toolbar with unified styling');
+                    console.log('✅ Print button integrated into right toolbar with consistent styling');
                 } else {
-                    // Fallback: position it where the toolbar should be
-                    printButton.style.cssText += `
+                    // Fallback: create a minimal toolbar container
+                    const fallbackToolbar = document.createElement('div');
+                    fallbackToolbar.className = 'cesium-viewer-toolbar';
+                    fallbackToolbar.style.cssText = `
                         position: fixed;
-                        top: 50%;
-                        right: 20px;
-                        transform: translateY(-50%);
+                        bottom: 80px;
+                        right: 10px;
+                        background: rgba(255, 255, 255, 0.3);
+                        border-radius: 8px;
+                        padding: 4px;
+                        flex-direction: column;
+                        display: flex;
                         z-index: 1000;
                     `;
-                    document.body.appendChild(printButton);
-                    console.log('⚠️ Toolbar not found, positioned print button on right side');
+                    fallbackToolbar.appendChild(printButton);
+                    document.body.appendChild(fallbackToolbar);
+                    console.log('⚠️ Toolbar not found, created fallback toolbar for print button');
                 }
             };
             

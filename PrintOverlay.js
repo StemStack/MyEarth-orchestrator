@@ -503,6 +503,12 @@ class PrintOverlay {
         // Add print mode class to body
         document.body.classList.add('print-mode-active');
         
+        // Add active class to print button
+        const printButton = document.querySelector('.cesium-viewer-toolbar .cesium-button[title="Print to PDF"]');
+        if (printButton) {
+            printButton.classList.add('print-active');
+        }
+        
         console.log('🖨️ Print mode activated');
     }
 
@@ -521,6 +527,12 @@ class PrintOverlay {
         
         // Remove print mode class
         document.body.classList.remove('print-mode-active');
+        
+        // Remove active class from print button
+        const printButton = document.querySelector('.cesium-viewer-toolbar .cesium-button[title="Print to PDF"]');
+        if (printButton) {
+            printButton.classList.remove('print-active');
+        }
         
         console.log('🖨️ Print mode deactivated');
     }
