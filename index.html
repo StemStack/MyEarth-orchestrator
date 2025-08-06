@@ -4998,6 +4998,329 @@ Built with CesiumJS`;
         }
 
         /**
+         * Global Keyboard Shortcuts System
+         * Provides convenient hotkeys for common actions
+         */
+        function initializeKeyboardShortcuts() {
+            document.addEventListener('keydown', (event) => {
+                // Don't trigger shortcuts when typing in inputs
+                if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable) {
+                    return;
+                }
+                
+                // Don't trigger if any modifier keys are pressed (except for specific combos)
+                const hasModifier = event.ctrlKey || event.metaKey || event.altKey;
+                
+                switch (event.key.toLowerCase()) {
+                    case 'escape':
+                        // Close any open panels or modals
+                        event.preventDefault();
+                        closeAllPanels();
+                        showMessage('Panels closed', 'info');
+                        break;
+                        
+                    case ' ': // Spacebar
+                        // Reset camera to home view
+                        event.preventDefault();
+                        resetToHomeView();
+                        showMessage('Camera reset to home', 'info');
+                        break;
+                        
+                    case 'h':
+                        // Toggle help/info
+                        event.preventDefault();
+                        toggleHelpMenu();
+                        break;
+                        
+                    case 'f':
+                        // Toggle fullscreen
+                        if (!hasModifier) {
+                            event.preventDefault();
+                            toggleFullscreen();
+                        }
+                        break;
+                        
+                    case 'l':
+                        // Toggle layers panel
+                        event.preventDefault();
+                        toggleLayersPanel();
+                        showMessage('Layers panel toggled', 'info');
+                        break;
+                        
+                    case 'm':
+                        // Toggle measurement tool
+                        event.preventDefault();
+                        toggleMeasurementTool();
+                        break;
+                        
+                    case 'p':
+                        // Toggle print mode
+                        if (!hasModifier) {
+                            event.preventDefault();
+                            if (window.printOverlay) {
+                                window.printOverlay.toggle();
+                            }
+                        }
+                        break;
+                        
+                    case 'g':
+                        // Toggle gizmo (if available)
+                        event.preventDefault();
+                        if (window.toggleGizmo) {
+                            window.toggleGizmo();
+                        }
+                        break;
+                        
+                    case 'n':
+                        // Reset camera to north
+                        event.preventDefault();
+                        resetCameraToNorth();
+                        showMessage('Camera oriented to north', 'info');
+                        break;
+                        
+                    case '+':
+                    case '=':
+                        // Zoom in
+                        event.preventDefault();
+                        zoomIn();
+                        break;
+                        
+                    case '-':
+                        // Zoom out
+                        event.preventDefault();
+                        zoomOut();
+                        break;
+                        
+                    case 't':
+                        // Toggle 3D/2D view mode
+                        event.preventDefault();
+                        toggle3DMode();
+                        break;
+                        
+                    case 'c':
+                        // Toggle coordinates display
+                        event.preventDefault();
+                        toggleCoordinatesDisplay();
+                        break;
+                        
+                    case '?':
+                        // Show keyboard shortcuts help
+                        event.preventDefault();
+                        showKeyboardShortcutsHelp();
+                        break;
+                }
+            });
+            
+            console.log('⌨️ Keyboard shortcuts initialized');
+        }
+
+        /**
+         * Close all open panels and overlays
+         */
+        function closeAllPanels() {
+            // Close measurement panel
+            const measurementControls = document.getElementById('measurementControls');
+            if (measurementControls && measurementControls.style.display === 'block') {
+                toggleMeasurementTool();
+            }
+            
+            // Close marker panel
+            const markerControls = document.getElementById('markerControls');
+            if (markerControls && markerControls.style.display === 'block') {
+                toggleMarkerPanel();
+            }
+            
+            // Close layers panel
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.classList.contains('active')) {
+                toggleLayersPanel();
+            }
+            
+            // Close print overlay
+            if (window.printOverlay && window.printOverlay.isActive) {
+                window.printOverlay.hide();
+            }
+            
+            // Close any modals
+            const modals = document.querySelectorAll('.error-modal, .success-modal');
+            modals.forEach(modal => modal.remove());
+        }
+
+        /**
+         * Reset camera to home view (Europe)
+         */
+        function resetToHomeView() {
+            const europeHomeView = {
+                destination: Cesium.Cartesian3.fromDegrees(10.0, 40.0, 8000000.0),
+                orientation: {
+                    heading: Cesium.Math.toRadians(0),
+                    pitch: Cesium.Math.toRadians(-90),
+                    roll: 0.0
+                }
+            };
+            viewer.camera.setView(europeHomeView);
+        }
+
+        /**
+         * Reset camera orientation to north
+         */
+        function resetCameraToNorth() {
+            const currentPosition = viewer.camera.position;
+            const cartographic = Cesium.Cartographic.fromCartesian(currentPosition);
+            
+            viewer.camera.setView({
+                destination: currentPosition,
+                orientation: {
+                    heading: Cesium.Math.toRadians(0), // North
+                    pitch: viewer.camera.pitch, // Keep current pitch
+                    roll: 0.0
+                }
+            });
+        }
+
+        /**
+         * Toggle 3D/2D view mode
+         */
+        function toggle3DMode() {
+            const currentMode = viewer.scene.mode;
+            
+            if (currentMode === Cesium.SceneMode.SCENE3D) {
+                viewer.scene.mode = Cesium.SceneMode.SCENE2D;
+                showMessage('Switched to 2D mode', 'info');
+            } else {
+                viewer.scene.mode = Cesium.SceneMode.SCENE3D;
+                showMessage('Switched to 3D mode', 'info');
+            }
+        }
+
+        /**
+         * Toggle coordinates display
+         */
+        function toggleCoordinatesDisplay() {
+            const coordinatesInfo = document.getElementById('coordinatesInfo');
+            if (coordinatesInfo) {
+                const isHidden = coordinatesInfo.style.display === 'none';
+                coordinatesInfo.style.display = isHidden ? 'block' : 'none';
+                showMessage(`Coordinates display ${isHidden ? 'enabled' : 'disabled'}`, 'info');
+            }
+        }
+
+        /**
+         * Show keyboard shortcuts help dialog
+         */
+        function showKeyboardShortcutsHelp() {
+            const shortcuts = `
+🔥 MyEarth Keyboard Shortcuts
+
+NAVIGATION:
+• Space - Reset camera to home view
+• N - Orient camera to north
+• + / = - Zoom in
+• - - Zoom out
+• T - Toggle 2D/3D mode
+
+TOOLS:
+• L - Toggle layers panel
+• M - Toggle measurement tool
+• P - Toggle print mode
+• G - Toggle 3D gizmo (if available)
+• C - Toggle coordinates display
+
+GENERAL:
+• ESC - Close all panels
+• F - Toggle fullscreen
+• H - Show help information
+• ? - Show this shortcuts guide
+
+TIP: These shortcuts work when not typing in input fields.
+            `;
+            
+            alert(shortcuts);
+        }
+
+        /**
+         * Zoom in function
+         */
+        function zoomIn() {
+            const camera = viewer.camera;
+            const currentHeight = camera.positionCartographic.height;
+            const newHeight = currentHeight * 0.7; // Zoom in by 30%
+            
+            const currentPosition = camera.position;
+            const cartographic = Cesium.Cartographic.fromCartesian(currentPosition);
+            
+            const newPosition = Cesium.Cartesian3.fromRadians(
+                cartographic.longitude,
+                cartographic.latitude,
+                newHeight
+            );
+            
+            camera.setView({
+                destination: newPosition,
+                orientation: {
+                    heading: camera.heading,
+                    pitch: camera.pitch,
+                    roll: camera.roll
+                }
+            });
+        }
+
+        /**
+         * Zoom out function
+         */
+        function zoomOut() {
+            const camera = viewer.camera;
+            const currentHeight = camera.positionCartographic.height;
+            const newHeight = currentHeight * 1.4; // Zoom out by 40%
+            
+            const currentPosition = camera.position;
+            const cartographic = Cesium.Cartographic.fromCartesian(currentPosition);
+            
+            const newPosition = Cesium.Cartesian3.fromRadians(
+                cartographic.longitude,
+                cartographic.latitude,
+                newHeight
+            );
+            
+            camera.setView({
+                destination: newPosition,
+                orientation: {
+                    heading: camera.heading,
+                    pitch: camera.pitch,
+                    roll: camera.roll
+                }
+            });
+        }
+
+        /**
+         * Toggle fullscreen mode
+         */
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                // Enter fullscreen
+                document.documentElement.requestFullscreen().then(() => {
+                    showMessage('Entered fullscreen mode (Press F or ESC to exit)', 'info');
+                }).catch(err => {
+                    showMessage('Failed to enter fullscreen mode', 'error');
+                    console.error('Fullscreen error:', err);
+                });
+            } else {
+                // Exit fullscreen
+                document.exitFullscreen().then(() => {
+                    showMessage('Exited fullscreen mode', 'info');
+                }).catch(err => {
+                    showMessage('Failed to exit fullscreen mode', 'error');
+                    console.error('Fullscreen exit error:', err);
+                });
+            }
+        }
+
+        // Initialize keyboard shortcuts after viewer is ready
+        setTimeout(() => {
+            initializeKeyboardShortcuts();
+        }, 1000);
+
+        /**
          * Show compatibility error modal with detailed guidance and multi-format support
          * @param {string} fileName - Name of the failed file
          */
