@@ -556,8 +556,27 @@ class PrintOverlay {
             controller.minimumZoomDistance = 1000;
             controller.maximumZoomDistance = 20000000;
             
+            // Force Cesium to handle events properly
+            if (this.viewer.scene.globe) {
+                this.viewer.scene.globe.enableLighting = false;
+            }
+            
+            // Ensure the viewer is responsive
+            this.viewer.scene.requestRenderMode = false;
+            this.viewer.scene.maximumRenderTimeChange = Infinity;
+            
             console.log('🎯 Cesium interactions explicitly enabled');
         }
+        
+        // Add a small delay to ensure everything is properly initialized
+        setTimeout(() => {
+            if (this.viewer && this.viewer.scene && this.viewer.scene.screenSpaceCameraController) {
+                const controller = this.viewer.scene.screenSpaceCameraController;
+                controller.enablePan = true;
+                controller.enableZoom = true;
+                console.log('🎯 Cesium interactions re-enabled after delay');
+            }
+        }, 100);
     }
 
     /**
