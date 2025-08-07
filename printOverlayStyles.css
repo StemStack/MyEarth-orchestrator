@@ -43,6 +43,247 @@
     pointer-events: none;
     z-index: 1000;
     display: none;
+    resize: none;
+    overflow: hidden;
+}
+
+/* Allow pointer events to pass through to Cesium viewer */
+.print-overlay-container .cesium-viewer,
+.print-overlay-container .cesium-viewer *,
+.print-overlay-container .cesium-widget,
+.print-overlay-container .cesium-widget *,
+.print-overlay-container .cesium-viewer-canvas,
+.print-overlay-container .cesium-viewer-canvas *,
+.print-overlay-container .cesium-viewer-container,
+.print-overlay-container .cesium-viewer-container * {
+    pointer-events: auto !important;
+}
+
+/* Disable any resize handles on overlay container */
+.print-overlay-container::-webkit-resizer,
+.print-overlay-container::-webkit-scrollbar,
+.print-overlay-container::-webkit-scrollbar-thumb,
+.print-overlay-container::-webkit-scrollbar-track {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Disable scrollbars and handles on Cesium viewer and all its containers */
+.cesium-viewer,
+.cesium-viewer *,
+.cesium-widget,
+.cesium-widget *,
+.cesium-viewer-canvas,
+.cesium-viewer-canvas *,
+.cesium-viewer-container,
+.cesium-viewer-container * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.cesium-viewer::-webkit-scrollbar,
+.cesium-viewer *::-webkit-scrollbar,
+.cesium-widget::-webkit-scrollbar,
+.cesium-widget *::-webkit-scrollbar,
+.cesium-viewer-canvas::-webkit-scrollbar,
+.cesium-viewer-canvas *::-webkit-scrollbar,
+.cesium-viewer-container::-webkit-scrollbar,
+.cesium-viewer-container *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.cesium-viewer::-webkit-scrollbar-thumb,
+.cesium-viewer *::-webkit-scrollbar-thumb,
+.cesium-widget::-webkit-scrollbar-thumb,
+.cesium-widget *::-webkit-scrollbar-thumb,
+.cesium-viewer-canvas::-webkit-scrollbar-thumb,
+.cesium-viewer-canvas *::-webkit-scrollbar-thumb,
+.cesium-viewer-container::-webkit-scrollbar-thumb,
+.cesium-viewer-container *::-webkit-scrollbar-thumb {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.cesium-viewer::-webkit-scrollbar-track,
+.cesium-viewer *::-webkit-scrollbar-track,
+.cesium-widget::-webkit-scrollbar-track,
+.cesium-widget *::-webkit-scrollbar-track,
+.cesium-viewer-canvas::-webkit-scrollbar-track,
+.cesium-viewer-canvas *::-webkit-scrollbar-track,
+.cesium-viewer-container::-webkit-scrollbar-track,
+.cesium-viewer-container *::-webkit-scrollbar-track {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Disable any potential resize handles on Cesium elements */
+.cesium-viewer::-webkit-resizer,
+.cesium-viewer *::-webkit-resizer,
+.cesium-widget::-webkit-resizer,
+.cesium-widget *::-webkit-resizer,
+.cesium-viewer-canvas::-webkit-resizer,
+.cesium-viewer-canvas *::-webkit-resizer,
+.cesium-viewer-container::-webkit-resizer,
+.cesium-viewer-container *::-webkit-resizer {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Disable all scrollbars and handles when in print mode */
+.print-mode-active,
+.print-mode-active *,
+.print-mode-active html,
+.print-mode-active body,
+.print-mode-active html *,
+.print-mode-active body * {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+.print-mode-active::-webkit-scrollbar,
+.print-mode-active *::-webkit-scrollbar,
+.print-mode-active html::-webkit-scrollbar,
+.print-mode-active body::-webkit-scrollbar,
+.print-mode-active html *::-webkit-scrollbar,
+.print-mode-active body *::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.print-mode-active::-webkit-scrollbar-thumb,
+.print-mode-active *::-webkit-scrollbar-thumb,
+.print-mode-active html::-webkit-scrollbar-thumb,
+.print-mode-active body::-webkit-scrollbar-thumb,
+.print-mode-active html *::-webkit-scrollbar-thumb,
+.print-mode-active body *::-webkit-scrollbar-thumb {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.print-mode-active::-webkit-scrollbar-track,
+.print-mode-active *::-webkit-scrollbar-track,
+.print-mode-active html::-webkit-scrollbar-track,
+.print-mode-active body::-webkit-scrollbar-track,
+.print-mode-active html *::-webkit-scrollbar-track,
+.print-mode-active body *::-webkit-scrollbar-track {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.print-mode-active::-webkit-resizer,
+.print-mode-active *::-webkit-resizer,
+.print-mode-active html::-webkit-resizer,
+.print-mode-active body::-webkit-resizer,
+.print-mode-active html *::-webkit-resizer,
+.print-mode-active body *::-webkit-resizer {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Nuclear option: Disable ALL scrollbars and handles on EVERYTHING when in print mode */
+.print-mode-active *,
+.print-mode-active html,
+.print-mode-active body,
+.print-mode-active div,
+.print-mode-active iframe,
+.print-mode-active object,
+.print-mode-active embed {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+
+/* Don't disable overflow on canvas elements to allow map panning */
+.print-mode-active canvas {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+    /* Keep overflow visible for map interactions */
+    pointer-events: auto !important;
+    user-select: none !important;
+}
+
+/* Ensure Cesium viewer can receive pointer events in print mode */
+.print-mode-active .cesium-viewer,
+.print-mode-active .cesium-viewer *,
+.print-mode-active .cesium-widget,
+.print-mode-active .cesium-widget *,
+.print-mode-active .cesium-viewer-canvas,
+.print-mode-active .cesium-viewer-canvas *,
+.print-mode-active .cesium-viewer-container,
+.print-mode-active .cesium-viewer-container * {
+    pointer-events: auto !important;
+    user-select: none !important;
+}
+
+.print-mode-active *::-webkit-scrollbar,
+.print-mode-active html::-webkit-scrollbar,
+.print-mode-active body::-webkit-scrollbar,
+.print-mode-active div::-webkit-scrollbar,
+.print-mode-active canvas::-webkit-scrollbar,
+.print-mode-active iframe::-webkit-scrollbar,
+.print-mode-active object::-webkit-scrollbar,
+.print-mode-active embed::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.print-mode-active *::-webkit-scrollbar-thumb,
+.print-mode-active html::-webkit-scrollbar-thumb,
+.print-mode-active body::-webkit-scrollbar-thumb,
+.print-mode-active div::-webkit-scrollbar-thumb,
+.print-mode-active canvas::-webkit-scrollbar-thumb,
+.print-mode-active iframe::-webkit-scrollbar-thumb,
+.print-mode-active object::-webkit-scrollbar-thumb,
+.print-mode-active embed::-webkit-scrollbar-thumb {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.print-mode-active *::-webkit-scrollbar-track,
+.print-mode-active html::-webkit-scrollbar-track,
+.print-mode-active body::-webkit-scrollbar-track,
+.print-mode-active div::-webkit-scrollbar-track,
+.print-mode-active canvas::-webkit-scrollbar-track,
+.print-mode-active iframe::-webkit-scrollbar-track,
+.print-mode-active object::-webkit-scrollbar-track,
+.print-mode-active embed::-webkit-scrollbar-track {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+.print-mode-active *::-webkit-resizer,
+.print-mode-active html::-webkit-resizer,
+.print-mode-active body::-webkit-resizer,
+.print-mode-active div::-webkit-resizer,
+.print-mode-active canvas::-webkit-resizer,
+.print-mode-active iframe::-webkit-resizer,
+.print-mode-active object::-webkit-resizer,
+.print-mode-active embed::-webkit-resizer {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Also disable any potential drag handles or corner handles */
+.print-mode-active *::before,
+.print-mode-active *::after,
+.print-mode-active html::before,
+.print-mode-active html::after,
+.print-mode-active body::before,
+.print-mode-active body::after {
+    display: none !important;
 }
 
 /* Darkened Area Overlay */
@@ -61,12 +302,30 @@
 /* Print Frame */
 .print-frame {
     position: absolute;
-    border: 3px solid #4CAF50;
+    border: none;
     background: transparent;
     pointer-events: none;
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+    box-shadow: none;
     transition: all 0.3s ease;
     z-index: 1002;
+    resize: none;
+    overflow: hidden;
+}
+
+/* Disable any resize handles */
+.print-frame::-webkit-resizer,
+.print-frame::-webkit-scrollbar,
+.print-frame::-webkit-scrollbar-thumb,
+.print-frame::-webkit-scrollbar-track {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* Disable any potential drag handles */
+.print-frame::before,
+.print-frame::after {
+    display: none !important;
 }
 
 /* Frame Labels */

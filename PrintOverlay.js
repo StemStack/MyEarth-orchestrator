@@ -37,7 +37,8 @@ class PrintOverlay {
             includeLegend: this.options.includeLegend,
             includeGrid: this.options.includeGrid,
             includeTitle: this.options.includeTitle,
-            includeCopyright: this.options.includeCopyright
+            includeCopyright: this.options.includeCopyright,
+            titleText: ''
         };
         
         // Paper size definitions (mm)
@@ -190,10 +191,10 @@ class PrintOverlay {
         this.printFrame.className = 'print-frame';
         this.printFrame.style.cssText = `
             position: absolute;
-            border: 3px solid #4CAF50;
+            border: none;
             background: transparent;
             pointer-events: none;
-            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+            box-shadow: none;
             z-index: 1002;
         `;
         
@@ -297,17 +298,19 @@ class PrintOverlay {
         this.settingsPanel.innerHTML = this.getSettingsPanelHTML();
         this.settingsPanel.style.cssText = `
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 8px;
+            right: 8px;
             background: rgba(0, 0, 0, 0.9);
             color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(10px);
             z-index: 2000;
             display: none;
-            min-width: 280px;
+            min-width: 180px;
+            max-width: 220px;
+            font-size: 11px;
         `;
         
         document.body.appendChild(this.settingsPanel);
@@ -319,15 +322,15 @@ class PrintOverlay {
      */
     getSettingsPanelHTML() {
         return `
-            <div class="print-settings-header">
-                <h3>🖨️ Print Settings</h3>
-                <button class="print-close-btn" onclick="printOverlay.exitPrintMode()">✕</button>
+            <div class="print-settings-header" style="margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 13px;">🖨️ Print</h3>
+                <button class="print-close-btn" onclick="printOverlay.exitPrintMode()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
             </div>
             
-            <div class="print-settings-content">
-                <div class="print-setting-group">
-                    <label>Paper Size:</label>
-                    <select id="overlayPaperSize">
+            <div class="print-settings-content" style="font-size: 10px;">
+                <div class="print-setting-group" style="margin-bottom: 4px;">
+                    <label style="display: block; margin-bottom: 1px;">Size:</label>
+                    <select id="overlayPaperSize" style="width: 100%; padding: 1px; font-size: 10px;">
                         <option value="A4">A4</option>
                         <option value="A3">A3</option>
                         <option value="A2">A2</option>
@@ -336,57 +339,51 @@ class PrintOverlay {
                     </select>
                 </div>
                 
-                <div class="print-setting-group">
-                    <label>Orientation:</label>
-                    <div class="orientation-buttons">
-                        <button class="orientation-btn active" data-orientation="portrait">📏 Portrait</button>
-                        <button class="orientation-btn" data-orientation="landscape">📐 Landscape</button>
+                <div class="print-setting-group" style="margin-bottom: 4px;">
+                    <label style="display: block; margin-bottom: 1px;">Orientation:</label>
+                    <div class="orientation-buttons" style="display: flex; gap: 3px;">
+                        <button class="orientation-btn active" data-orientation="portrait" style="flex: 1; padding: 3px; font-size: 9px; background: #4CAF50; border: none; color: white; border-radius: 2px;">Portrait</button>
+                        <button class="orientation-btn" data-orientation="landscape" style="flex: 1; padding: 3px; font-size: 9px; background: #666; border: none; color: white; border-radius: 2px;">Landscape</button>
                     </div>
                 </div>
                 
-                <div class="print-setting-group">
-                    <label>Scale:</label>
-                    <select id="overlayMapScale">
+                <div class="print-setting-group" style="margin-bottom: 4px;">
+                    <label style="display: block; margin-bottom: 1px;">Scale:</label>
+                    <select id="overlayMapScale" style="width: 100%; padding: 1px; font-size: 10px;">
                         ${this.scalePresets.map(scale => `<option value="${scale}">${scale}</option>`).join('')}
                         <option value="custom">Custom...</option>
                     </select>
                 </div>
                 
-                <div class="print-setting-group" id="customScaleContainer" style="display: none;">
-                    <label>Custom Scale:</label>
-                    <input type="text" id="customScaleInput" placeholder="1:1'500'000">
+                <div class="print-setting-group" id="customScaleContainer" style="display: none; margin-bottom: 4px;">
+                    <label style="display: block; margin-bottom: 1px;">Custom Scale:</label>
+                    <input type="text" id="customScaleInput" placeholder="1:1'500'000" style="width: 100%; padding: 1px; font-size: 10px;">
                 </div>
                 
-                <div class="print-setting-group">
-                    <label>
-                        <input type="checkbox" id="overlayIncludeTitle" checked>
-                        Include Title
+                <div class="print-setting-group" style="margin-bottom: 3px;">
+                    <label style="display: flex; align-items: center; gap: 3px; font-size: 9px;">
+                        <input type="checkbox" id="overlayIncludeTitle" checked style="margin: 0;">
+                        Title
+                    </label>
+                    <input type="text" id="overlayTitleText" placeholder="Enter title" style="margin-top: 3px; width: 100%; padding: 2px; font-size: 10px; display: none;" />
+                </div>
+                
+                <div class="print-setting-group" style="margin-bottom: 3px;">
+                    <label style="display: flex; align-items: center; gap: 3px; font-size: 9px;">
+                        <input type="checkbox" id="overlayIncludeLegend" checked style="margin: 0;">
+                        Legend
                     </label>
                 </div>
                 
-                <div class="print-setting-group">
-                    <label>
-                        <input type="checkbox" id="overlayIncludeLegend" checked>
-                        Include Legend
-                    </label>
-                </div>
-                
-                <div class="print-setting-group">
-                    <label>
-                        <input type="checkbox" id="overlayIncludeGrid">
-                        Include Grid
-                    </label>
-                </div>
-                
-                <div class="print-setting-group">
-                    <label>
-                        <input type="checkbox" id="overlayIncludeCopyright" checked>
-                        Include Copyright
+                <div class="print-setting-group" style="margin-bottom: 6px;">
+                    <label style="display: flex; align-items: center; gap: 3px; font-size: 9px;">
+                        <input type="checkbox" id="overlayIncludeGrid" style="margin: 0;">
+                        Grid
                     </label>
                 </div>
                 
                 <div class="print-actions">
-                    <button class="print-generate-btn" onclick="printOverlay.generatePDF()">
+                    <button class="print-generate-btn" onclick="printOverlay.generatePDF()" style="width: 100%; padding: 5px; background: #4CAF50; border: none; color: white; border-radius: 3px; font-size: 11px; cursor: pointer;">
                         📄 Generate PDF
                     </button>
                 </div>
@@ -439,15 +436,37 @@ class PrintOverlay {
             this.updatePrintFrame();
         };
         
-        // Content options
-        const checkboxes = ['overlayIncludeTitle', 'overlayIncludeLegend', 'overlayIncludeGrid', 'overlayIncludeCopyright'];
-        checkboxes.forEach(id => {
+        // Content options (copyright is always included by default)
+        const checkboxMap = {
+            overlayIncludeTitle: 'includeTitle',
+            overlayIncludeLegend: 'includeLegend',
+            overlayIncludeGrid: 'includeGrid'
+        };
+        Object.entries(checkboxMap).forEach(([id, key]) => {
             const checkbox = document.getElementById(id);
-            checkbox.checked = this.currentSettings[id.replace('overlay', '').toLowerCase()];
+            if (!checkbox) return;
+            checkbox.checked = !!this.currentSettings[key];
             checkbox.onchange = (e) => {
-                this.currentSettings[id.replace('overlay', '').toLowerCase()] = e.target.checked;
+                this.currentSettings[key] = e.target.checked;
+                if (id === 'overlayIncludeTitle') {
+                    const titleInput = document.getElementById('overlayTitleText');
+                    if (titleInput) {
+                        titleInput.style.display = e.target.checked ? 'block' : 'none';
+                    }
+                }
             };
         });
+
+        // Title text input handling
+        const titleInput = document.getElementById('overlayTitleText');
+        if (titleInput) {
+            titleInput.value = this.currentSettings.titleText || '';
+            // Show input if title checkbox is enabled
+            titleInput.style.display = this.currentSettings.includeTitle ? 'block' : 'none';
+            titleInput.addEventListener('input', (e) => {
+                this.currentSettings.titleText = e.target.value;
+            });
+        }
     }
 
     /**
@@ -484,15 +503,30 @@ class PrintOverlay {
         if (this.viewer && this.viewer.scene.screenSpaceCameraController) {
             const controller = this.viewer.scene.screenSpaceCameraController;
             
-            // Enable panning but keep rotation/tilt disabled
-            controller.enablePan = true;
-            controller.enableRotate = false;
+            // Enable translate and rotate (needed for one-finger drag on mobile), keep tilt disabled
+            controller.enableTranslate = true;
+            controller.enableRotate = true;
             controller.enableTilt = false;
+            if (typeof controller.enableLook !== 'undefined') {
+                controller.enableLook = false;
+            }
             controller.enableZoom = true;
             
             // Set panning constraints to keep the view within reasonable bounds
             controller.minimumZoomDistance = 1000;
             controller.maximumZoomDistance = 20000000;
+
+            // Force translate to use LEFT_DRAG so single-finger/left-drag pans
+            if (typeof Cesium !== 'undefined' && Cesium.CameraEventType) {
+                // Allow left-drag to rotate (mobile one-finger), keep translate on right/middle drag
+                controller.rotateEventTypes = [Cesium.CameraEventType.LEFT_DRAG];
+                controller.translateEventTypes = [Cesium.CameraEventType.RIGHT_DRAG, Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.PINCH];
+                controller.zoomEventTypes = [Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
+                controller.tiltEventTypes = [];
+                if (typeof controller.lookEventTypes !== 'undefined') {
+                    controller.lookEventTypes = [];
+                }
+            }
             
             // Force Cesium to handle mouse events
             if (this.viewer.canvas) {
@@ -505,7 +539,7 @@ class PrintOverlay {
             }
             
             console.log('🎮 Camera controls updated:', {
-                enablePan: controller.enablePan,
+                enableTranslate: controller.enableTranslate,
                 enableRotate: controller.enableRotate,
                 enableTilt: controller.enableTilt,
                 enableZoom: controller.enableZoom
@@ -547,10 +581,24 @@ class PrintOverlay {
             const controller = this.viewer.scene.screenSpaceCameraController;
             
             // Enable all necessary interactions
-            controller.enablePan = true;
+            controller.enableTranslate = true;
             controller.enableZoom = true;
-            controller.enableRotate = false;
+            controller.enableRotate = true;
             controller.enableTilt = false;
+            if (typeof controller.enableLook !== 'undefined') {
+                controller.enableLook = false;
+            }
+
+            // Map event types so LEFT_DRAG pans
+            if (typeof Cesium !== 'undefined' && Cesium.CameraEventType) {
+                controller.rotateEventTypes = [Cesium.CameraEventType.LEFT_DRAG];
+                controller.translateEventTypes = [Cesium.CameraEventType.RIGHT_DRAG, Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.PINCH];
+                controller.zoomEventTypes = [Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
+                controller.tiltEventTypes = [];
+                if (typeof controller.lookEventTypes !== 'undefined') {
+                    controller.lookEventTypes = [];
+                }
+            }
             
             // Set reasonable constraints
             controller.minimumZoomDistance = 1000;
@@ -572,8 +620,21 @@ class PrintOverlay {
         setTimeout(() => {
             if (this.viewer && this.viewer.scene && this.viewer.scene.screenSpaceCameraController) {
                 const controller = this.viewer.scene.screenSpaceCameraController;
-                controller.enablePan = true;
+                controller.enableTranslate = true;
                 controller.enableZoom = true;
+                controller.enableRotate = true;
+                if (typeof controller.enableLook !== 'undefined') {
+                    controller.enableLook = false;
+                }
+                if (typeof Cesium !== 'undefined' && Cesium.CameraEventType) {
+                    controller.rotateEventTypes = [Cesium.CameraEventType.LEFT_DRAG];
+                    controller.translateEventTypes = [Cesium.CameraEventType.RIGHT_DRAG, Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.PINCH];
+                    controller.zoomEventTypes = [Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
+                    controller.tiltEventTypes = [];
+                    if (typeof controller.lookEventTypes !== 'undefined') {
+                        controller.lookEventTypes = [];
+                    }
+                }
                 console.log('🎯 Cesium interactions re-enabled after delay');
             }
         }, 100);
@@ -605,6 +666,9 @@ class PrintOverlay {
         
         // Disable conflicting UI elements (this also enables panning)
         this.disableConflictingUI();
+        
+        // Explicitly enable map panning
+        this.enableMapPanning();
         
         // Explicitly enable Cesium interactions
         this.enableCesiumInteractions();
@@ -853,10 +917,23 @@ class PrintOverlay {
         // Configure Cesium navigation controls for print mode
         if (this.viewer && this.viewer.scene.screenSpaceCameraController) {
             // Enable panning for map movement within print frame
-            this.viewer.scene.screenSpaceCameraController.enablePan = true;
-            this.viewer.scene.screenSpaceCameraController.enableRotate = false;
+            this.viewer.scene.screenSpaceCameraController.enableTranslate = true;
+            this.viewer.scene.screenSpaceCameraController.enableRotate = true;
             this.viewer.scene.screenSpaceCameraController.enableTilt = false;
             this.viewer.scene.screenSpaceCameraController.enableZoom = true;
+            if (typeof this.viewer.scene.screenSpaceCameraController.enableLook !== 'undefined') {
+                this.viewer.scene.screenSpaceCameraController.enableLook = false;
+            }
+            if (typeof Cesium !== 'undefined' && Cesium.CameraEventType) {
+                const controller = this.viewer.scene.screenSpaceCameraController;
+                controller.rotateEventTypes = [Cesium.CameraEventType.LEFT_DRAG];
+                controller.translateEventTypes = [Cesium.CameraEventType.RIGHT_DRAG, Cesium.CameraEventType.MIDDLE_DRAG, Cesium.CameraEventType.PINCH];
+                controller.zoomEventTypes = [Cesium.CameraEventType.WHEEL, Cesium.CameraEventType.PINCH];
+                controller.tiltEventTypes = [];
+                if (typeof controller.lookEventTypes !== 'undefined') {
+                    controller.lookEventTypes = [];
+                }
+            }
         }
     }
 
@@ -1033,7 +1110,7 @@ class PrintOverlay {
         ctx.scale(scale, scale);
         
         // Add title if requested (only once, clean positioning)
-        if (this.currentSettings.includeTitle) {
+        if (this.currentSettings.includeTitle && this.currentSettings.titleText && this.currentSettings.titleText.trim().length > 0) {
             ctx.fillStyle = 'white';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'left';
@@ -1041,7 +1118,7 @@ class PrintOverlay {
             ctx.shadowBlur = 3;
             ctx.shadowOffsetX = 1;
             ctx.shadowOffsetY = 1;
-            ctx.fillText('MyEarth - 3D Globe Viewer', 10, 20);
+            ctx.fillText(this.currentSettings.titleText.trim(), 10, 20);
         }
         
         // Add scale bar at bottom center (clean positioning)
@@ -1054,18 +1131,24 @@ class PrintOverlay {
         if (this.currentSettings.includeLegend) {
             this.drawLegend(ctx, frameRect.width, frameRect.height);
         }
-        
-        // Add copyright if requested (bottom-right, no overlap with scale bar)
-        if (this.currentSettings.includeCopyright) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = '9px Arial';
-            ctx.textAlign = 'right';
-            ctx.shadowBlur = 1;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.fillText('© MyEarth Team', frameRect.width - 10, frameRect.height - 15);
-            ctx.fillText('Map data © OpenStreetMap contributors', frameRect.width - 10, frameRect.height - 8);
+
+        // Add grid if requested
+        if (this.currentSettings.includeGrid) {
+            this.drawGridOnCanvas(ctx, frameRect.width, frameRect.height);
         }
+        
+        // Add copyright (always included by default)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = '9px Arial';
+        ctx.textAlign = 'right';
+        ctx.shadowBlur = 1;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillText('© MyEarth Team', frameRect.width - 10, frameRect.height - 15);
+        ctx.fillText('Map data © OpenStreetMap contributors', frameRect.width - 10, frameRect.height - 8);
+        
+        // Add MyEarth.app logo at bottom right
+        this.drawLogo(ctx, frameRect.width, frameRect.height);
         
         // Return compressed JPEG data for smaller file size
         return {
@@ -1324,33 +1407,8 @@ class PrintOverlay {
      * Show message
      */
     showMessage(message, type = 'info') {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `print-overlay-message print-overlay-message-${type}`;
-        messageDiv.textContent = message;
-        messageDiv.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 6px;
-            color: white;
-            font-weight: bold;
-            z-index: 10000;
-            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            animation: slideIn 0.3s ease-out;
-        `;
-        
-        document.body.appendChild(messageDiv);
-        
-        setTimeout(() => {
-            messageDiv.style.animation = 'slideOut 0.3s ease-in';
-            setTimeout(() => {
-                if (document.body.contains(messageDiv)) {
-                    document.body.removeChild(messageDiv);
-                }
-            }, 300);
-        }, 3000);
+        // Disabled popup messages - do nothing
+        return;
     }
 
     /**
@@ -1382,6 +1440,64 @@ class PrintOverlay {
         if (this.settingsPanel && this.settingsPanel.parentNode) {
             this.settingsPanel.parentNode.removeChild(this.settingsPanel);
         }
+    }
+
+    /**
+     * Draw coordinate grid on the canvas (baked into captured image)
+     */
+    drawGridOnCanvas(ctx, width, height) {
+        const gridSpacing = 40; // pixels
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 0.5;
+        // Vertical lines
+        for (let x = 0; x <= width; x += gridSpacing) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        // Horizontal lines
+        for (let y = 0; y <= height; y += gridSpacing) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    /**
+     * Draw MyEarth.app logo at bottom right of the canvas
+     */
+    drawLogo(ctx, width, height) {
+        ctx.save();
+        
+        // Position at bottom right with padding
+        const logoX = width - 80;
+        const logoY = height - 25;
+        
+        // Background for better visibility
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(logoX - 5, logoY - 15, 75, 20);
+        
+        // Logo text styling
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'right';
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 1;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Draw "My" on first line
+        ctx.fillText('My', logoX + 70, logoY - 2);
+        
+        // Draw "Earth.app" on second line
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText('Earth.app', logoX + 70, logoY + 8);
+        
+        ctx.restore();
     }
 }
 
