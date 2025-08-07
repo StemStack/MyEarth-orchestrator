@@ -168,6 +168,7 @@ class PrintOverlay {
             pointer-events: none;
             z-index: 1000;
             display: none;
+            user-select: none;
         `;
         
         // Create darkened area overlay (full screen dark overlay)
@@ -471,6 +472,92 @@ class PrintOverlay {
                 }
             }
         });
+        
+
+    }
+    
+    /**
+     * Enable map panning within print area
+     */
+    enableMapPanning() {
+        // Enable Cesium camera controls for panning within the print frame
+        if (this.viewer && this.viewer.scene.screenSpaceCameraController) {
+            const controller = this.viewer.scene.screenSpaceCameraController;
+            
+            // Enable panning but keep rotation/tilt disabled
+            controller.enablePan = true;
+            controller.enableRotate = false;
+            controller.enableTilt = false;
+            controller.enableZoom = true;
+            
+            // Set panning constraints to keep the view within reasonable bounds
+            controller.minimumZoomDistance = 1000;
+            controller.maximumZoomDistance = 20000000;
+            
+            // Force Cesium to handle mouse events
+            if (this.viewer.canvas) {
+                this.viewer.canvas.style.pointerEvents = 'auto';
+            }
+            
+            // Ensure the Cesium viewer container can receive events
+            if (this.viewer.container) {
+                this.viewer.container.style.pointerEvents = 'auto';
+            }
+            
+            console.log('🎮 Camera controls updated:', {
+                enablePan: controller.enablePan,
+                enableRotate: controller.enableRotate,
+                enableTilt: controller.enableTilt,
+                enableZoom: controller.enableZoom
+            });
+            
+            console.log('🎯 Cesium elements updated:', {
+                canvasPointerEvents: this.viewer.canvas ? this.viewer.canvas.style.pointerEvents : 'N/A',
+                containerPointerEvents: this.viewer.container ? this.viewer.container.style.pointerEvents : 'N/A'
+            });
+        } else {
+            console.error('❌ Cesium viewer or camera controller not available');
+        }
+        
+        // Add visual indication that map is draggable
+        document.body.classList.add('print-mode-map-draggable');
+        
+        console.log('🗺️ Map panning enabled within print area');
+    }
+    
+    /**
+     * Explicitly enable Cesium interactions
+     */
+    enableCesiumInteractions() {
+        if (!this.viewer) return;
+        
+        // Ensure Cesium viewer can receive events
+        if (this.viewer.canvas) {
+            this.viewer.canvas.style.pointerEvents = 'auto';
+            this.viewer.canvas.style.userSelect = 'none';
+        }
+        
+        if (this.viewer.container) {
+            this.viewer.container.style.pointerEvents = 'auto';
+            this.viewer.container.style.userSelect = 'none';
+        }
+        
+        // Force Cesium to handle mouse events
+        if (this.viewer.scene && this.viewer.scene.screenSpaceCameraController) {
+            const controller = this.viewer.scene.screenSpaceCameraController;
+            
+            // Enable all necessary interactions
+            controller.enablePan = true;
+            controller.enableZoom = true;
+            controller.enableRotate = false;
+            controller.enableTilt = false;
+            
+            // Set reasonable constraints
+            controller.minimumZoomDistance = 1000;
+            controller.maximumZoomDistance = 20000000;
+            
+            console.log('🎯 Cesium interactions explicitly enabled');
+        }
     }
 
     /**
@@ -497,8 +584,11 @@ class PrintOverlay {
         // Update frame
         this.updatePrintFrame();
         
-        // Disable conflicting UI elements
+        // Disable conflicting UI elements (this also enables panning)
         this.disableConflictingUI();
+        
+        // Explicitly enable Cesium interactions
+        this.enableCesiumInteractions();
         
         // Add print mode class to body
         document.body.classList.add('print-mode-active');
@@ -604,6 +694,8 @@ class PrintOverlay {
         
         this.darkenedOverlay.style.clipPath = clipPath;
         
+
+        
         // Only update camera if we're not already updating it (prevents infinite loop)
         if (!this.isUpdatingCamera) {
             this.updateCameraForScale(realWorldWidthMeters, realWorldHeightMeters);
@@ -611,6 +703,11 @@ class PrintOverlay {
         
         // Update labels with real-world information
         this.updateFrameLabels(frameWidth, frameHeight, realWorldWidthMeters, realWorldHeightMeters);
+        
+        // Ensure map panning is enabled after frame update
+        if (this.isActive) {
+            this.enableMapPanning();
+        }
     }
 
     /**
@@ -698,8 +795,8 @@ class PrintOverlay {
         
         this.topLabel.textContent = labelText;
         this.bottomLabel.textContent = realWorldText;
-        this.leftLabel.textContent = `${paperWidth}mm`;
-        this.rightLabel.textContent = `${paperHeight}mm`;
+        this.leftLabel.textContent = '';
+        this.rightLabel.textContent = '';
     }
 
     /**
@@ -734,10 +831,13 @@ class PrintOverlay {
         // Add visual indication
         document.body.classList.add('print-mode-ui-disabled');
         
-        // Disable Cesium navigation controls
+        // Configure Cesium navigation controls for print mode
         if (this.viewer && this.viewer.scene.screenSpaceCameraController) {
+            // Enable panning for map movement within print frame
+            this.viewer.scene.screenSpaceCameraController.enablePan = true;
             this.viewer.scene.screenSpaceCameraController.enableRotate = false;
             this.viewer.scene.screenSpaceCameraController.enableTilt = false;
+            this.viewer.scene.screenSpaceCameraController.enableZoom = true;
         }
     }
 

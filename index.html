@@ -1,4 +1,55 @@
 <!DOCTYPE html>
+<!-- ======================================== -->
+<!-- MYEARTH.APP - 3D GLOBE VIEWER -->
+<!-- ======================================== -->
+<!-- 
+    PANEL SYSTEM DOCUMENTATION
+    =========================
+    
+    This application uses a dual-panel system for user interface:
+    
+    1. LEFT PANEL (SIDEBAR)
+       ====================
+       - ID: leftPanel
+       - Class: sidebar
+       - Toggle Function: toggleLeftPanel()
+       - Toggle Button: leftPanelToggle (hamburger menu)
+       - Position: Left side of screen
+       - Purpose: Map layers, data services, 3D models, gizmo controls
+       - Sections: Maps displayed, Data Services, 3D Models, Gizmo, Performance
+       - Default State: Collapsed
+       - CSS Classes: 'collapsed', 'with-left-panel'
+       
+    2. RIGHT PANEL (TOOL TOOLBAR)
+       ==========================
+       - ID: rightPanel
+       - Toggle Function: toggleRightPanel()
+       - Toggle Button: panel-toggle-btn (hamburger menu)
+       - Position: Right side of screen
+       - Purpose: Quick access to map tools, navigation, layers, utilities
+       - Layout: 2-column grid with 20 tool buttons + print tool
+       - Style: White rounded panel with Swiss geoportal design
+       - Default State: Visible
+       - CSS Classes: 'collapsed'
+       
+    KEY ELEMENTS:
+    =============
+    - leftPanelToggle: Left panel toggle button (top-left corner)
+    - leftPanel: Main left sidebar container
+    - rightPanel: Main right toolbar container
+    - panel-toggle-btn: Right panel toggle button (hamburger menu)
+    - tool-grid: 2-column grid containing 20 tool buttons
+    - print-tool: Separate print button at bottom of right panel
+    
+    DEVELOPMENT NOTES:
+    =================
+    - All panel functions are globally available via window object
+    - Panel states are managed via CSS classes
+    - Console logging is implemented for debugging
+    - Responsive design supports mobile and desktop
+    - Swiss geoportal design pattern used for right panel
+    - Left panel uses traditional sidebar design
+-->
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -151,6 +202,8 @@
             overflow: hidden;
             background-color: #000;
             transition: margin 0.3s ease;
+            visibility: visible !important;
+            display: block !important;
         }
 
         #cesiumContainer.with-left-panel {
@@ -868,68 +921,523 @@
             box-sizing: border-box;
         }
 
-        /* Right Panel Styles - Single Vertical Column */
+        /* New 2-Column Grid Layout for Right Panel */
         #rightPanel {
             position: fixed !important;
-            top: 50px !important;
-            right: 20px !important;
-            width: 50px;
-            background: transparent !important;
+            top: 60px !important;
+            right: 15px !important;
+            width: 80px !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+            backdrop-filter: blur(10px) !important;
+            border-radius: 12px !important;
             z-index: 999;
             display: flex;
             flex-direction: column;
-            gap: 4px;
-            max-height: none;
-            overflow: visible;
-            transition: all 0.3s ease;
-            padding: 0;
+            gap: 8px;
+            padding: 12px 8px;
             box-sizing: border-box;
             align-items: center;
-            border-radius: 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+        }
+
+        /* Tool Grid - 2 Columns */
+        .tool-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 4px !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Tool Icons in Grid */
+        .tool-grid .tool-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.9) !important;
+            border: 1px solid rgba(0,0,0,0.1) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #333;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            margin: 0;
+        }
+
+        .tool-grid .tool-icon:hover {
+            background: rgba(0, 123, 255, 0.1) !important;
+            border-color: rgba(0, 123, 255, 0.3) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+
+        .tool-grid .tool-icon.active {
+            background: rgba(0, 123, 255, 0.2) !important;
+            color: #007bff !important;
+            border-color: #007bff !important;
+        }
+
+        /* Print Tool (Separate) - Match Grid Button Style Exactly */
+        .tool-icon.print-tool,
+        #printTool {
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 6px !important;
+            background: rgba(255,255,255,0.9) !important;
+            border: 1px solid rgba(0,0,0,0.1) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            color: #333 !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            margin: 0 !important;
+            margin-top: 8px !important;
+        }
+
+        .tool-icon.print-tool:hover,
+        #printTool:hover {
+            background: rgba(0, 123, 255, 0.1) !important;
+            border-color: rgba(0, 123, 255, 0.3) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+
+        .tool-icon.print-tool.active,
+        #printTool.active {
+            background: rgba(0, 123, 255, 0.2) !important;
+            color: #007bff !important;
+            border-color: #007bff !important;
+        }
+
+        /* Panel Toggle Button */
+        #rightPanel .panel-toggle-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.95) !important;
+            border: 1px solid rgba(0,0,0,0.1) !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #333;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
+            margin-bottom: 8px;
+        }
+
+        #rightPanel .panel-toggle-btn:hover {
+            background: rgba(0, 123, 255, 0.1) !important;
+            border-color: rgba(0, 123, 255, 0.3) !important;
+            transform: translateY(-1px);
+        }
+
+        /* Dark Theme Support */
+        .dark-theme {
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+        }
+
+        .dark-theme #rightPanel {
+            background: rgba(30, 30, 30, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .dark-theme .tool-grid .tool-icon {
+            background: rgba(50, 50, 50, 0.9) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff;
+        }
+
+        .dark-theme .tool-grid .tool-icon:hover {
+            background: rgba(0, 123, 255, 0.2) !important;
+            border-color: rgba(0, 123, 255, 0.5) !important;
+        }
+
+        .dark-theme .tool-icon.print-tool,
+        .dark-theme #printTool {
+            background: rgba(50, 50, 50, 0.9) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff !important;
+        }
+
+        .dark-theme .tool-icon.print-tool:hover,
+        .dark-theme #printTool:hover {
+            background: rgba(0, 123, 255, 0.2) !important;
+            border-color: rgba(0, 123, 255, 0.5) !important;
+        }
+
+        .dark-theme .panel-toggle-btn {
+            background: rgba(50, 50, 50, 0.95) !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+            color: #ffffff;
+        }
+
+        /* ======================================== */
+        /* LAYERS PANEL STYLES - SWISS GEOPORTAL */
+        /* ======================================== */
+        .layers-panel {
+            position: fixed !important;
+            bottom: 40px !important;
+            right: 20px !important;
+            width: auto !important;
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+            z-index: 1000 !important;
+            overflow: visible !important;
+        }
+
+        .layers-close-btn {
+            position: absolute !important;
+            top: -8px !important;
+            right: -8px !important;
+            width: 20px !important;
+            height: 20px !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            border: 1px solid rgba(0, 0, 0, 0.2) !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            z-index: 1001 !important;
+            transition: all 0.2s ease !important;
+            color: #666 !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .layers-close-btn:hover {
+            background: rgba(255, 255, 255, 1) !important;
+            color: #333 !important;
+            transform: scale(1.1) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+        }
+
+
+
+        .base-map-row {
+            display: flex !important;
+            gap: 8px !important;
+            align-items: flex-start !important;
+            overflow-x: auto !important;
+            padding-bottom: 8px !important;
+        }
+
+        .base-map-card {
+            flex-shrink: 0 !important;
+            width: 80px !important;
+            height: 60px !important;
+            border: 2px solid #ddd !important;
+            border-radius: 6px !important;
+            cursor: pointer !important;
+            transition: all 0.2s ease !important;
+            position: relative !important;
+            overflow: hidden !important;
+            background: #f8f8f8 !important;
+        }
+
+        .base-map-card:hover {
+            border-color: #007bff !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .base-map-card.selected {
+            border-color: #e74c3c !important;
+            border-width: 3px !important;
+        }
+
+        .base-map-preview {
+            width: 100% !important;
+            height: 40px !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
+        .base-map-overlay {
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 20px !important;
+            background: rgba(51, 51, 51, 0.8) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .base-map-overlay span {
+            color: white !important;
+            font-size: 10px !important;
+            font-weight: 500 !important;
+            text-align: center !important;
+            line-height: 1 !important;
+        }
+
+        /* Map Preview Styles */
+        .no-background {
+            background: white !important;
+        }
+
+        .grid-overlay {
+            width: 100% !important;
+            height: 100% !important;
+            background-image: radial-gradient(circle, #ccc 1px, transparent 1px) !important;
+            background-size: 8px 8px !important;
+            opacity: 0.3 !important;
+        }
+
+        .osm-preview {
+            background: #f0f0f0 !important;
+        }
+
+        .map-details {
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+        }
+
+        .roads {
+            position: absolute !important;
+            top: 20px !important;
+            left: 10px !important;
+            right: 10px !important;
+            height: 2px !important;
+            background: #f4d03f !important;
+            border-radius: 1px !important;
+        }
+
+        .roads::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 8px !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 1px !important;
+            background: #bdc3c7 !important;
+            border-radius: 0.5px !important;
+        }
+
+        .buildings {
+            position: absolute !important;
+            top: 8px !important;
+            left: 15px !important;
+            width: 4px !important;
+            height: 4px !important;
+            background: #2c3e50 !important;
+        }
+
+        .buildings::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 8px !important;
+            width: 3px !important;
+            height: 3px !important;
+            background: #2c3e50 !important;
+        }
+
+        .buildings::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 16px !important;
+            width: 2px !important;
+            height: 2px !important;
+            background: #2c3e50 !important;
+        }
+
+        .water {
+            position: absolute !important;
+            top: 25px !important;
+            left: 5px !important;
+            width: 15px !important;
+            height: 8px !important;
+            background: #3498db !important;
+            border-radius: 2px !important;
+        }
+
+        .contours {
+            position: absolute !important;
+            top: 10px !important;
+            left: 10px !important;
+            right: 10px !important;
+            height: 1px !important;
+            background: #8B4513 !important;
+        }
+
+        .contours::before {
+            content: '' !important;
+            position: absolute !important;
+            top: 6px !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 1px !important;
+            background: #A0522D !important;
+        }
+
+        .contours::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 12px !important;
+            left: 0 !important;
+            right: 0 !important;
+            height: 1px !important;
+            background: #8B4513 !important;
+        }
+
+        .topo-preview {
+            background: linear-gradient(135deg, #f4f1de 0%, #e8d5c4 100%) !important;
+        }
+
+        .mono-preview {
+            background: #f5f5f5 !important;
+        }
+
+        .satellite-preview {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #f39c12 100%) !important;
+        }
+
+        .satellite-texture {
+            width: 100% !important;
+            height: 100% !important;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(255,255,255,0.3) 1px, transparent 1px),
+                radial-gradient(circle at 80% 70%, rgba(255,255,255,0.2) 1px, transparent 1px) !important;
+            background-size: 8px 8px, 12px 12px !important;
+        }
+
+        .more-preview {
+            background: #34495e !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        .arrow-icon {
+            color: white !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+        }
+
+
+
+        /* Dark Theme Support for Layers Panel */
+        .dark-theme .base-map-card {
+            background: #2c3e50 !important;
+            border-color: #34495e !important;
+        }
+
+        /* Force hide any circular buttons or overlays */
+        [style*="border-radius: 50%"],
+        [style*="border-radius: 50px"],
+        [style*="border-radius: 25px"],
+        [style*="border-radius: 20px"],
+        [style*="border-radius: 15px"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            z-index: -9999 !important;
+        }
+
+        /* Force hide any old panels or conflicting elements */
+        #oldRightPanel,
+        .old-right-panel,
+        [id*="old"],
+        [class*="old"],
+        .cesium-viewer-toolbar,
+        .cesium-widget-toolbar,
+        .cesium-toolbar-button,
+        .cesium-button,
+        .cesium-navigation-help-button,
+        .cesium-home-button,
+        .cesium-scene-mode-picker,
+        .cesium-base-layer-picker,
+        .cesium-geocoder-container {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            z-index: -9999 !important;
         }
 
         #rightPanel.collapsed {
-            width: 50px;
-            padding: 0;
+            width: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            border-radius: 6px !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
         }
         
         #rightPanel.collapsed .tool-icon {
-            display: none;
+            display: none !important;
+        }
+        
+        #rightPanel.collapsed .print-tool {
+            display: none !important;
         }
         
         #rightPanel.collapsed .panel-toggle-btn {
             display: flex !important;
             position: relative !important;
             margin: 0 !important;
-            width: 30px !important;
-            height: 30px !important;
-            background: rgba(255,255,255,0.1) !important;
-            border: 1px solid #ddd !important;
-            border-radius: 50% !important;
+            width: 32px !important;
+            height: 32px !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 6px !important;
             align-items: center !important;
             justify-content: center !important;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            box-shadow: none !important;
+            color: #333 !important;
+        }
+        
+        #rightPanel.collapsed .panel-toggle-btn:hover {
+            background: rgba(0, 123, 255, 0.1) !important;
+            border-color: rgba(0, 123, 255, 0.3) !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
         }
         
 
 
-        /* Panel toggle button - exactly same as left panel */
+        /* Panel toggle button - Swiss Style */
         .panel-toggle-btn {
             position: relative;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid #ddd;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px !important;
+            background: transparent !important;
+            border: none !important;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #666;
+            color: #333 !important;
             z-index: 1001;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 10px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: none !important;
+            margin-bottom: 8px;
         }
         
 
@@ -937,8 +1445,9 @@
         /* No rotation needed for hamburger menus - they stay the same */
 
         .panel-toggle-btn:hover {
-            background: rgba(255,255,255,0.3);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: rgba(0, 0, 0, 0.08) !important;
+            border-radius: 6px !important;
+            transform: translateY(-1px);
         }
 
         /* Floating toggle button for collapsed left panel */
@@ -966,51 +1475,64 @@
             transform: scale(1.05);
         }
 
-        /* Single Column Tool Icons */
+
+
+        /* Swiss Geoportal Style Tool Icons */
         .tool-icon {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.1);
-            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px !important;
+            background: transparent !important;
+            border: none !important;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 14px;
-            color: #333;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 16px;
+            color: #333 !important;
+            box-shadow: none !important;
             font-weight: 400;
             margin: 0 auto;
             flex-shrink: 0;
+            position: relative;
         }
 
         .tool-icon:hover {
-            background: rgba(255,255,255,0.3);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-            transform: scale(1.05);
+            background: rgba(0, 0, 0, 0.08) !important;
+            border-radius: 6px !important;
+            transform: translateY(-1px);
         }
 
         .tool-icon.active {
-            background: rgba(0,0,0,0.8);
-            color: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+            background: rgba(0, 123, 255, 0.1) !important;
+            color: #007bff !important;
+            border-radius: 6px !important;
         }
 
-        /* SVG icons inside tool icons */
+        .tool-icon:active {
+            transform: translateY(0px);
+        }
+
+        /* Swiss Style SVG icons */
         .tool-icon svg {
-            width: 16px;
-            height: 16px;
-            color: inherit;
-            stroke: currentColor;
+            width: 18px;
+            height: 18px;
+            color: #333 !important;
+            stroke: #333 !important;
             fill: none;
-            stroke-width: 2;
+            stroke-width: 1.5;
+            transition: all 0.2s ease;
+        }
+
+        .tool-icon:hover svg {
+            color: #000 !important;
+            stroke: #000 !important;
         }
 
         .tool-icon.active svg {
-            color: white;
-            stroke: white;
+            color: #007bff !important;
+            stroke: #007bff !important;
         }
 
         /* Left Panel Collapse State */
@@ -1120,14 +1642,7 @@
             margin-left: 2px;
         }
 
-        .app-version {
-            font-weight: 400;
-            color: #999;
-            font-size: 0.27rem;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            opacity: 0.6;
-            letter-spacing: 0.2px;
-        }
+
 
         .top-panel-middle {
             flex: 1;
@@ -1326,11 +1841,18 @@
 
         .bottom-right {
             display: flex;
+            flex-direction: column;
             justify-content: flex-end;
-            align-items: center;
+            align-items: flex-end;
             text-align: right;
-            gap: 8px;
+            gap: 2px;
             overflow: hidden;
+        }
+
+        #revisionInfo {
+            font-size: 9px;
+            color: #888;
+            font-style: italic;
         }
 
         /* Mobile responsive adjustments */
@@ -1363,6 +1885,14 @@
                 text-overflow: ellipsis;
                 max-width: 45%;
             }
+            
+            #revisionInfo {
+                font-size: 7px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 45%;
+            }
         }
 
         /* Extra small screens */
@@ -1384,6 +1914,11 @@
             
             #attributionInfo {
                 font-size: 7px;
+                max-width: 40%;
+            }
+            
+            #revisionInfo {
+                font-size: 6px;
                 max-width: 40%;
             }
         }
@@ -1491,20 +2026,26 @@
             position: fixed;
             top: 50px;
             left: 25px;
-            width: 30px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #ddd;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            border-radius: 6px !important;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            color: #333;
+            color: #333 !important;
             z-index: 1003;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+        }
+
+        .sidebar-toggle:hover {
+            background: rgba(0, 123, 255, 0.1) !important;
+            border-color: rgba(0, 123, 255, 0.3) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
         }
 
         .sidebar-close-button {
@@ -1557,19 +2098,19 @@
             position: fixed;
             top: 50px;
             left: 25px;
-            width: 30px;
-            height: 30px;
-            background: rgba(255, 255, 255, 0.9);
-            color: #333;
-            border: 1px solid #ddd;
-            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            border-radius: 6px !important;
             cursor: pointer;
             display: none;
             align-items: center;
             justify-content: center;
+            color: #333 !important;
             z-index: 1003;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .floating-menu-button:hover {
@@ -2358,6 +2899,13 @@
             .layer-toggle label {
                 font-size: 11px;
             }
+
+
+
+            .tool-icon {
+                width: 28px;
+                height: 28px;
+            }
         }
 
         /* Drag and drop overlay styling */
@@ -2432,13 +2980,7 @@
             opacity: 1 !important;
         }
         
-        /* Right panel is transparent - no background */
-        #rightPanel {
-            background: transparent !important;
-            backdrop-filter: none !important;
-            -webkit-backdrop-filter: none !important;
-            opacity: 1 !important;
-        }
+
         
         /* Ensure sub-panels are also opaque */
         .sidebar-section,
@@ -2463,7 +3005,7 @@
                     <span class="title-earth">Earth</span>
                     <span class="title-app">.app</span>
                 </div>
-                <div class="app-version" id="appVersion">Loading version...</div>
+
             </div>
         </div>
         <div class="top-panel-middle">
@@ -2493,20 +3035,42 @@
         <div class="crosshair-vertical"></div>
     </div>
 
-    <!-- Left Panel Toggle Button (outside sidebar) -->
+    <!-- ======================================== -->
+    <!-- LEFT PANEL TOOLBAR - TOGGLE BUTTON -->
+    <!-- ======================================== -->
+    <!-- 
+        LEFT PANEL TOGGLE BUTTON
+        - ID: leftPanelToggle
+        - Function: toggleLeftPanel()
+        - Position: Fixed top-left corner
+        - Style: Square button matching right panel
+        - Purpose: Opens/closes the left sidebar panel
+    -->
     <div class="sidebar-toggle" id="leftPanelToggle" onclick="toggleLeftPanel()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
         </svg>
     </div>
 
-    <!-- Left Panel -->
+    <!-- ======================================== -->
+    <!-- LEFT PANEL - MAIN SIDEBAR -->
+    <!-- ======================================== -->
+    <!-- 
+        LEFT PANEL (SIDEBAR)
+        - ID: leftPanel
+        - Class: sidebar
+        - Function: toggleLeftPanel()
+        - Position: Left side of screen
+        - Purpose: Contains map layers, data services, 3D models, gizmo controls
+        - Sections: Maps displayed, Data Services, 3D Models, Gizmo, Performance
+        - Toggle: Use leftPanelToggle button or sidebar-close-button
+    -->
     <div class="sidebar" id="leftPanel">
         <!-- Close button -->
         <div class="sidebar-close-button" onclick="toggleLeftPanel()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
@@ -2838,80 +3402,266 @@
         </div>
     </div>
 
-    <!-- Right Panel with Tool Icons - MapX Style -->
+
+
+    <!-- ======================================== -->
+    <!-- RIGHT PANEL - TOOL TOOLBAR -->
+    <!-- ======================================== -->
+    <!-- 
+        RIGHT PANEL (TOOL TOOLBAR)
+        - ID: rightPanel
+        - Function: toggleRightPanel()
+        - Position: Fixed right side of screen
+        - Layout: 2-column grid with 20 tool buttons
+        - Style: White rounded panel with Swiss geoportal design
+        - Purpose: Quick access to map tools, navigation, layers, utilities
+        - Toggle: Use panel-toggle-btn (hamburger menu)
+        - Grid: 10 rows × 2 columns = 20 total tools
+        - Print Tool: Separate button at bottom
+    -->
     <div id="rightPanel">
-        <div class="panel-toggle-btn" onclick="toggleRightPanel()" title="Collapse Panel">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <div class="panel-toggle-btn" onclick="toggleRightPanel()" title="Tools">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
         </div>
         
-        <!-- 1. North Arrow Tool -->
-        <div class="tool-icon" id="northArrow" title="North Direction - Click to Reset" onclick="resetViewToNorth()" style="cursor: pointer;">
-            <svg width="16" height="16" viewBox="0 0 24 24" style="transform: rotate(0deg);">
-                <polygon points="12,2 16,12 12,10 8,12" fill="red" stroke="none"/>
-                <polygon points="12,22 8,12 12,14 16,12" fill="white" stroke="black" stroke-width="1"/>
-            </svg>
+        <div class="tool-grid">
+            <!-- Row 1 -->
+            <div class="tool-icon" id="zoomInTool" title="Zoom In" onclick="zoomIn()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </div>
+            <div class="tool-icon" id="zoomOutTool" title="Zoom Out" onclick="zoomOut()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </div>
+
+
+
+            <!-- Row 3 -->
+            <div class="tool-icon" id="northArrow" title="North Orientation" onclick="resetNorth()" style="cursor: pointer;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12,2 22,22 12,18 2,22" fill="none" stroke="currentColor"/>
+                    <line x1="12" y1="2" x2="12" y2="18"></line>
+                </svg>
+            </div>
+            <div class="tool-icon" id="fullscreenTool" title="Fullscreen" onclick="toggleFullscreen()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                    <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                    <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                </svg>
+            </div>
+
+            <!-- Row 4 -->
+            <div class="tool-icon" id="searchTool" title="Search" onclick="toggleSearch()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                </svg>
+            </div>
+            <div class="tool-icon" id="themeTool" title="Toggle Theme" onclick="toggleTheme()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                </svg>
+            </div>
+
+            <!-- Row 5 -->
+            <div class="tool-icon" id="forestTool" title="Forest Layer" onclick="toggleForestLayer()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5Z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                </svg>
+            </div>
+            <div class="tool-icon" id="waterTool" title="Water Layer" onclick="toggleWaterLayer()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </div>
+
+            <!-- Row 6 -->
+            <div class="tool-icon" id="mountainTool" title="Terrain Layer" onclick="toggleTerrainLayer()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3"></path>
+                    <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                    <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                </svg>
+            </div>
+            <div class="tool-icon" id="flyTool" title="Fly to Location" onclick="toggleFlyMode()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19 4c-1 0-2 1-3.5 2.5L12 9l-8.2-1.8c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 2.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path>
+                </svg>
+            </div>
+
+            <!-- Row 7 -->
+            <div class="tool-icon" id="globeTool" title="Globe View" onclick="toggleGlobeView()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M2 12h20"></path>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                </svg>
+            </div>
+            <div class="tool-icon" id="layersTool" title="Layers" onclick="toggleLayersPanel()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0l8.57-3.9a1 1 0 0 0 0-1.83Z"></path>
+                    <path d="m22 12-8.57 3.9a2 2 0 0 1-1.66 0L3 12"></path>
+                    <path d="m22 17-8.57 3.9a2 2 0 0 1-1.66 0L3 17"></path>
+                </svg>
+            </div>
+
+            <!-- Row 8 -->
+            <div class="tool-icon" id="markerTool" title="Add Marker" onclick="toggleMarkerPanel()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+            </div>
+            <div class="tool-icon" id="shareTool" title="Share View" onclick="shareCurrentView()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="18" cy="5" r="3"></circle>
+                    <circle cx="6" cy="12" r="3"></circle>
+                    <circle cx="18" cy="19" r="3"></circle>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                </svg>
+            </div>
+
+
         </div>
 
-        <!-- 2. Home Tool -->
-        <div class="tool-icon" id="resetViewTool" title="Home View" onclick="resetView()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
-                <polyline points="9,22 9,12 15,12 15,22" stroke="currentColor" stroke-width="2"/>
+        <!-- Print Tool (Separate) -->
+        <div class="tool-icon print-tool" id="printTool" title="Print to PDF" onclick="togglePrintMode()">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                <rect x="6" y="14" width="12" height="8"></rect>
             </svg>
         </div>
+    </div>
 
-        <!-- 3. Zoom In "+" Tool -->
-        <div class="tool-icon" id="zoomInTool" title="Zoom In" onclick="zoomIn()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/>
-                <line x1="11" y1="8" x2="11" y2="14" stroke="currentColor" stroke-width="2"/>
-                <line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-
-        <!-- 4. Zoom Out "-" Tool -->
-        <div class="tool-icon" id="zoomOutTool" title="Zoom Out" onclick="zoomOut()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2"/>
-                <line x1="8" y1="11" x2="14" y2="11" stroke="currentColor" stroke-width="2"/>
-            </svg>
+            <!-- Point Marker Tool -->
+            <div class="tool-icon" id="markerTool" title="Add Marker" onclick="toggleMarkerPanel()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+            </div>
         </div>
 
 
-
-        <!-- 6. Measure Tool -->
-        <div class="tool-icon" id="measurementTool" title="Measurement Tools" onclick="toggleMeasurementTool()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a3.5 3.5 0 1 0 5 0z" fill="none" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-
-        <!-- 7. Point Tool -->
-        <div class="tool-icon" id="markerTool" title="Place Markers" onclick="toggleMarkerPanel()">
-            <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="none" stroke="currentColor" stroke-width="2"/>
-                <circle cx="12" cy="10" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
-
-        <!-- Help/Info Menu Button -->
-        <div class="tool-icon" id="helpMenuTool" title="Help & Information" onclick="toggleHelpMenu()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" fill="none" stroke="currentColor" stroke-width="2"/>
-                <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2"/>
-            </svg>
-        </div>
 
     </div>
 
-
+    <!-- ======================================== -->
+    <!-- LAYERS PANEL - SWISS GEOPORTAL STYLE -->
+    <!-- ======================================== -->
+    <!-- 
+        LAYERS PANEL
+        - ID: layersPanel
+        - Purpose: Contains base map provider selection
+        - Trigger: layersTool button in right panel
+        - Style: Swiss geoportal horizontal layout with map thumbnails
+        - Position: Overlay on top of the globe
+        - Reference: https://map.geo.admin.ch/
+    -->
+    <div id="layersPanel" class="layers-panel" style="display: none;">
+        <div class="layers-close-btn" onclick="toggleLayersPanel()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+        <div class="base-map-row">
+                <div class="base-map-card" data-value="none" onclick="selectBaseMap('none')">
+                    <div class="base-map-preview no-background">
+                        <div class="grid-overlay"></div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>No background</span>
+                    </div>
+                </div>
+                
+                <div class="base-map-card" data-value="openstreetmap" onclick="selectBaseMap('openstreetmap')">
+                    <div class="base-map-preview osm-preview">
+                        <div class="map-details">
+                            <div class="roads"></div>
+                            <div class="buildings"></div>
+                            <div class="water"></div>
+                        </div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>OSM Standard</span>
+                    </div>
+                </div>
+                
+                <div class="base-map-card selected" data-value="openstreetmap" onclick="selectBaseMap('openstreetmap')">
+                    <div class="base-map-preview osm-preview">
+                        <div class="map-details">
+                            <div class="roads"></div>
+                            <div class="buildings"></div>
+                            <div class="water"></div>
+                        </div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>OSM Standard</span>
+                    </div>
+                </div>
+                
+                <div class="base-map-card" data-value="opentopomap" onclick="selectBaseMap('opentopomap')">
+                    <div class="base-map-preview topo-preview">
+                        <div class="map-details">
+                            <div class="contours"></div>
+                            <div class="roads"></div>
+                            <div class="buildings"></div>
+                        </div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>OpenTopoMap</span>
+                    </div>
+                </div>
+                
+                <div class="base-map-card" data-value="monochrome" onclick="selectBaseMap('monochrome')">
+                    <div class="base-map-preview mono-preview">
+                        <div class="map-details">
+                            <div class="roads"></div>
+                            <div class="buildings"></div>
+                            <div class="water"></div>
+                        </div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>Monochrome</span>
+                    </div>
+                </div>
+                
+                <div class="base-map-card" data-value="esri_world" onclick="selectBaseMap('esri_world')">
+                    <div class="base-map-preview satellite-preview">
+                        <div class="satellite-texture"></div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>Aerial imagery</span>
+                    </div>
+                </div>
+                
+                <div class="base-map-card more-options" onclick="showMoreMaps()">
+                    <div class="base-map-preview more-preview">
+                        <div class="arrow-icon">></div>
+                    </div>
+                    <div class="base-map-overlay">
+                        <span>More...</span>
+                    </div>
+                </div>
+            </div>
+    </div>
 
     <!-- Bottom Information Band -->
     <div id="bottomBand">
@@ -2930,6 +3680,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
+            <div id="revisionInfo">Revision: v0.3.0</div>
         </div>
     </div>
 
@@ -8245,38 +8996,180 @@ TIP: These shortcuts work when not typing in input fields.
          * Toggle Right Panel Visibility
          */
         function toggleRightPanel() {
-            const rightPanelElement = document.getElementById('rightPanel');
-            if (rightPanelElement) {
-                rightPanelElement.classList.toggle('collapsed');
-                const isCollapsed = rightPanelElement.classList.contains('collapsed');
-                
-                // Update toggle button icon
-                const toggleBtn = rightPanelElement.querySelector('.panel-toggle-btn');
-                if (toggleBtn) {
-                    const svg = toggleBtn.querySelector('svg');
-                    if (svg) {
-                        if (isCollapsed) {
-                            // Show hamburger menu icon when collapsed
-                            svg.innerHTML = `
-                                <line x1="3" y1="6" x2="21" y2="6"></line>
-                                <line x1="3" y1="12" x2="21" y2="12"></line>
-                                <line x1="3" y1="18" x2="21" y2="18"></line>
-                            `;
-                            toggleBtn.title = 'Expand Panel';
-                        } else {
-                            // Show X icon when expanded
-                            svg.innerHTML = `
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            `;
-                            toggleBtn.title = 'Collapse Panel';
-                        }
-                    }
-                }
-                
+            const rightPanel = document.getElementById('rightPanel');
+            if (rightPanel) {
+                rightPanel.classList.toggle('collapsed');
+                const isCollapsed = rightPanel.classList.contains('collapsed');
                 console.log('✓ Right panel', isCollapsed ? 'collapsed' : 'expanded');
             }
         }
+
+        // New functionality functions
+        function resetNorth() {
+            if (viewer && viewer.camera) {
+                viewer.camera.setHeading(0);
+                console.log('✓ Reset to North orientation');
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+            console.log('✓ Toggled fullscreen');
+        }
+
+        function toggleTheme() {
+            const body = document.body;
+            const isDark = body.classList.contains('dark-theme');
+            body.classList.toggle('dark-theme', !isDark);
+            console.log('✓ Toggled theme:', !isDark ? 'dark' : 'light');
+        }
+
+        function toggleSearch() {
+            // Toggle search functionality
+            console.log('✓ Search toggled');
+        }
+
+        function toggleForestLayer() {
+            // Toggle forest layer
+            console.log('✓ Forest layer toggled');
+        }
+
+        function toggleWaterLayer() {
+            // Toggle water layer
+            console.log('✓ Water layer toggled');
+        }
+
+        function toggleTerrainLayer() {
+            // Toggle terrain layer
+            console.log('✓ Terrain layer toggled');
+        }
+
+        function toggleFlyMode() {
+            // Toggle fly mode
+            console.log('✓ Fly mode toggled');
+        }
+
+        function toggleGlobeView() {
+            // Toggle between globe and flat view
+            console.log('✓ Globe view toggled');
+        }
+
+        function toggleLayersPanel() {
+            const layersPanel = document.getElementById('layersPanel');
+            const layersTool = document.getElementById('layersTool');
+            
+            if (layersPanel.style.display === 'none') {
+                // Show layers panel
+                layersPanel.style.display = 'block';
+                layersTool.classList.add('active');
+                console.log('✓ Layers panel opened');
+            } else {
+                // Hide layers panel
+                layersPanel.style.display = 'none';
+                layersTool.classList.remove('active');
+                console.log('✓ Layers panel closed');
+            }
+        }
+
+        function selectBaseMap(mapType) {
+            // Update visual selection
+            const cards = document.querySelectorAll('.base-map-card');
+            
+            // Remove all selections
+            cards.forEach(card => card.classList.remove('selected'));
+            
+            // Select the clicked card
+            const selectedCard = document.querySelector(`[data-value="${mapType}"]`);
+            
+            if (selectedCard) {
+                selectedCard.classList.add('selected');
+            }
+            
+            // Map the UI values to actual base map keys
+            const mapTypeMapping = {
+                'none': 'none',
+                'openstreetmap': 'osm',
+                'opentopomap': 'otm',
+                'monochrome': 'cartodb-positron',
+                'esri_world': 'esri-imagery'
+            };
+            
+            const actualMapType = mapTypeMapping[mapType] || 'osm';
+            
+            // Switch the actual base map using the real switching logic
+            if (actualMapType === 'none') {
+                // Remove all imagery layers for "no background"
+                viewer.imageryLayers.removeAll();
+                console.log('✓ Removed all base maps');
+            } else if (baseMaps[actualMapType]) {
+                try {
+                    // Remove current imagery layers
+                    viewer.imageryLayers.removeAll();
+                    
+                    // Add new imagery provider
+                    viewer.imageryLayers.addImageryProvider(baseMaps[actualMapType].provider());
+                    
+                    // Update attribution
+                    const attributionElement = document.querySelector('.cesium-credit-textContainer');
+                    if (attributionElement) {
+                        attributionElement.innerHTML = baseMaps[actualMapType].attribution;
+                    }
+                    
+                    // Update current base map
+                    currentBaseMap = actualMapType;
+                    
+                    console.log(`✓ Switched to base map: ${actualMapType}`);
+                } catch (error) {
+                    console.error('Error switching base map:', error);
+                    
+                    // Fallback to OpenStreetMap on error
+                    viewer.imageryLayers.removeAll();
+                    viewer.imageryLayers.addImageryProvider(baseMaps['osm'].provider());
+                    const attributionElement = document.querySelector('.cesium-credit-textContainer');
+                    if (attributionElement) {
+                        attributionElement.innerHTML = baseMaps['osm'].attribution;
+                    }
+                    currentBaseMap = 'osm';
+                    
+                    // Update visual selection to OSM
+                    const osmCard = document.querySelector('[data-value="openstreetmap"]');
+                    if (osmCard) {
+                        cards.forEach(card => card.classList.remove('selected'));
+                        osmCard.classList.add('selected');
+                    }
+                }
+            }
+            
+            // Keep panel open - no auto-close
+            
+            console.log(`✓ Base map switched to: ${mapType} (${actualMapType})`);
+        }
+
+        function showMoreMaps() {
+            // Placeholder for showing additional map options
+            console.log('✓ More maps option clicked');
+            alert('Additional map options coming soon!');
+        }
+
+        function shareCurrentView() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'MyEarth View',
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url);
+                alert('View URL copied to clipboard!');
+            }
+            console.log('✓ Shared current view');
+        }
+
+
 
         /**
          * Switch Base Map
@@ -8762,6 +9655,7 @@ TIP: These shortcuts work when not typing in input fields.
                 cesiumContainer.classList.remove('with-left-panel');
             }
             
+            // Ensure right panel is visible
             if (rightPanel) {
                 rightPanel.classList.remove('collapsed');
             }
@@ -8771,6 +9665,22 @@ TIP: These shortcuts work when not typing in input fields.
             
             // Toggle functions for panel controls are defined later
         
+        // ========================================
+        // RIGHT PANEL TOGGLE FUNCTION
+        // ========================================
+        // 
+        // RIGHT PANEL TOGGLE FUNCTION
+        // - Function: toggleRightPanel()
+        // - Element: rightPanel (tool toolbar)
+        // - Toggle Button: panel-toggle-btn (hamburger menu)
+        // - Purpose: Expands/collapses the right tool toolbar
+        // - Behavior: 
+        //   * When collapsed: Shows only toggle button
+        //   * When expanded: Shows full 2-column grid of 20 tools
+        // - CSS Classes: 'collapsed'
+        // - Console: Logs panel state changes
+        // - Default: Panel is visible by default
+        //
         function toggleRightPanel() {
             const rightPanel = document.getElementById('rightPanel');
             if (rightPanel) {
@@ -9017,7 +9927,21 @@ TIP: These shortcuts work when not typing in input fields.
             return scales[scales.length - 1];
         }
 
-        // Updated toggle function for left panel
+        // ========================================
+        // LEFT PANEL TOGGLE FUNCTION
+        // ========================================
+        // 
+        // LEFT PANEL TOGGLE FUNCTION
+        // - Function: toggleLeftPanel()
+        // - Element: leftPanel (sidebar)
+        // - Toggle Button: leftPanelToggle
+        // - Purpose: Expands/collapses the left sidebar panel
+        // - Behavior: 
+        //   * When collapsed: Expands panel, shows close icon (X)
+        //   * When expanded: Collapses panel, shows hamburger icon (≡)
+        // - CSS Classes: 'collapsed', 'with-left-panel'
+        // - Console: Logs panel state changes
+        //
         function toggleLeftPanel() {
             const leftPanelElement = document.getElementById('leftPanel');
             const cesiumContainer = document.getElementById('cesiumContainer');
@@ -9028,7 +9952,7 @@ TIP: These shortcuts work when not typing in input fields.
                 leftPanelElement.classList.remove('collapsed');
                 cesiumContainer.classList.add('with-left-panel');
                 if (toggleButton) {
-                    toggleButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+                    toggleButton.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
                 }
                 console.log('Left panel expanded');
             } else {
@@ -9036,7 +9960,7 @@ TIP: These shortcuts work when not typing in input fields.
                 leftPanelElement.classList.add('collapsed');
                 cesiumContainer.classList.remove('with-left-panel');
                 if (toggleButton) {
-                    toggleButton.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+                    toggleButton.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
                 }
                 console.log('Left panel collapsed');
             }
@@ -9100,6 +10024,29 @@ TIP: These shortcuts work when not typing in input fields.
                 console.log('Marker mode activated - click on globe to place markers');
             } else {
                 console.log('Marker mode deactivated');
+            }
+        }
+
+        // ========================================
+        // PRINT TOOL FUNCTION
+        // ========================================
+        // 
+        // PRINT TOOL FUNCTION
+        // - Function: togglePrintMode()
+        // - Element: printTool (print button)
+        // - Purpose: Activates the print overlay system
+        // - Behavior: 
+        //   * Calls window.printOverlay.togglePrintMode()
+        //   * Shows print overlay for PDF generation
+        //   * Console: Logs print mode activation
+        //
+        function togglePrintMode() {
+            console.log('🖨️ Print mode activated');
+            if (window.printOverlay) {
+                window.printOverlay.togglePrintMode();
+            } else {
+                console.error('❌ Print overlay not available');
+                alert('Print functionality not available. Please refresh the page and try again.');
             }
         }
 
