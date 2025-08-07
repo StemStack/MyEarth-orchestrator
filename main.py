@@ -908,11 +908,12 @@ if __name__ == "__main__":
     import uvicorn
     import sys
     
-    # Get port from command line argument or default to 5001
-    port = 5001
+    # Get port from environment variable, command line argument, or default to 5001
+    port = int(os.getenv('PORT', 5001))  # Check PORT env var first (for deployment)
+    
     if len(sys.argv) > 1 and sys.argv[1] == "--port":
         try:
-            port = int(sys.argv[2])
+            port = int(sys.argv[2])  # Command line overrides env var
         except (IndexError, ValueError):
             pass
     
