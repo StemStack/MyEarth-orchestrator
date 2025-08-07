@@ -1,0 +1,478 @@
+/**
+ * Print Styles for MyEarth CesiumJS Application
+ * Clean, modern design inspired by map.geo.admin.ch
+ */
+
+/* Print Button */
+.print-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.print-button:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.print-button:active {
+    transform: scale(0.95);
+}
+
+/* Print Panel */
+.print-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    color: white;
+    z-index: 2000;
+    transition: right 0.3s ease;
+    backdrop-filter: blur(15px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-y: auto;
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.print-panel.active {
+    right: 0;
+}
+
+/* Panel Header */
+.print-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.print-panel-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #4CAF50;
+}
+
+.print-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.print-close-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Panel Content */
+.print-panel-content {
+    padding: 20px;
+}
+
+/* Print Sections */
+.print-section {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.print-section:last-child {
+    border-bottom: none;
+}
+
+.print-section h4 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4CAF50;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Print Options */
+.print-option {
+    margin-bottom: 15px;
+}
+
+.print-option label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #ccc;
+    font-weight: 500;
+}
+
+.print-option select,
+.print-option input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.print-option select:focus,
+.print-option input[type="text"]:focus {
+    outline: none;
+    border-color: #4CAF50;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.print-option select option {
+    background: #333;
+    color: white;
+}
+
+/* Orientation Buttons */
+.orientation-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.orientation-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.orientation-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.orientation-btn.active {
+    background: #4CAF50;
+    border-color: #4CAF50;
+    color: white;
+}
+
+/* Checkboxes */
+.print-option input[type="checkbox"] {
+    margin-right: 8px;
+    transform: scale(1.2);
+    accent-color: #4CAF50;
+}
+
+.print-option label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* Preview Section */
+.print-preview {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.preview-placeholder {
+    text-align: center;
+    color: #888;
+    font-size: 13px;
+}
+
+.preview-image {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.preview-info {
+    margin-top: 10px;
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+}
+
+.preview-info div {
+    margin-bottom: 2px;
+}
+
+/* Actions */
+.print-actions {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.print-generate-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.print-generate-btn:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.print-generate-btn:active {
+    transform: translateY(0);
+}
+
+.print-generate-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Messages */
+.print-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease-out;
+}
+
+.print-message-success {
+    background: #4CAF50;
+}
+
+.print-message-error {
+    background: #f44336;
+}
+
+.print-message-info {
+    background: #2196F3;
+}
+
+/* Animations */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .print-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .print-button {
+        top: 10px;
+        right: 10px;
+        width: 45px;
+        height: 45px;
+        font-size: 18px;
+    }
+    
+    .print-panel-header {
+        padding: 15px;
+    }
+    
+    .print-panel-content {
+        padding: 15px;
+    }
+    
+    .print-section {
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+    }
+    
+    .orientation-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .orientation-btn {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 480px) {
+    .print-panel-header h3 {
+        font-size: 16px;
+    }
+    
+    .print-section h4 {
+        font-size: 13px;
+    }
+    
+    .print-option label {
+        font-size: 12px;
+    }
+    
+    .print-option select,
+    .print-option input[type="text"] {
+        font-size: 12px;
+        padding: 10px 12px;
+    }
+    
+    .print-generate-btn {
+        padding: 15px 20px;
+        font-size: 16px;
+    }
+}
+
+/* Dark/Light Mode Compatibility */
+@media (prefers-color-scheme: light) {
+    .print-panel {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        border-left: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .print-panel-header {
+        background: rgba(0, 0, 0, 0.05);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .print-section {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .print-option select,
+    .print-option input[type="text"] {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+    
+    .print-option select:focus,
+    .print-option input[type="text"]:focus {
+        background: rgba(0, 0, 0, 0.15);
+    }
+    
+    .orientation-btn {
+        background: rgba(0, 0, 0, 0.1);
+        color: #333;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+    
+    .orientation-btn:hover {
+        background: rgba(0, 0, 0, 0.15);
+    }
+    
+    .print-preview {
+        background: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .print-actions {
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Accessibility */
+.print-button:focus,
+.print-close-btn:focus,
+.orientation-btn:focus,
+.print-generate-btn:focus {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+.print-option select:focus,
+.print-option input[type="text"]:focus {
+    outline: 2px solid #4CAF50;
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .print-panel {
+        background: #000;
+        color: #fff;
+        border-left: 2px solid #fff;
+    }
+    
+    .print-button {
+        background: #000;
+        border: 2px solid #fff;
+    }
+    
+    .print-generate-btn {
+        background: #fff;
+        color: #000;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .print-panel,
+    .print-button,
+    .orientation-btn,
+    .print-generate-btn,
+    .print-message {
+        transition: none;
+    }
+    
+    .print-panel.active {
+        right: 0;
+    }
+} 
