@@ -159,8 +159,30 @@ jobs:
             sleep 5  # Wait for app to fully start
             if curl -f http://localhost:5001/api/ping; then
                 echo "✅ App health check passed"
+                echo "=== Checking if app is still running after 30 seconds ==="
+                sleep 30
+                if curl -f http://localhost:5001/api/ping; then
+                                    echo "✅ App is stable"
+                echo "=== Setting up nginx configuration ==="
+                # Copy our nginx configuration
+                if [ -w /etc/nginx/sites-available/ ]; then
+                    cp /home/jc/MyEarth/nginx.conf /etc/nginx/sites-available/myearth
+                    ln -sf /etc/nginx/sites-available/myearth /etc/nginx/sites-enabled/ 2>/dev/null || echo "Could not create symlink"
+                    nginx -t 2>/dev/null && {
+                        systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
+                        echo "✅ Nginx configuration updated"
+                    } || echo "⚠️  Nginx config has issues"
+                else
+                    echo "⚠️  Cannot write to nginx config directory"
+                fi
                 echo "=== Deployment completed successfully ==="
                 echo "SUCCESS"
+                else
+                    echo "❌ App crashed after initial startup"
+                    echo "=== Checking app logs ==="
+                    cat app.log || echo "No app log found"
+                    echo "FAILED"
+                fi
             else
                 echo "❌ App health check failed"
                 echo "=== Trying to start app manually ==="
