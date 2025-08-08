@@ -270,6 +270,18 @@ jobs:
             sleep 5  # Wait for app to fully start
             if curl -f http://localhost:5001/api/ping; then
                 echo "✅ App health check passed"
+                echo "=== Setting up nginx configuration ==="
+                # Copy our nginx configuration
+                if [ -w /etc/nginx/sites-available/ ]; then
+                    cp /home/jc/MyEarth/nginx.conf /etc/nginx/sites-available/myearth
+                    ln -sf /etc/nginx/sites-available/myearth /etc/nginx/sites-enabled/ 2>/dev/null || echo "Could not create symlink"
+                    nginx -t 2>/dev/null && {
+                        systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
+                        echo "✅ Nginx configuration updated"
+                    } || echo "⚠️  Nginx config has issues"
+                else
+                    echo "⚠️  Cannot write to nginx config directory"
+                fi
                 echo "=== Deployment completed successfully ==="
                 exit 0
             else
