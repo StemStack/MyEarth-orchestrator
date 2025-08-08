@@ -15,7 +15,7 @@ jobs:
     - name: Deploy to server via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: 100.69.50.87
+        host: 194.230.198.246
         username: jc
         key: ${{ secrets.DEPLOY_KEY }}
         port: 22
@@ -57,7 +57,7 @@ jobs:
       run: |
         echo "🏥 Performing health check..."
         sleep 10
-        if curl -f http://100.69.50.87:5001/api/ping; then
+        if curl -f http://194.230.198.246:5001/api/ping; then
           echo "✅ Health check passed!"
         else
           echo "❌ Health check failed"
