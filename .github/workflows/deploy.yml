@@ -1,388 +1,65 @@
-name: Deploy via Tailscale SSH
+name: Deploy to MyEarth Server
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      # 1. Install Tailscale and authenticate
-      - name: Install Tailscale
-        run: |
-          curl -fsSL https://tailscale.com/install.sh | sh
-          sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh=false
-          sleep 5  # Wait for Tailscale to fully connect
-
-      # 2. Debug: Check Tailscale status and connectivity
-      - name: Debug Tailscale connectivity
-        run: |
-          echo "=== Tailscale Status ==="
-          tailscale status
-          echo "=== Testing ping to server ==="
-          ping -c 3 100.69.50.87 || echo "Ping failed, but SSH might still work"
-          echo "=== Testing SSH connection ==="
-          timeout 10 ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i <(echo "${{ secrets.DEPLOY_KEY }}") jc@100.69.50.87 "echo 'SSH test successful'" || echo "SSH test failed"
-
-      # 3. Deploy using native SSH (more reliable than appleboy/ssh-action)
-      - name: Deploy to server via SSH
-        run: |
-          # Create temporary key file
-          echo "${{ secrets.DEPLOY_KEY }}" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Deploy to server via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          echo "🚀 Starting MyEarth.app deployment..."
           
-          # Deploy with detailed error handling
-          DEPLOY_RESULT=$(ssh -o ConnectTimeout=30 \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              -i /tmp/deploy_key \
-              jc@100.69.50.87 << 'EOF'
-            # set -e  # Exit on any error - temporarily disabled for debugging
-            
-            echo "=== Starting deployment ==="
-            cd /home/jc/MyEarth
-            
-            echo "=== Pulling latest code ==="
-            # Clean up any untracked files that might cause conflicts
-            git clean -fd || echo "No untracked files to clean"
-            git pull origin main
-            
-            echo "=== Recreating virtual environment ==="
-            rm -rf venv
-            python3 -m venv venv
-            source venv/bin/activate
-            
-            echo "=== Installing dependencies ==="
-            # Handle NumPy compatibility issue
-            echo "=== Installing NumPy first ==="
-            pip install "numpy==1.26.4" --break-system-packages || {
-                echo "⚠️  NumPy install failed, trying alternative approach"
-                # Try installing distutils if available
-                pip install setuptools --break-system-packages || echo "setuptools install failed"
-                # Try system numpy
-                pip install numpy --break-system-packages || echo "system numpy install failed"
-            }
-            echo "=== Installing other dependencies ==="
-            pip install -r requirements.txt --break-system-packages || {
-                echo "⚠️  Some dependencies failed to install, continuing anyway"
-                # Try installing key dependencies individually
-                pip install fastapi uvicorn sqlalchemy psycopg2-binary pyjwt requests --break-system-packages || echo "Key dependencies install failed"
-            }
-            
-            echo "=== Setting up PostgreSQL ==="
-            # Check if PostgreSQL is already installed and running
-            if systemctl is-active --quiet postgresql; then
-                echo "✅ PostgreSQL is already running"
-            else
-                echo "⚠️  PostgreSQL not running, attempting to start..."
-                # Try to start without sudo first
-                systemctl start postgresql || echo "Could not start PostgreSQL without sudo"
-            fi
-            
-            # Try to create database and user without sudo first
-            echo "=== Attempting database setup ==="
-            if command -v psql >/dev/null 2>&1; then
-                # Try direct connection if postgres user exists
-                psql -h localhost -U postgres -c "CREATE DATABASE myearth;" 2>/dev/null || echo "Database creation failed or already exists"
-                psql -h localhost -U postgres -c "CREATE USER myearth WITH PASSWORD 'myearth_password';" 2>/dev/null || echo "User creation failed or already exists"
-                psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE myearth TO myearth;" 2>/dev/null || echo "Privileges failed or already granted"
-            else
-                echo "⚠️  PostgreSQL client not available, skipping database setup"
-            fi
-            
-            # Set environment variable for database
-            export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
-            
-            echo "=== Testing application startup ==="
-            echo "=== Starting test server ==="
-            timeout 30 python3 main.py > test.log 2>&1 &
-            TEST_PID=$!
-            echo "Test server started with PID: $TEST_PID"
-            sleep 5
-            echo "=== Testing health check ==="
-            if curl -f http://localhost:5001/api/ping; then
-                echo "✅ Local test successful"
-                pkill -f "python3 main.py" || echo "Could not kill test process"
-            else
-                echo "❌ Local test failed"
-                echo "=== Test server logs ==="
-                cat test.log || echo "No test log found"
-                pkill -f "python3 main.py" || echo "Could not kill test process"
-                echo "=== Continuing anyway for now ==="
-            fi
-            
-            echo "=== Stopping existing app ==="
-            systemctl stop myearth 2>/dev/null || echo "Service not running or no sudo access"
-            pkill -f "python3 main.py" || echo "No existing process found"
-            sleep 2
-            
-            echo "=== Installing systemd service ==="
-            # Debug: Check if service file exists
-            echo "=== Checking for service file ==="
-            ls -la /home/jc/MyEarth/myearth.service || echo "Service file not found!"
-            echo "=== Current directory contents ==="
-            ls -la /home/jc/MyEarth/
-            
-            # Try to copy service file without sudo first
-            if [ -w /etc/systemd/system/ ]; then
-                cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
-                systemctl daemon-reload
-                systemctl enable myearth
-                echo "✅ Service installed successfully"
-            else
-                echo "⚠️  Cannot write to /etc/systemd/system/, trying manual start"
-            fi
-            
-            echo "=== Starting new app ==="
-            if systemctl is-active --quiet myearth 2>/dev/null; then
-                systemctl start myearth || echo "Could not start service"
-            else
-                echo "⚠️  Service not available, starting manually"
-            fi
-            
-            echo "=== Deployment completed ==="
-            sleep 3
-            echo "=== Checking if app is running ==="
-            systemctl status myearth --no-pager 2>/dev/null || echo "Could not check service status"
-            
-            echo "=== Checking service logs ==="
-            journalctl -u myearth --no-pager -n 20 2>/dev/null || echo "Could not access service logs"
-            
-            echo "=== Checking if port 5001 is listening ==="
-            netstat -tlnp | grep :5001 || echo "Port 5001 not listening"
-            ss -tlnp | grep :5001 || echo "Port 5001 not listening (ss)"
-            
-            echo "=== Testing app health check ==="
-            sleep 5  # Wait for app to fully start
-            if curl -f http://localhost:5001/api/ping; then
-                echo "✅ App health check passed"
-                echo "=== Checking if app is still running after 30 seconds ==="
-                sleep 30
-                if curl -f http://localhost:5001/api/ping; then
-                                    echo "✅ App is stable"
-                echo "=== Setting up nginx configuration ==="
-                # Copy our nginx configuration
-                if [ -w /etc/nginx/sites-available/ ]; then
-                    cp /home/jc/MyEarth/nginx.conf /etc/nginx/sites-available/myearth
-                    ln -sf /etc/nginx/sites-available/myearth /etc/nginx/sites-enabled/ 2>/dev/null || echo "Could not create symlink"
-                    nginx -t 2>/dev/null && {
-                        systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
-                        echo "✅ Nginx configuration updated"
-                    } || echo "⚠️  Nginx config has issues"
-                else
-                    echo "⚠️  Cannot write to nginx config directory"
-                fi
-                echo "=== Deployment completed successfully ==="
-                echo "SUCCESS"
-                else
-                    echo "❌ App crashed after initial startup"
-                    echo "=== Checking app logs ==="
-                    cat app.log || echo "No app log found"
-                    echo "FAILED"
-                fi
-            else
-                echo "❌ App health check failed"
-                echo "=== Trying to start app manually ==="
-                cd /home/jc/MyEarth
-                source venv/bin/activate
-                # Set environment variables
-                export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
-                export PORT=5001
-                # Start the application in background with logging
-                nohup python3 main.py > app.log 2>&1 &
-                APP_PID=$!
-                echo "Manual app started with PID: $APP_PID"
-                sleep 10
-                if curl -f http://localhost:5001/api/ping; then
-                    echo "✅ Manual start successful"
-                    echo "SUCCESS"
-                else
-                    echo "❌ Manual start also failed"
-                    echo "=== Checking manual app logs ==="
-                    cat app.log || echo "No manual app log found"
-                    echo "=== Checking if manual process is running ==="
-                    ps aux | grep python3 || echo "No python processes found"
-                    echo "=== Final attempt - starting without database ==="
-                    # Try starting without database dependency
-                    export DATABASE_URL=""
-                    nohup python3 -c "import main; print('Import successful')" > import_test.log 2>&1
-                    cat import_test.log || echo "No import test log found"
-                    echo "FAILED"
-                fi
-            fi
-          EOF
-          )
+          # Navigate to project directory
+          cd /home/jc/MyEarth
           
-          # Check the result and exit accordingly
-          if echo "$DEPLOY_RESULT" | grep -q "SUCCESS"; then
-              echo "✅ Deployment completed successfully"
-              exit 0
-          else
-              echo "❌ Deployment failed"
-              exit 1
-          fi
+          # Pull latest code
+          echo "📥 Pulling latest code..."
+          git clean -fd || echo "No untracked files to clean"
+          git pull origin main
           
-          # Clean up
-          rm -f /tmp/deploy_key
-
-      # 4. Fallback: If native SSH fails, try appleboy/ssh-action
-      - name: Deploy via appleboy/ssh-action (fallback)
-        if: failure()
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 100.69.50.87
-          username: jc
-          key: ${{ secrets.DEPLOY_KEY }}
-          debug: true
-          script: |
-            cd /home/jc/MyEarth
-            # Clean up any untracked files that might cause conflicts
-            git clean -fd || echo "No untracked files to clean"
-            git pull origin main
-            rm -rf venv
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install -r requirements.txt --break-system-packages
-            systemctl stop myearth 2>/dev/null || echo "Could not stop service"
-            
-            # Debug: Check if service file exists
-            echo "=== Checking for service file ==="
-            ls -la /home/jc/MyEarth/myearth.service || echo "Service file not found!"
-            echo "=== Current directory contents ==="
-            ls -la /home/jc/MyEarth/
-            
-            # Try to install service without sudo
-            if [ -w /etc/systemd/system/ ]; then
-                cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
-                systemctl daemon-reload
-                systemctl enable myearth
-                systemctl start myearth
-                sleep 3
-                systemctl status myearth --no-pager 2>/dev/null || echo "Could not check status"
-            else
-                echo "⚠️  Cannot install service, starting manually"
-            fi
-            
-            echo "=== Testing app health check ==="
-            sleep 5  # Wait for app to fully start
-            if curl -f http://localhost:5001/api/ping; then
-                echo "✅ App health check passed"
-                echo "=== Setting up nginx configuration ==="
-                # Try multiple approaches to configure nginx
-                NGINX_CONFIGURED=false
-                
-                # Method 1: Direct nginx config directory
-                if [ -w /etc/nginx/sites-available/ ]; then
-                    echo "=== Method 1: Direct nginx config ==="
-                    cp /home/jc/MyEarth/nginx.conf /etc/nginx/sites-available/myearth
-                    ln -sf /etc/nginx/sites-available/myearth /etc/nginx/sites-enabled/ 2>/dev/null || echo "Could not create symlink"
-                    nginx -t 2>/dev/null && {
-                        systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
-                        echo "✅ Nginx configuration updated (Method 1)"
-                        NGINX_CONFIGURED=true
-                    } || echo "⚠️  Nginx config has issues"
-                else
-                    echo "⚠️  Cannot write to nginx config directory"
-                fi
-                
-                # Method 2: Try to modify main nginx.conf directly
-                if [ "$NGINX_CONFIGURED" = false ] && [ -w /etc/nginx/nginx.conf ]; then
-                    echo "=== Method 2: Modify main nginx.conf ==="
-                    # Backup original config
-                    cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
-                    # Add our server block to the main config
-                    cat /home/jc/MyEarth/nginx.conf >> /etc/nginx/nginx.conf
-                    nginx -t 2>/dev/null && {
-                        systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
-                        echo "✅ Nginx configuration updated (Method 2)"
-                        NGINX_CONFIGURED=true
-                    } || {
-                        echo "⚠️  Method 2 failed, restoring backup"
-                        cp /etc/nginx/nginx.conf.backup /etc/nginx/nginx.conf
-                    }
-                fi
-                
-                # Method 3: Create a simple proxy using socat or similar
-                if [ "$NGINX_CONFIGURED" = false ]; then
-                    echo "=== Method 3: Manual proxy setup ==="
-                    echo "⚠️  Nginx configuration failed, but app is running on port 5001"
-                    echo "⚠️  You can access the app directly at: http://YOUR_SERVER_IP:5001"
-                    echo "⚠️  Or run manually: sudo bash /home/jc/MyEarth/fix-nginx-manual.sh"
-                fi
-                echo "=== Deployment completed successfully ==="
-                exit 0
-            else
-                echo "❌ App health check failed"
-                echo "=== Trying to start app manually ==="
-                cd /home/jc/MyEarth
-                source venv/bin/activate
-                # Set environment variables
-                export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
-                export PORT=5001
-                # Start the application in background
-                nohup python3 main.py > app.log 2>&1 &
-                APP_PID=$!
-                echo "App started with PID: $APP_PID"
-                sleep 10  # Wait for app to start
-                if curl -f http://localhost:5001/api/ping; then
-                    echo "✅ Manual start successful"
-                    echo "SUCCESS"
-                    exit 0
-                else
-                    echo "❌ Manual start also failed"
-                    echo "=== Checking app logs ==="
-                    cat app.log || echo "No log file found"
-                    echo "=== Checking if process is running ==="
-                    ps aux | grep python3 || echo "No python processes found"
-                    echo "FAILED"
-                    exit 1
-                fi
-            fi
-
-      # 5. Emergency fallback: Direct SSH without Tailscale
-      - name: Emergency deployment via direct SSH
-        if: failure()
-        run: |
-          # Try connecting directly to the server's SSH port
-          echo "${{ secrets.DEPLOY_KEY }}" > /tmp/emergency_key
-          chmod 600 /tmp/emergency_key
+          # Recreate virtual environment
+          echo "🐍 Setting up Python environment..."
+          rm -rf venv
+          python3 -m venv venv
+          source venv/bin/activate
           
-          ssh -o ConnectTimeout=30 \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              -i /tmp/emergency_key \
-              jc@100.69.50.87 << 'EOF'
-            cd /home/jc/MyEarth
-            # Clean up any untracked files that might cause conflicts
-            git clean -fd || echo "No untracked files to clean"
-            git pull origin main
-            rm -rf venv
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install -r requirements.txt --break-system-packages
-            systemctl stop myearth 2>/dev/null || echo "Could not stop service"
-            if [ -w /etc/systemd/system/ ]; then
-                cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
-                systemctl daemon-reload
-                systemctl enable myearth
-                systemctl start myearth
-            else
-                echo "⚠️  Cannot install service, starting manually"
-            fi
-            echo "=== Testing app health check ==="
-            sleep 5  # Wait for app to fully start
-            if curl -f http://localhost:5001/api/ping; then
-                echo "✅ App health check passed"
-                echo "Emergency deployment completed successfully"
-                exit 0
-            else
-                echo "❌ App health check failed"
-                echo "Emergency deployment completed with errors"
-                exit 1
-            fi
-          EOF
+          # Install dependencies
+          echo "📦 Installing dependencies..."
+          pip install -r requirements.txt --break-system-packages || {
+              echo "⚠️  Some dependencies failed, trying key packages..."
+              pip install fastapi uvicorn sqlalchemy psycopg2-binary pyjwt requests --break-system-packages || echo "Key dependencies install failed"
+          }
           
-          rm -f /tmp/emergency_key
+          # Run deployment fix script
+          echo "🔧 Running deployment fix script..."
+          chmod +x fix-deployment.sh
+          ./fix-deployment.sh
+          
+          # Final verification
+          echo "✅ Deployment completed!"
+          echo "🌐 Application URL: http://194.230.198.246:5001"
+          echo "🌍 Domain URL: https://myearth.app (if nginx configured)"
+          
+    - name: Health check
+      run: |
+        echo "🏥 Performing health check..."
+        sleep 10
+        if curl -f http://${{ secrets.HOST }}:5001/api/ping; then
+          echo "✅ Health check passed!"
+        else
+          echo "❌ Health check failed"
+          exit 1
+        fi
