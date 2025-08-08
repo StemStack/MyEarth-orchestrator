@@ -7,7 +7,7 @@ Type=simple
 User=jc
 WorkingDirectory=/home/jc/MyEarth
 Environment=PATH=/home/jc/MyEarth/venv/bin
-Environment=PORT=5000
+Environment=PORT=5001
 ExecStart=/home/jc/MyEarth/venv/bin/python main.py
 Restart=always
 RestartSec=10

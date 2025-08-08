@@ -84,7 +84,7 @@ jobs:
             sudo systemctl status myearth --no-pager || true
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
-            if curl -f http://localhost:5000/api/ping; then
+            if curl -f http://localhost:5001/api/ping; then
                 echo "✅ App health check passed"
                 echo "=== Deployment completed successfully ==="
                 echo "SUCCESS"
@@ -141,7 +141,7 @@ jobs:
             sudo systemctl status myearth --no-pager || true
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
-            if curl -f http://localhost:5000/api/ping; then
+            if curl -f http://localhost:5001/api/ping; then
                 echo "✅ App health check passed"
                 echo "=== Deployment completed successfully ==="
                 exit 0
@@ -178,7 +178,7 @@ jobs:
             sudo systemctl start myearth
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
-            if curl -f http://localhost:5000/api/ping; then
+            if curl -f http://localhost:5001/api/ping; then
                 echo "✅ App health check passed"
                 echo "Emergency deployment completed successfully"
                 exit 0
