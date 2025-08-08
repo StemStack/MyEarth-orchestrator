@@ -3435,8 +3435,10 @@
             <!-- Row 3 -->
             <div class="tool-icon" id="northArrow" title="North Orientation" onclick="resetNorth()" style="cursor: pointer;">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polygon points="12,2 22,22 12,18 2,22" fill="none" stroke="currentColor"/>
-                    <line x1="12" y1="2" x2="12" y2="18"></line>
+                    <!-- Black circle background -->
+                    <circle cx="12" cy="12" r="10" fill="black"/>
+                    <!-- White upward-pointing arrow -->
+                    <polygon points="12,6 16,14 12,12 8,14" fill="white" stroke="white"/>
                 </svg>
             </div>
             <div class="tool-icon" id="fullscreenTool" title="Fullscreen" onclick="toggleFullscreen()">
@@ -3666,7 +3668,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
-            <div id="revisionInfo">Revision: v0.4.1</div>
+            <div id="revisionInfo">MyEarth.app v.0.4.3</div>
         </div>
     </div>
 
@@ -8993,7 +8995,24 @@ TIP: These shortcuts work when not typing in input fields.
         // New functionality functions
         function resetNorth() {
             if (viewer && viewer.camera) {
-                viewer.camera.setHeading(0);
+                // Reset to north orientation with smooth animation
+                viewer.camera.setView({
+                    orientation: {
+                        heading: 0, // North
+                        pitch: viewer.camera.pitch, // Keep current pitch
+                        roll: 0 // Level the view
+                    }
+                });
+                
+                // Add visual feedback
+                const northArrow = document.getElementById('northArrow');
+                if (northArrow) {
+                    northArrow.style.transform = 'scale(1.2)';
+                    setTimeout(() => {
+                        northArrow.style.transform = 'scale(1)';
+                    }, 200);
+                }
+                
                 console.log('✓ Reset to North orientation');
             }
         }
