@@ -56,6 +56,10 @@ jobs:
             source venv/bin/activate
             
             echo "=== Installing dependencies ==="
+            # Handle NumPy compatibility issue
+            echo "=== Installing NumPy first ==="
+            pip install "numpy==1.24.3" --break-system-packages
+            echo "=== Installing other dependencies ==="
             pip install -r requirements.txt --break-system-packages
             
             echo "=== Setting up PostgreSQL ==="
@@ -147,6 +151,8 @@ jobs:
                 echo "=== Trying to start app manually ==="
                 cd /home/jc/MyEarth
                 source venv/bin/activate
+                # Try with NumPy fix
+                pip install "numpy==1.24.3" --break-system-packages || echo "NumPy install failed"
                 python3 main.py &
                 sleep 10
                 if curl -f http://localhost:5001/api/ping; then
