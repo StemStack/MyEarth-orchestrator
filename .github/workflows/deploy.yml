@@ -221,6 +221,7 @@ jobs:
             else
                 echo "⚠️  Cannot install service, starting manually"
             fi
+            
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
             if curl -f http://localhost:5001/api/ping; then
@@ -229,7 +230,30 @@ jobs:
                 exit 0
             else
                 echo "❌ App health check failed"
-                exit 1
+                echo "=== Trying to start app manually ==="
+                cd /home/jc/MyEarth
+                source venv/bin/activate
+                # Set environment variables
+                export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
+                export PORT=5001
+                # Start the application in background
+                nohup python3 main.py > app.log 2>&1 &
+                APP_PID=$!
+                echo "App started with PID: $APP_PID"
+                sleep 10  # Wait for app to start
+                if curl -f http://localhost:5001/api/ping; then
+                    echo "✅ Manual start successful"
+                    echo "SUCCESS"
+                    exit 0
+                else
+                    echo "❌ Manual start also failed"
+                    echo "=== Checking app logs ==="
+                    cat app.log || echo "No log file found"
+                    echo "=== Checking if process is running ==="
+                    ps aux | grep python3 || echo "No python processes found"
+                    echo "FAILED"
+                    exit 1
+                fi
             fi
 
       # 5. Emergency fallback: Direct SSH without Tailscale
