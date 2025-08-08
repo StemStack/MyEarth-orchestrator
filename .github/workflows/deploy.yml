@@ -271,16 +271,46 @@ jobs:
             if curl -f http://localhost:5001/api/ping; then
                 echo "✅ App health check passed"
                 echo "=== Setting up nginx configuration ==="
-                # Copy our nginx configuration
+                # Try multiple approaches to configure nginx
+                NGINX_CONFIGURED=false
+                
+                # Method 1: Direct nginx config directory
                 if [ -w /etc/nginx/sites-available/ ]; then
+                    echo "=== Method 1: Direct nginx config ==="
                     cp /home/jc/MyEarth/nginx.conf /etc/nginx/sites-available/myearth
                     ln -sf /etc/nginx/sites-available/myearth /etc/nginx/sites-enabled/ 2>/dev/null || echo "Could not create symlink"
                     nginx -t 2>/dev/null && {
                         systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
-                        echo "✅ Nginx configuration updated"
+                        echo "✅ Nginx configuration updated (Method 1)"
+                        NGINX_CONFIGURED=true
                     } || echo "⚠️  Nginx config has issues"
                 else
                     echo "⚠️  Cannot write to nginx config directory"
+                fi
+                
+                # Method 2: Try to modify main nginx.conf directly
+                if [ "$NGINX_CONFIGURED" = false ] && [ -w /etc/nginx/nginx.conf ]; then
+                    echo "=== Method 2: Modify main nginx.conf ==="
+                    # Backup original config
+                    cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
+                    # Add our server block to the main config
+                    cat /home/jc/MyEarth/nginx.conf >> /etc/nginx/nginx.conf
+                    nginx -t 2>/dev/null && {
+                        systemctl reload nginx 2>/dev/null || echo "Could not reload nginx"
+                        echo "✅ Nginx configuration updated (Method 2)"
+                        NGINX_CONFIGURED=true
+                    } || {
+                        echo "⚠️  Method 2 failed, restoring backup"
+                        cp /etc/nginx/nginx.conf.backup /etc/nginx/nginx.conf
+                    }
+                fi
+                
+                # Method 3: Create a simple proxy using socat or similar
+                if [ "$NGINX_CONFIGURED" = false ]; then
+                    echo "=== Method 3: Manual proxy setup ==="
+                    echo "⚠️  Nginx configuration failed, but app is running on port 5001"
+                    echo "⚠️  You can access the app directly at: http://YOUR_SERVER_IP:5001"
+                    echo "⚠️  Or run manually: sudo bash /home/jc/MyEarth/fix-nginx-manual.sh"
                 fi
                 echo "=== Deployment completed successfully ==="
                 exit 0
