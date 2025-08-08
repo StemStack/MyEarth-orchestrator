@@ -21,9 +21,9 @@ class PrintOverlay {
             defaultPaperSize: 'A4',
             defaultOrientation: 'portrait',
             defaultScale: '1:1\'500\'000',
-            includeLegend: true,
+            includeLegend: false,
             includeGrid: false,
-            includeTitle: true,
+            includeTitle: false,
             includeCopyright: true,
             ...options
         };
@@ -313,6 +313,18 @@ class PrintOverlay {
             font-size: 11px;
         `;
         
+        // Add mobile-specific styling
+        if (window.innerWidth <= 768) {
+            this.settingsPanel.style.cssText += `
+                max-width: 160px !important;
+                min-width: 140px !important;
+                padding: 6px !important;
+                font-size: 10px !important;
+                top: 4px !important;
+                right: 4px !important;
+            `;
+        }
+        
         document.body.appendChild(this.settingsPanel);
         this.initializeSettingsControls();
     }
@@ -321,16 +333,25 @@ class PrintOverlay {
      * Get settings panel HTML
      */
     getSettingsPanelHTML() {
+        const isMobile = window.innerWidth <= 768;
+        const mobileStyle = isMobile ? 'margin-bottom: 2px; font-size: 9px;' : 'margin-bottom: 4px; font-size: 10px;';
+        const mobileLabelStyle = isMobile ? 'margin-bottom: 0px; font-size: 8px;' : 'margin-bottom: 1px;';
+        const mobileButtonStyle = isMobile ? 'padding: 2px; font-size: 8px;' : 'padding: 3px; font-size: 9px;';
+        const mobileSelectStyle = isMobile ? 'padding: 1px; font-size: 9px;' : 'padding: 1px; font-size: 10px;';
+        const mobileHeaderStyle = isMobile ? 'margin-bottom: 4px; font-size: 11px;' : 'margin-bottom: 6px; font-size: 13px;';
+        const mobileCheckboxStyle = isMobile ? 'margin-bottom: 2px; font-size: 8px;' : 'margin-bottom: 3px; font-size: 9px;';
+        const mobileGenerateStyle = isMobile ? 'padding: 4px; font-size: 10px;' : 'padding: 5px; font-size: 11px;';
+        
         return `
-            <div class="print-settings-header" style="margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 13px;">🖨️ Print</h3>
-                <button class="print-close-btn" onclick="printOverlay.exitPrintMode()" style="background: none; border: none; color: white; cursor: pointer; font-size: 14px;">✕</button>
+            <div class="print-settings-header" style="${mobileHeaderStyle} display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0;">🖨️ Print</h3>
+                <button class="print-close-btn" onclick="printOverlay.exitPrintMode()" style="background: none; border: none; color: white; cursor: pointer; font-size: 12px;">✕</button>
             </div>
             
-            <div class="print-settings-content" style="font-size: 10px;">
-                <div class="print-setting-group" style="margin-bottom: 4px;">
-                    <label style="display: block; margin-bottom: 1px;">Size:</label>
-                    <select id="overlayPaperSize" style="width: 100%; padding: 1px; font-size: 10px;">
+            <div class="print-settings-content" style="font-size: ${isMobile ? '9px' : '10px'};">
+                <div class="print-setting-group" style="${mobileStyle}">
+                    <label style="display: block; ${mobileLabelStyle}">Size:</label>
+                    <select id="overlayPaperSize" style="width: 100%; ${mobileSelectStyle}">
                         <option value="A4">A4</option>
                         <option value="A3">A3</option>
                         <option value="A2">A2</option>
@@ -339,51 +360,51 @@ class PrintOverlay {
                     </select>
                 </div>
                 
-                <div class="print-setting-group" style="margin-bottom: 4px;">
-                    <label style="display: block; margin-bottom: 1px;">Orientation:</label>
-                    <div class="orientation-buttons" style="display: flex; gap: 3px;">
-                        <button class="orientation-btn active" data-orientation="portrait" style="flex: 1; padding: 3px; font-size: 9px; background: #4CAF50; border: none; color: white; border-radius: 2px;">Portrait</button>
-                        <button class="orientation-btn" data-orientation="landscape" style="flex: 1; padding: 3px; font-size: 9px; background: #666; border: none; color: white; border-radius: 2px;">Landscape</button>
+                <div class="print-setting-group" style="${mobileStyle}">
+                    <label style="display: block; ${mobileLabelStyle}">Orientation:</label>
+                    <div class="orientation-buttons" style="display: flex; gap: 2px;">
+                        <button class="orientation-btn active" data-orientation="portrait" style="flex: 1; ${mobileButtonStyle} background: #666; border: none; color: white; border-radius: 2px;">Portrait</button>
+                        <button class="orientation-btn" data-orientation="landscape" style="flex: 1; ${mobileButtonStyle} background: #666; border: none; color: white; border-radius: 2px;">Landscape</button>
                     </div>
                 </div>
                 
-                <div class="print-setting-group" style="margin-bottom: 4px;">
-                    <label style="display: block; margin-bottom: 1px;">Scale:</label>
-                    <select id="overlayMapScale" style="width: 100%; padding: 1px; font-size: 10px;">
+                <div class="print-setting-group" style="${mobileStyle}">
+                    <label style="display: block; ${mobileLabelStyle}">Scale:</label>
+                    <select id="overlayMapScale" style="width: 100%; ${mobileSelectStyle}">
                         ${this.scalePresets.map(scale => `<option value="${scale}">${scale}</option>`).join('')}
                         <option value="custom">Custom...</option>
                     </select>
                 </div>
                 
-                <div class="print-setting-group" id="customScaleContainer" style="display: none; margin-bottom: 4px;">
-                    <label style="display: block; margin-bottom: 1px;">Custom Scale:</label>
-                    <input type="text" id="customScaleInput" placeholder="1:1'500'000" style="width: 100%; padding: 1px; font-size: 10px;">
+                <div class="print-setting-group" id="customScaleContainer" style="display: none; ${mobileStyle}">
+                    <label style="display: block; ${mobileLabelStyle}">Custom Scale:</label>
+                    <input type="text" id="customScaleInput" placeholder="1:1'500'000" style="width: 100%; ${mobileSelectStyle}">
                 </div>
                 
-                <div class="print-setting-group" style="margin-bottom: 3px;">
-                    <label style="display: flex; align-items: center; gap: 3px; font-size: 9px;">
-                        <input type="checkbox" id="overlayIncludeTitle" checked style="margin: 0;">
+                <div class="print-setting-group" style="${mobileCheckboxStyle}">
+                    <label style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="overlayIncludeTitle" style="margin: 0;">
                         Title
                     </label>
-                    <input type="text" id="overlayTitleText" placeholder="Enter title" style="margin-top: 3px; width: 100%; padding: 2px; font-size: 10px; display: none;" />
+                    <input type="text" id="overlayTitleText" placeholder="Enter title" style="margin-top: 2px; width: 100%; padding: 1px; font-size: ${isMobile ? '8px' : '10px'}; display: none;" />
                 </div>
                 
-                <div class="print-setting-group" style="margin-bottom: 3px;">
-                    <label style="display: flex; align-items: center; gap: 3px; font-size: 9px;">
-                        <input type="checkbox" id="overlayIncludeLegend" checked style="margin: 0;">
+                <div class="print-setting-group" style="${mobileCheckboxStyle}">
+                    <label style="display: flex; align-items: center; gap: 2px;">
+                        <input type="checkbox" id="overlayIncludeLegend" style="margin: 0;">
                         Legend
                     </label>
                 </div>
                 
-                <div class="print-setting-group" style="margin-bottom: 6px;">
-                    <label style="display: flex; align-items: center; gap: 3px; font-size: 9px;">
+                <div class="print-setting-group" style="${mobileCheckboxStyle}">
+                    <label style="display: flex; align-items: center; gap: 2px;">
                         <input type="checkbox" id="overlayIncludeGrid" style="margin: 0;">
                         Grid
                     </label>
                 </div>
                 
                 <div class="print-actions">
-                    <button class="print-generate-btn" onclick="printOverlay.generatePDF()" style="width: 100%; padding: 5px; background: #4CAF50; border: none; color: white; border-radius: 3px; font-size: 11px; cursor: pointer;">
+                    <button class="print-generate-btn" onclick="printOverlay.generatePDF()" style="width: 100%; ${mobileGenerateStyle} background: #4CAF50; border: none; color: white; border-radius: 3px; cursor: pointer;">
                         📄 Generate PDF
                     </button>
                 </div>
@@ -445,7 +466,13 @@ class PrintOverlay {
         Object.entries(checkboxMap).forEach(([id, key]) => {
             const checkbox = document.getElementById(id);
             if (!checkbox) return;
-            checkbox.checked = !!this.currentSettings[key];
+            // Explicitly set to unchecked for Title and Legend
+            if (id === 'overlayIncludeTitle' || id === 'overlayIncludeLegend') {
+                checkbox.checked = false;
+                this.currentSettings[key] = false;
+            } else {
+                checkbox.checked = !!this.currentSettings[key];
+            }
             checkbox.onchange = (e) => {
                 this.currentSettings[key] = e.target.checked;
                 if (id === 'overlayIncludeTitle') {

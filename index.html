@@ -16,7 +16,7 @@
        - Toggle Button: leftPanelToggle (hamburger menu)
        - Position: Left side of screen
        - Purpose: Map layers, data services, 3D models, gizmo controls
-       - Sections: Maps displayed, Data Services, 3D Models, Gizmo, Performance
+       - Sections: Maps displayed, Data Services, 3D Models, Gizmo
        - Default State: Collapsed
        - CSS Classes: 'collapsed', 'with-left-panel'
        
@@ -948,7 +948,7 @@
             gap: 4px !important;
             width: 100% !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 40px 0 0 0 !important;
         }
 
         /* Tool Icons in Grid */
@@ -983,11 +983,14 @@
 
 
 
-        /* Panel Toggle Button */
+        /* Panel Toggle Button - Aligned with Panel */
         #rightPanel .panel-toggle-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
+            position: absolute !important;
+            top: 12px !important;
+            right: 8px !important;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
             background: rgba(255,255,255,0.95) !important;
             border: 1px solid rgba(0,0,0,0.1) !important;
             display: flex;
@@ -996,14 +999,31 @@
             cursor: pointer;
             color: #333;
             transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
-            margin-bottom: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+            z-index: 1002 !important;
         }
 
         #rightPanel .panel-toggle-btn:hover {
             background: rgba(0, 123, 255, 0.1) !important;
             border-color: rgba(0, 123, 255, 0.3) !important;
             transform: translateY(-1px);
+        }
+
+        /* Icon switching for panel toggle button */
+        #rightPanel .panel-toggle-btn .hamburger-icon {
+            display: none;
+        }
+        
+        #rightPanel .panel-toggle-btn .close-icon {
+            display: block;
+        }
+        
+        #rightPanel.collapsed .panel-toggle-btn .hamburger-icon {
+            display: block;
+        }
+        
+        #rightPanel.collapsed .panel-toggle-btn .close-icon {
+            display: none;
         }
 
         /* Dark Theme Support */
@@ -1340,13 +1360,17 @@
             width: 32px !important;
             height: 32px !important;
             padding: 0 !important;
-            background: rgba(255, 255, 255, 0.95) !important;
-            border: 1px solid rgba(0, 0, 0, 0.1) !important;
-            border-radius: 6px !important;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+            background: transparent !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
         }
         
         #rightPanel.collapsed .tool-icon {
+            display: none !important;
+        }
+        
+        #rightPanel.collapsed .tool-grid {
             display: none !important;
         }
         
@@ -1354,17 +1378,20 @@
         
         #rightPanel.collapsed .panel-toggle-btn {
             display: flex !important;
-            position: relative !important;
+            position: fixed !important;
+            top: 20px !important;
+            right: 15px !important;
             margin: 0 !important;
-            width: 32px !important;
-            height: 32px !important;
-            background: transparent !important;
-            border: none !important;
+            width: 28px !important;
+            height: 28px !important;
+            background: rgba(255,255,255,0.95) !important;
+            border: 1px solid rgba(0,0,0,0.1) !important;
             border-radius: 6px !important;
             align-items: center !important;
             justify-content: center !important;
-            box-shadow: none !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
             color: #333 !important;
+            z-index: 1002 !important;
         }
         
         #rightPanel.collapsed .panel-toggle-btn:hover {
@@ -1376,34 +1403,7 @@
         
 
 
-        /* Panel toggle button - Swiss Style */
-        .panel-toggle-btn {
-            position: relative;
-            width: 32px;
-            height: 32px;
-            border-radius: 6px !important;
-            background: transparent !important;
-            border: none !important;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #333 !important;
-            z-index: 1001;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: none !important;
-            margin-bottom: 8px;
-        }
-        
 
-        
-        /* No rotation needed for hamburger menus - they stay the same */
-
-        .panel-toggle-btn:hover {
-            background: rgba(0, 0, 0, 0.08) !important;
-            border-radius: 6px !important;
-            transform: translateY(-1px);
-        }
 
         /* Floating toggle button for collapsed left panel */
         .floating-toggle {
@@ -1953,28 +1953,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
         }
 
-        .sidebar-close-button {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            width: 24px;
-            height: 24px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-            z-index: 1001;
-        }
 
-        .sidebar-close-button:hover {
-            background: rgba(255, 255, 255, 0.3);
-            color: #333;
-        }
 
         /* Floating menu button when sidebar is collapsed - maps.geo.admin style */
         .floating-menu-button {
@@ -2047,10 +2026,14 @@
 
         /* Sidebar Logo Styling */
         .sidebar-logo {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--sidebar-border);
-            background: rgba(255, 255, 255, 0.1);
-            margin-bottom: 10px;
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 4px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
         }
 
         .sidebar-logo .app-title {
@@ -2064,7 +2047,7 @@
         .sidebar-logo .title-main {
             font-weight: 900;
             color: #333;
-            font-size: 16px;
+            font-size: 14px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             letter-spacing: -0.5px;
         }
@@ -2078,7 +2061,7 @@
         .sidebar-logo .title-earth {
             font-weight: 900;
             color: #333;
-            font-size: 16px;
+            font-size: 14px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             letter-spacing: -0.5px;
         }
@@ -2086,7 +2069,7 @@
         .sidebar-logo .title-app {
             font-weight: 400;
             color: #666;
-            font-size: 9px;
+            font-size: 8px;
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin-left: 2px;
         }
@@ -3010,18 +2993,10 @@
         - Function: toggleLeftPanel()
         - Position: Left side of screen
         - Purpose: Contains map layers, data services, 3D models, gizmo controls
-        - Sections: Maps displayed, Data Services, 3D Models, Gizmo, Performance
+        - Sections: Maps displayed, Data Services, 3D Models, Gizmo
         - Toggle: Use leftPanelToggle button or sidebar-close-button
     -->
     <div class="sidebar" id="leftPanel">
-        <!-- Close button -->
-        <div class="sidebar-close-button" onclick="toggleLeftPanel()">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </div>
-
         <!-- Logo Section -->
         <div class="sidebar-logo">
             <div class="app-title">
@@ -3172,22 +3147,7 @@
             </div>
         </div>
         
-        <!-- Performance Section -->
-        <div class="sidebar-section">
-            <div class="section-header" onclick="toggleSection('performance')">
-                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>Performance</span>
-                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
-            </div>
-            <div class="section-content collapsed" id="performance">
-                <div class="webgl-notice">
-                    <div style="font-weight: 600; margin-bottom: 4px;">WebGL Optimization</div>
-                    <div style="margin-bottom: 8px;">For best 3D terrain performance, open in a new tab for full GPU acceleration.</div>
-                    <button class="control-button" onclick="window.open(window.location.href, '_blank')">
-                        Open in New Tab
-                    </button>
-                </div>
-            </div>
-        </div>
+
     </div>
 
     <!-- Drag and drop overlay -->
@@ -3378,10 +3338,16 @@
     -->
     <div id="rightPanel">
         <div class="panel-toggle-btn" onclick="toggleRightPanel()" title="Tools">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <!-- Hamburger icon (shown when panel is closed) -->
+            <svg class="hamburger-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+            <!-- X icon (shown when panel is open) -->
+            <svg class="close-icon" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>
         </div>
         
@@ -7995,6 +7961,14 @@ TIP: These shortcuts work when not typing in input fields.
                 }
             });
             
+            // Add Escape key handler to close drag and drop overlay
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && dragDropOverlay.style.display === 'flex') {
+                    dragDropOverlay.style.display = 'none';
+                    dragCounter = 0;
+                }
+            });
+            
             // Also handle file input for alternative upload method
             modelFileInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
@@ -8914,6 +8888,21 @@ TIP: These shortcuts work when not typing in input fields.
             if (rightPanel) {
                 rightPanel.classList.toggle('collapsed');
                 const isCollapsed = rightPanel.classList.contains('collapsed');
+                
+                // Update icon visibility
+                const hamburgerIcon = rightPanel.querySelector('.hamburger-icon');
+                const closeIcon = rightPanel.querySelector('.close-icon');
+                
+                if (isCollapsed) {
+                    // Panel is closed - show hamburger icon
+                    if (hamburgerIcon) hamburgerIcon.style.display = 'block';
+                    if (closeIcon) closeIcon.style.display = 'none';
+                } else {
+                    // Panel is open - show X icon
+                    if (hamburgerIcon) hamburgerIcon.style.display = 'none';
+                    if (closeIcon) closeIcon.style.display = 'block';
+                }
+                
                 console.log('✓ Right panel', isCollapsed ? 'collapsed' : 'expanded');
             }
         }
@@ -10106,21 +10095,7 @@ TIP: These shortcuts work when not typing in input fields.
             }
         }
 
-        function toggleSettingsPanel() {
-            const tool = document.getElementById('settingsTool');
-            const section = document.getElementById('performance');
-            
-            tool.classList.toggle('active');
-            
-            if (tool.classList.contains('active')) {
-                if (section.classList.contains('collapsed')) {
-                    toggleSection('performance');
-                }
-                console.log('Settings panel activated');
-            } else {
-                console.log('Settings panel deactivated');
-            }
-        }
+
         
         console.log('✓ Swiss-style sidebar initialized');
         
