@@ -58,6 +58,24 @@ jobs:
             echo "=== Installing dependencies ==="
             pip install -r requirements.txt --break-system-packages
             
+            echo "=== Setting up PostgreSQL ==="
+            # Install PostgreSQL if not already installed
+            sudo apt-get update
+            sudo apt-get install -y postgresql postgresql-contrib
+            
+            # Start PostgreSQL service
+            sudo systemctl start postgresql
+            sudo systemctl enable postgresql
+            
+            # Create database and user
+            sudo -u postgres psql -c "CREATE DATABASE myearth;" || echo "Database already exists"
+            sudo -u postgres psql -c "CREATE USER myearth WITH PASSWORD 'myearth_password';" || echo "User already exists"
+            sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE myearth TO myearth;" || echo "Privileges already granted"
+            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'myearth_password';" || echo "Postgres password already set"
+            
+            # Set environment variable for database
+            export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
+            
             echo "=== Testing application startup ==="
             timeout 30 python3 main.py &
             sleep 5

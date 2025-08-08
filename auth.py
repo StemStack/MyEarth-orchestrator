@@ -33,18 +33,43 @@ LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
 LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
 
 # Database setup
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/myearth")
+# Try multiple database configurations
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    # Try common PostgreSQL configurations
+    possible_urls = [
+        "postgresql://postgres:myearth_password@localhost/myearth",
+        "postgresql://postgres:password@localhost/myearth",
+        "postgresql://postgres:@localhost/myearth",
+        "postgresql://myearth:myearth@localhost/myearth"
+    ]
+    DATABASE_URL = possible_urls[0]  # Use first one as default
+
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Create tables (with error handling)
+try:
+    Base.metadata.create_all(bind=engine)
+    print("✅ Database tables created successfully")
+except Exception as e:
+    print(f"⚠️  Database connection failed: {e}")
+    print("⚠️  Application will start without database functionality")
+    # Create a dummy engine for development
+    engine = None
+    SessionLocal = None
 
 # Security
 security = HTTPBearer()
 
 def get_db():
     """Get database session"""
+    if SessionLocal is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is not available"
+        )
+    
     db = SessionLocal()
     try:
         yield db

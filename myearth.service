@@ -9,6 +9,7 @@ WorkingDirectory=/home/jc/MyEarth
 Environment=PATH=/home/jc/MyEarth/venv/bin
 Environment=PORT=5001
 Environment=PYTHONPATH=/home/jc/MyEarth
+Environment=DATABASE_URL=postgresql://postgres:myearth_password@localhost/myearth
 ExecStart=/home/jc/MyEarth/venv/bin/python main.py
 StandardOutput=journal
 StandardError=journal
