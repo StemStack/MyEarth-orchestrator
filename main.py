@@ -235,7 +235,7 @@ async def serve_version():
     except FileNotFoundError:
         # Fallback if version.json doesn't exist
         return JSONResponse(content={
-            "version": "0.4",
+            "version": "0.3",
             "buildDate": "unknown",
             "buildTimestamp": 0,
             "commitHash": "unknown",
