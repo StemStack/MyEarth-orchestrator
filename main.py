@@ -2,13 +2,15 @@
 FastAPI server for MyEarth:
 - Serves CesiumJS static files
 - Provides API endpoints for DB connection and health checks
+- Handles user authentication and layer management
 - Replaces old Flask + custom HTTP server setup
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBearer
 import psycopg2
 import os
 import shutil
@@ -20,6 +22,14 @@ import time
 import json
 import requests
 import zipfile
+from typing import Optional
+
+# --------------------
+# Import our modules
+# --------------------
+from auth import get_current_active_user, get_db, create_access_token, verify_google_token, verify_github_token, verify_linkedin_token, get_or_create_user
+from layer_api import router as layer_router
+from models import User, Layer, LayerRating, LayerCategory, License
 
 # --------------------
 # Database configuration
@@ -50,7 +60,11 @@ def get_db_connection():
 # --------------------
 # Initialize FastAPI
 # --------------------
-app = FastAPI()
+app = FastAPI(
+    title="MyEarth.app API",
+    description="GIS platform API for 3D globe visualization and layer management",
+    version="1.0.0"
+)
 
 # Enable CORS (all origins allowed)
 app.add_middleware(
@@ -60,6 +74,114 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include layer management routes
+app.include_router(layer_router)
+
+# --------------------
+# Authentication endpoints
+# --------------------
+@app.post("/api/auth/google")
+async def google_auth(token: str = Form(...), db = Depends(get_db)):
+    """Authenticate with Google OAuth2"""
+    try:
+        # Verify Google token
+        google_data = await verify_google_token(token)
+        
+        # Get or create user
+        user = get_or_create_user(db, google_data, "google")
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(user.id)})
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "full_name": user.full_name,
+                "avatar_url": user.avatar_url,
+                "is_admin": user.is_admin
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/auth/github")
+async def github_auth(token: str = Form(...), db = Depends(get_db)):
+    """Authenticate with GitHub OAuth2"""
+    try:
+        # Verify GitHub token
+        github_data = await verify_github_token(token)
+        
+        # Get or create user
+        user = get_or_create_user(db, github_data, "github")
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(user.id)})
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "full_name": user.full_name,
+                "avatar_url": user.avatar_url,
+                "is_admin": user.is_admin
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/auth/linkedin")
+async def linkedin_auth(token: str = Form(...), db = Depends(get_db)):
+    """Authenticate with LinkedIn OAuth2"""
+    try:
+        # Verify LinkedIn token
+        linkedin_data = await verify_linkedin_token(token)
+        
+        # Get or create user
+        user = get_or_create_user(db, linkedin_data, "linkedin")
+        
+        # Create access token
+        access_token = create_access_token(data={"sub": str(user.id)})
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "username": user.username,
+                "full_name": user.full_name,
+                "avatar_url": user.avatar_url,
+                "is_admin": user.is_admin
+            }
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/api/auth/me")
+async def get_current_user_info(current_user: User = Depends(get_current_active_user)):
+    """Get current user information"""
+    return {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "username": current_user.username,
+        "full_name": current_user.full_name,
+        "avatar_url": current_user.avatar_url,
+        "is_admin": current_user.is_admin,
+        "created_at": current_user.created_at
+    }
+
+@app.get("/api/auth/logout")
+async def logout():
+    """Logout endpoint (client should discard token)"""
+    return {"message": "Logged out successfully"}
 
 # --------------------
 # Serve static files
@@ -113,7 +235,7 @@ async def serve_version():
     except FileNotFoundError:
         # Fallback if version.json doesn't exist
         return JSONResponse(content={
-            "version": "0.3",
+            "version": "0.4",
             "buildDate": "unknown",
             "buildTimestamp": 0,
             "commitHash": "unknown",

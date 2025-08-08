@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyEarth - Universal 3D Model Importer with Gizmo</title>
+    
+    <!-- CesiumJS -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        
+        #cesiumContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            min-width: 250px;
+        }
+        
+        .control-panel h3 {
+            margin: 0 0 15px 0;
+            color: #4CAF50;
+            font-size: 16px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            transition: background 0.3s;
+        }
+        
+        .btn:hover {
+            background: #45a049;
+        }
+        
+        .btn.active {
+            background: #2196F3;
+        }
+        
+        .btn.secondary {
+            background: #ff9800;
+        }
+        
+        .btn.secondary:hover {
+            background: #f57c00;
+        }
+        
+        .btn.danger {
+            background: #f44336;
+        }
+        
+        .btn.danger:hover {
+            background: #d32f2f;
+        }
+        
+        .mode-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #333;
+        }
+        
+        .drag-drop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 123, 255, 0.1);
+            border: 3px dashed #007bff;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            pointer-events: none;
+        }
+        
+        .drag-drop-overlay.active {
+            display: flex;
+        }
+        
+        .drag-drop-text {
+            color: #007bff;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .info-panel h4 {
+            margin: 0 0 10px 0;
+            color: #4CAF50;
+        }
+        
+        .info-panel ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .info-panel li {
+            margin-bottom: 5px;
+        }
+        
+        .keyboard-shortcuts {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+        
+        .shortcut {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 11px;
+        }
+        
+        .shortcut-key {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer">
+        <div class="drag-drop-overlay" id="dragDropOverlay">
+            <div class="drag-drop-text">
+                Drop 3D Model Files Here<br>
+                <small>Supports: glTF, GLB, OBJ, 3D Tiles, LAS, PLY, and more!</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Control Panel -->
+    <div class="control-panel">
+        <h3>🎮 Model Controls</h3>
+        
+        <div class="control-group">
+            <label>Import Models:</label>
+            <button class="btn" onclick="modelImporter.selectFiles()">📁 Select Files</button>
+            <button class="btn secondary" onclick="clearAllModels()">🗑️ Clear All</button>
+        </div>
+        
+        <div class="control-group">
+            <label>Gizmo Mode:</label>
+            <div class="mode-buttons">
+                <button class="btn" id="translateBtn" onclick="setGizmoMode('translate')">↔️ Translate</button>
+                <button class="btn" id="rotateBtn" onclick="setGizmoMode('rotate')">🔄 Rotate</button>
+                <button class="btn" id="scaleBtn" onclick="setGizmoMode('scale')">📏 Scale</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label>Gizmo Controls:</label>
+            <button class="btn" onclick="toggleGizmo()">🎯 Toggle Gizmo</button>
+            <button class="btn secondary" onclick="selectNextModel()">⏭️ Next Model</button>
+        </div>
+        
+        <div class="status" id="status">
+            Ready to import models! Drag & drop files or click "Select Files".
+        </div>
+    </div>
+    
+    <!-- Info Panel -->
+    <div class="info-panel">
+        <h4>🚀 Universal 3D Model Importer</h4>
+        <p style="font-size: 12px; margin-bottom: 15px;">
+            Import and manipulate 3D models with real-time gizmo controls.
+        </p>
+        
+        <div class="keyboard-shortcuts">
+            <h5>⌨️ Keyboard Shortcuts:</h5>
+            <div class="shortcut">
+                <span class="shortcut-key">T</span>
+                <span>Translate Mode</span>
+            </div>
+            <div class="shortcut">
+                <span class="shortcut-key">R</span>
+                <span>Rotate Mode</span>
+            </div>
+            <div class="shortcut">
+                <span class="shortcut-key">S</span>
+                <span>Scale Mode</span>
+            </div>
+            <div class="shortcut">
+                <span class="shortcut-key">ESC</span>
+                <span>Disable Gizmo</span>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px; font-size: 11px; color: #aaa;">
+            <strong>Supported Formats:</strong><br>
+            • glTF/GLB (direct)<br>
+            • OBJ (converted)<br>
+            • 3D Tiles (.json, .b3dm)<br>
+            • Point Clouds (.las, .laz)<br>
+            • Gaussian Splats (.splat)<br>
+            • Archives (.zip, .kmz)
+        </div>
+    </div>
+
+    <!-- Load our custom modules -->
+    <script src="CesiumModelImporter.js"></script>
+    <script src="CesiumGizmo.js"></script>
+    
+    <script>
+        // Initialize Cesium Viewer
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlYWE1OWUxNy1mMWZiLTQzYjYtYTQ0OS1kMWFjYmFkNjc5YzciLCJpZCI6NTc3MzMsImlhdCI6MTYyMjY0NjQ5N30.XcKpgANiY19MC4bdFUXMVEBToBmqS8kuYpUlxJHYZxY';
+        
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            terrainProvider: Cesium.createWorldTerrain(),
+            homeButton: false,
+            sceneModePicker: false,
+            baseLayerPicker: false,
+            navigationHelpButton: false,
+            animation: false,
+            timeline: false,
+            fullscreenButton: false,
+            geocoder: false,
+            infoBox: false
+        });
+        
+        // Remove default imagery layer and add Bing Maps
+        viewer.imageryLayers.removeAll();
+        viewer.imageryLayers.addImageryProvider(new Cesium.BingMapsImageryProvider({
+            url: 'https://dev.virtualearth.net',
+            key: 'AqTGBsziZHIJYYxgivLBf0hVdrAk9mWO5cQcb8Yux8sW5M8c8opEC2lZqKR1ZZXf',
+            mapStyle: Cesium.BingMapsStyle.AERIAL_WITH_LABELS
+        }));
+        
+        // Set initial camera position
+        viewer.camera.setView({
+            destination: Cesium.Cartesian3.fromDegrees(-122.4194, 37.7749, 1000),
+            orientation: {
+                heading: Cesium.Math.toRadians(0),
+                pitch: Cesium.Math.toRadians(-45),
+                roll: 0.0
+            }
+        });
+        
+        // Initialize Model Importer
+        const modelImporter = new CesiumModelImporter(viewer, {
+            autoSelect: true,
+            showBoundingBox: true,
+            onModelImported: (model, file, fileType) => {
+                updateStatus(`✅ Imported: ${file.name} (${fileType})`);
+                console.log('Model imported:', model, file, fileType);
+            },
+            onError: (error, file) => {
+                updateStatus(`❌ Error importing ${file.name}: ${error.message}`);
+                console.error('Import error:', error, file);
+            }
+        });
+        
+        // Initialize Gizmo
+        const gizmo = new CesiumGizmo(viewer, {
+            size: 30,
+            snapping: {
+                translate: 1.0,
+                rotate: 15.0,
+                scale: 0.5
+            }
+        });
+        
+        // Global variables
+        let currentModelIndex = 0;
+        let importedModels = [];
+        
+        // Update status display
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+        
+        // Set gizmo mode
+        function setGizmoMode(mode) {
+            gizmo.setMode(mode);
+            
+            // Update button states
+            document.getElementById('translateBtn').classList.remove('active');
+            document.getElementById('rotateBtn').classList.remove('active');
+            document.getElementById('scaleBtn').classList.remove('active');
+            
+            document.getElementById(mode + 'Btn').classList.add('active');
+            
+            updateStatus(`🎯 Gizmo mode: ${mode}`);
+        }
+        
+        // Toggle gizmo visibility
+        function toggleGizmo() {
+            if (gizmo.isVisible()) {
+                gizmo.hide();
+                updateStatus('🎯 Gizmo hidden');
+            } else {
+                gizmo.show();
+                updateStatus('🎯 Gizmo visible');
+            }
+        }
+        
+        // Select next model
+        function selectNextModel() {
+            const models = Array.from(modelImporter.getImportedModels().values());
+            if (models.length === 0) {
+                updateStatus('❌ No models to select');
+                return;
+            }
+            
+            currentModelIndex = (currentModelIndex + 1) % models.length;
+            const model = models[currentModelIndex];
+            
+            modelImporter.selectModel(model.entity);
+            updateStatus(`🎯 Selected: ${model.file.name}`);
+        }
+        
+        // Clear all models
+        function clearAllModels() {
+            modelImporter.clearAllModels();
+            gizmo.disable();
+            currentModelIndex = 0;
+            updateStatus('🗑️ All models cleared');
+        }
+        
+        // Enhanced drag and drop visual feedback
+        const dragDropOverlay = document.getElementById('dragDropOverlay');
+        
+        viewer.canvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dragDropOverlay.classList.add('active');
+        });
+        
+        viewer.canvas.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragDropOverlay.classList.remove('active');
+        });
+        
+        viewer.canvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragDropOverlay.classList.remove('active');
+        });
+        
+        // Listen for model selection events
+        viewer.canvas.addEventListener('modelSelected', (e) => {
+            const model = e.detail.model;
+            updateStatus(`🎯 Selected model for manipulation`);
+            
+            // Update gizmo
+            gizmo.setSelectedEntity(model);
+        });
+        
+        // Initialize with translate mode
+        setGizmoMode('translate');
+        
+        // Welcome message
+        updateStatus('🚀 Welcome to MyEarth Universal 3D Model Importer!');
+        
+        // Add some sample entities for testing
+        function addSampleEntities() {
+            // Add a sample building
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(-122.4194, 37.7749, 0),
+                box: {
+                    dimensions: new Cesium.Cartesian3(50, 50, 100),
+                    material: Cesium.Color.BLUE.withAlpha(0.7),
+                    outline: true,
+                    outlineColor: Cesium.Color.BLUE
+                },
+                label: {
+                    text: 'Sample Building',
+                    font: '14pt sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -50)
+                }
+            });
+            
+            // Add a sample sphere
+            viewer.entities.add({
+                position: Cesium.Cartesian3.fromDegrees(-122.4154, 37.7749, 0),
+                ellipsoid: {
+                    radii: new Cesium.Cartesian3(25, 25, 25),
+                    material: Cesium.Color.RED.withAlpha(0.7),
+                    outline: true,
+                    outlineColor: Cesium.Color.RED
+                },
+                label: {
+                    text: 'Sample Sphere',
+                    font: '14pt sans-serif',
+                    fillColor: Cesium.Color.WHITE,
+                    outlineColor: Cesium.Color.BLACK,
+                    outlineWidth: 2,
+                    style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                    pixelOffset: new Cesium.Cartesian2(0, -50)
+                }
+            });
+        }
+        
+        // Add sample entities after a short delay
+        setTimeout(addSampleEntities, 1000);
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            viewer.resize();
+        });
+        
+        // Export functions for global access
+        window.modelImporter = modelImporter;
+        window.gizmo = gizmo;
+        window.setGizmoMode = setGizmoMode;
+        window.toggleGizmo = toggleGizmo;
+        window.selectNextModel = selectNextModel;
+        window.clearAllModels = clearAllModels;
+    </script>
+</body>
+</html> 

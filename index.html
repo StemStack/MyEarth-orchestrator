@@ -67,6 +67,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
+    <!-- Google OAuth2 -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/auth.css">
+    
     <!-- Gizmo System CSS -->
     <style>
         .gizmo-controls {
@@ -2965,6 +2971,43 @@
     </div>
 
     <!-- ======================================== -->
+    <!-- ======================================== -->
+    <!-- LAYER MANAGEMENT CONTAINER -->
+    <!-- ======================================== -->
+    <div class="layer-management" id="layerManagement">
+        <div class="layer-management-header">
+            <h3 class="layer-management-title">Layer Management</h3>
+            <button class="layer-management-close" onclick="document.getElementById('layerManagement').style.display='none'">&times;</button>
+        </div>
+        
+        <div class="search-filters">
+            <input type="text" id="layerSearch" class="search-input" placeholder="Search layers...">
+            <div class="filter-row">
+                <select id="categoryFilter" class="filter-select">
+                    <option value="">All Categories</option>
+                </select>
+                <select id="licenseFilter" class="filter-select">
+                    <option value="">All Licenses</option>
+                </select>
+                <select id="sortBy" class="filter-select">
+                    <option value="created_at">Date</option>
+                    <option value="rating">Rating</option>
+                    <option value="popularity">Popularity</option>
+                    <option value="title">Title</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="layer-actions">
+            <button id="addLayerBtn" class="btn-primary">Add Layer</button>
+            <button id="uploadFileBtn" class="btn-secondary">Upload File</button>
+        </div>
+        
+        <div id="layersContainer" class="layers-container">
+            <!-- Layers will be loaded here -->
+        </div>
+    </div>
+
     <!-- LEFT PANEL TOOLBAR - TOGGLE BUTTON -->
     <!-- ======================================== -->
     <!-- 
@@ -3005,6 +3048,28 @@
                     <span class="title-earth">Earth</span>
                     <span class="title-app">.app</span>
                 </div>
+            </div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('authSection')">
+                <span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Account
+                </span>
+                <span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="section-content" id="authSection">
+                <div id="userInfo" style="display: none;"></div>
+                <div id="loginButtons"></div>
             </div>
         </div>
 
@@ -3463,6 +3528,20 @@
             </svg>
         </div>
 
+            <!-- Row 12 - Login Icon -->
+            <div class="tool-icon" id="loginTool" title="Account" onclick="toggleLeftPanel()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </div>
+            <div class="tool-icon" id="layerManagementTool" title="Layer Management" onclick="toggleLayerManagement()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M6 6h12M6 12h12M6 18h12" stroke="currentColor" stroke-width="1"/>
+                </svg>
+            </div>
+
         </div>
 
 
@@ -3587,7 +3666,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
-            <div id="revisionInfo">Revision: v0.3.1</div>
+                            <div id="revisionInfo">Revision: v0.4</div>
         </div>
     </div>
 
@@ -3622,6 +3701,10 @@
     <!-- Print Overlay System -->
     <link rel="stylesheet" href="printOverlayStyles.css">
     <script src="PrintOverlay.js"></script>
+    
+    <!-- Authentication and Layer Management -->
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/layerManager.js"></script>
     
     <script>
         // Version management and cache busting

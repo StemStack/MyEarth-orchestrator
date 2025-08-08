@@ -37,8 +37,8 @@ def update_version():
         with open(version_file, 'r') as f:
             version_data = json.load(f)
     else:
-        version_data = {
-            "version": "0.3",
+            version_data = {
+        "version": "0.4",
             "buildDate": "",
             "buildTimestamp": 0,
             "commitHash": "",
