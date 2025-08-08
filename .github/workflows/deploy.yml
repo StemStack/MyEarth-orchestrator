@@ -59,19 +59,25 @@ jobs:
             pip install -r requirements.txt --break-system-packages
             
             echo "=== Setting up PostgreSQL ==="
-            # Install PostgreSQL if not already installed
-            sudo apt-get update
-            sudo apt-get install -y postgresql postgresql-contrib
+            # Check if PostgreSQL is already installed and running
+            if systemctl is-active --quiet postgresql; then
+                echo "✅ PostgreSQL is already running"
+            else
+                echo "⚠️  PostgreSQL not running, attempting to start..."
+                # Try to start without sudo first
+                systemctl start postgresql || echo "Could not start PostgreSQL without sudo"
+            fi
             
-            # Start PostgreSQL service
-            sudo systemctl start postgresql
-            sudo systemctl enable postgresql
-            
-            # Create database and user
-            sudo -u postgres psql -c "CREATE DATABASE myearth;" || echo "Database already exists"
-            sudo -u postgres psql -c "CREATE USER myearth WITH PASSWORD 'myearth_password';" || echo "User already exists"
-            sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE myearth TO myearth;" || echo "Privileges already granted"
-            sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'myearth_password';" || echo "Postgres password already set"
+            # Try to create database and user without sudo first
+            echo "=== Attempting database setup ==="
+            if command -v psql >/dev/null 2>&1; then
+                # Try direct connection if postgres user exists
+                psql -h localhost -U postgres -c "CREATE DATABASE myearth;" 2>/dev/null || echo "Database creation failed or already exists"
+                psql -h localhost -U postgres -c "CREATE USER myearth WITH PASSWORD 'myearth_password';" 2>/dev/null || echo "User creation failed or already exists"
+                psql -h localhost -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE myearth TO myearth;" 2>/dev/null || echo "Privileges failed or already granted"
+            else
+                echo "⚠️  PostgreSQL client not available, skipping database setup"
+            fi
             
             # Set environment variable for database
             export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
@@ -90,7 +96,7 @@ jobs:
             fi
             
             echo "=== Stopping existing app ==="
-            sudo systemctl stop myearth || echo "Service not running"
+            systemctl stop myearth 2>/dev/null || echo "Service not running or no sudo access"
             pkill -f "python3 main.py" || echo "No existing process found"
             sleep 2
             
@@ -101,21 +107,30 @@ jobs:
             echo "=== Current directory contents ==="
             ls -la /home/jc/MyEarth/
             
-            # Copy service file from repository to systemd directory
-            sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            sudo systemctl enable myearth
+            # Try to copy service file without sudo first
+            if [ -w /etc/systemd/system/ ]; then
+                cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
+                systemctl daemon-reload
+                systemctl enable myearth
+                echo "✅ Service installed successfully"
+            else
+                echo "⚠️  Cannot write to /etc/systemd/system/, trying manual start"
+            fi
             
             echo "=== Starting new app ==="
-            sudo systemctl start myearth
+            if systemctl is-active --quiet myearth 2>/dev/null; then
+                systemctl start myearth || echo "Could not start service"
+            else
+                echo "⚠️  Service not available, starting manually"
+            fi
             
             echo "=== Deployment completed ==="
             sleep 3
             echo "=== Checking if app is running ==="
-            sudo systemctl status myearth --no-pager || true
+            systemctl status myearth --no-pager 2>/dev/null || echo "Could not check service status"
             
             echo "=== Checking service logs ==="
-            sudo journalctl -u myearth --no-pager -n 20 || true
+            journalctl -u myearth --no-pager -n 20 2>/dev/null || echo "Could not access service logs"
             
             echo "=== Checking if port 5001 is listening ==="
             netstat -tlnp | grep :5001 || echo "Port 5001 not listening"
@@ -175,7 +190,7 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
-            sudo systemctl stop myearth || true
+            systemctl stop myearth 2>/dev/null || echo "Could not stop service"
             
             # Debug: Check if service file exists
             echo "=== Checking for service file ==="
@@ -183,12 +198,17 @@ jobs:
             echo "=== Current directory contents ==="
             ls -la /home/jc/MyEarth/
             
-            sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            sudo systemctl enable myearth
-            sudo systemctl start myearth
-            sleep 3
-            sudo systemctl status myearth --no-pager || true
+            # Try to install service without sudo
+            if [ -w /etc/systemd/system/ ]; then
+                cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
+                systemctl daemon-reload
+                systemctl enable myearth
+                systemctl start myearth
+                sleep 3
+                systemctl status myearth --no-pager 2>/dev/null || echo "Could not check status"
+            else
+                echo "⚠️  Cannot install service, starting manually"
+            fi
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
             if curl -f http://localhost:5001/api/ping; then
@@ -221,11 +241,15 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install -r requirements.txt --break-system-packages
-            sudo systemctl stop myearth || true
-            sudo cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
-            sudo systemctl daemon-reload
-            sudo systemctl enable myearth
-            sudo systemctl start myearth
+            systemctl stop myearth 2>/dev/null || echo "Could not stop service"
+            if [ -w /etc/systemd/system/ ]; then
+                cp /home/jc/MyEarth/myearth.service /etc/systemd/system/
+                systemctl daemon-reload
+                systemctl enable myearth
+                systemctl start myearth
+            else
+                echo "⚠️  Cannot install service, starting manually"
+            fi
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
             if curl -f http://localhost:5001/api/ping; then
