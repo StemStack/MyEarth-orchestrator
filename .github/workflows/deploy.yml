@@ -15,10 +15,10 @@ jobs:
     - name: Deploy to server via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.KEY }}
-        port: ${{ secrets.PORT }}
+        host: 100.69.50.87
+        username: jc
+        key: ${{ secrets.DEPLOY_KEY }}
+        port: 22
         script: |
           echo "🚀 Starting MyEarth.app deployment..."
           
@@ -57,7 +57,7 @@ jobs:
       run: |
         echo "🏥 Performing health check..."
         sleep 10
-        if curl -f http://${{ secrets.HOST }}:5001/api/ping; then
+        if curl -f http://100.69.50.87:5001/api/ping; then
           echo "✅ Health check passed!"
         else
           echo "❌ Health check failed"
