@@ -1030,6 +1030,14 @@ if __name__ == "__main__":
     import uvicorn
     import sys
     
+    # Debug: Print environment info
+    print(f"Python version: {sys.version}")
+    print(f"Working directory: {os.getcwd()}")
+    print(f"Environment variables:")
+    for key, value in os.environ.items():
+        if key in ['PATH', 'PYTHONPATH', 'PORT', 'DB_HOST', 'DB_NAME', 'DB_USER']:
+            print(f"  {key}: {value}")
+    
     # Get port from environment variable, command line argument, or default to 5001
     port = int(os.getenv('PORT', 5001))  # Check PORT env var first (for deployment)
     
@@ -1040,4 +1048,8 @@ if __name__ == "__main__":
             pass
     
     print(f"Starting MyEarth server on port {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=port)
+    except Exception as e:
+        print(f"Failed to start server: {e}")
+        sys.exit(1)

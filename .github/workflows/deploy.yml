@@ -58,6 +58,19 @@ jobs:
             echo "=== Installing dependencies ==="
             pip install -r requirements.txt --break-system-packages
             
+            echo "=== Testing application startup ==="
+            timeout 30 python3 main.py &
+            sleep 5
+            if curl -f http://localhost:5001/api/ping; then
+                echo "✅ Local test successful"
+                pkill -f "python3 main.py"
+            else
+                echo "❌ Local test failed"
+                pkill -f "python3 main.py"
+                echo "FAILED"
+                exit 1
+            fi
+            
             echo "=== Stopping existing app ==="
             sudo systemctl stop myearth || echo "Service not running"
             pkill -f "python3 main.py" || echo "No existing process found"
@@ -82,6 +95,14 @@ jobs:
             sleep 3
             echo "=== Checking if app is running ==="
             sudo systemctl status myearth --no-pager || true
+            
+            echo "=== Checking service logs ==="
+            sudo journalctl -u myearth --no-pager -n 20 || true
+            
+            echo "=== Checking if port 5001 is listening ==="
+            netstat -tlnp | grep :5001 || echo "Port 5001 not listening"
+            ss -tlnp | grep :5001 || echo "Port 5001 not listening (ss)"
+            
             echo "=== Testing app health check ==="
             sleep 5  # Wait for app to fully start
             if curl -f http://localhost:5001/api/ping; then
@@ -90,7 +111,18 @@ jobs:
                 echo "SUCCESS"
             else
                 echo "❌ App health check failed"
-                echo "FAILED"
+                echo "=== Trying to start app manually ==="
+                cd /home/jc/MyEarth
+                source venv/bin/activate
+                python3 main.py &
+                sleep 10
+                if curl -f http://localhost:5001/api/ping; then
+                    echo "✅ Manual start successful"
+                    echo "SUCCESS"
+                else
+                    echo "❌ Manual start also failed"
+                    echo "FAILED"
+                fi
             fi
           EOF
           )
