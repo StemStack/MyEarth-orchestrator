@@ -166,15 +166,28 @@ jobs:
                 echo "=== Trying to start app manually ==="
                 cd /home/jc/MyEarth
                 source venv/bin/activate
-                # Try with NumPy fix
-                pip install "numpy==1.26.4" --break-system-packages || echo "NumPy install failed"
-                python3 main.py &
+                # Set environment variables
+                export DATABASE_URL="postgresql://postgres:myearth_password@localhost/myearth"
+                export PORT=5001
+                # Start the application in background with logging
+                nohup python3 main.py > app.log 2>&1 &
+                APP_PID=$!
+                echo "Manual app started with PID: $APP_PID"
                 sleep 10
                 if curl -f http://localhost:5001/api/ping; then
                     echo "✅ Manual start successful"
                     echo "SUCCESS"
                 else
                     echo "❌ Manual start also failed"
+                    echo "=== Checking manual app logs ==="
+                    cat app.log || echo "No manual app log found"
+                    echo "=== Checking if manual process is running ==="
+                    ps aux | grep python3 || echo "No python processes found"
+                    echo "=== Final attempt - starting without database ==="
+                    # Try starting without database dependency
+                    export DATABASE_URL=""
+                    nohup python3 -c "import main; print('Import successful')" > import_test.log 2>&1
+                    cat import_test.log || echo "No import test log found"
                     echo "FAILED"
                 fi
             fi
