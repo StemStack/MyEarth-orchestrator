@@ -12,13 +12,21 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Setup Tailscale
+      run: |
+        curl -fsSL https://tailscale.com/install.sh | sh
+        sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh=false
+        sleep 10  # Wait for Tailscale to connect
+        
     - name: Deploy to server via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: 194.230.198.246
+        host: 100.69.50.87
         username: jc
         key: ${{ secrets.DEPLOY_KEY }}
         port: 22
+        timeout: 60
+        command_timeout: 300
         script: |
           echo "🚀 Starting MyEarth.app deployment..."
           
