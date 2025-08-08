@@ -269,3 +269,4 @@ if __name__ == "__main__":
     print("   - Set up your OAuth2 credentials in .env file")
     print("   - Configure your database connection")
     print("   - Run: python main.py")
+

@@ -697,3 +697,4 @@ async def get_licenses(db: Session = Depends(get_db)):
         }
         for lic in licenses
     ]
+

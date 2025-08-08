@@ -120,3 +120,4 @@ class License(Base):
     url = Column(String, nullable=True)  # License URL
     is_open = Column(Boolean, default=True)  # Whether this is an open license
     created_at = Column(DateTime, default=func.now())
+

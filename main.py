@@ -242,6 +242,16 @@ async def serve_version():
             "environment": "development"
         })
 
+@app.get("/api/oauth-config")
+async def get_oauth_config():
+    """Serve OAuth configuration for frontend"""
+    return {
+        "google_client_id": os.getenv("GOOGLE_CLIENT_ID", ""),
+        "github_client_id": os.getenv("GITHUB_CLIENT_ID", ""),
+        "linkedin_client_id": os.getenv("LINKEDIN_CLIENT_ID", ""),
+        "oauth_enabled": bool(os.getenv("GOOGLE_CLIENT_ID") or os.getenv("GITHUB_CLIENT_ID") or os.getenv("LINKEDIN_CLIENT_ID"))
+    }
+
 # --------------------
 # Health check endpoint
 # --------------------

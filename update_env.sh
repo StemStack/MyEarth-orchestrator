@@ -68,3 +68,4 @@ echo "🔗 OAuth Setup Links:"
 echo "- Google: https://console.developers.google.com/"
 echo "- GitHub: https://github.com/settings/developers"
 echo "- LinkedIn: https://www.linkedin.com/developers/"
+

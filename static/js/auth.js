@@ -10,26 +10,38 @@ class AuthManager {
         this.isAuthenticated = !!this.token;
         
         // Initialize OAuth providers
-        this.initializeOAuth();
-        
-        // Update UI based on auth state
-        this.updateAuthUI();
+        this.initializeOAuth().then(() => {
+            // Update UI based on auth state
+            this.updateAuthUI();
+        });
     }
     
-    initializeOAuth() {
-        // Google OAuth2
-        if (typeof google !== 'undefined' && google.accounts) {
-            google.accounts.id.initialize({
-                client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with actual client ID
-                callback: this.handleGoogleSignIn.bind(this)
-            });
+    async initializeOAuth() {
+        try {
+            // Fetch OAuth configuration from backend
+            const response = await fetch('/api/oauth-config');
+            const config = await response.json();
+            
+            // Google OAuth2
+            if (config.google_client_id && typeof google !== 'undefined' && google.accounts) {
+                google.accounts.id.initialize({
+                    client_id: config.google_client_id,
+                    callback: this.handleGoogleSignIn.bind(this)
+                });
+            }
+            
+            // GitHub OAuth2
+            this.githubClientId = config.github_client_id || '';
+            
+            // LinkedIn OAuth2
+            this.linkedinClientId = config.linkedin_client_id || '';
+            
+            // Update UI based on OAuth availability
+            this.updateOAuthUI(config.oauth_enabled);
+        } catch (error) {
+            console.error('Failed to load OAuth configuration:', error);
+            this.updateOAuthUI(false);
         }
-        
-        // GitHub OAuth2
-        this.githubClientId = 'YOUR_GITHUB_CLIENT_ID'; // Replace with actual client ID
-        
-        // LinkedIn OAuth2
-        this.linkedinClientId = 'YOUR_LINKEDIN_CLIENT_ID'; // Replace with actual client ID
     }
     
     async handleGoogleSignIn(response) {
@@ -43,6 +55,11 @@ class AuthManager {
     }
     
     async handleGitHubSignIn() {
+        if (!this.githubClientId) {
+            this.showAuthError('GitHub OAuth not configured');
+            return;
+        }
+        
         try {
             // Redirect to GitHub OAuth
             const githubUrl = `https://github.com/login/oauth/authorize?client_id=${this.githubClientId}&scope=user:email`;
@@ -54,6 +71,11 @@ class AuthManager {
     }
     
     async handleLinkedInSignIn() {
+        if (!this.linkedinClientId) {
+            this.showAuthError('LinkedIn OAuth not configured');
+            return;
+        }
+        
         try {
             // Redirect to LinkedIn OAuth
             const linkedinUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${this.linkedinClientId}&redirect_uri=${encodeURIComponent(window.location.origin + '/auth/linkedin/callback')}&scope=r_liteprofile%20r_emailaddress`;
@@ -239,6 +261,35 @@ class AuthManager {
             
             // Hide authenticated features
             this.hideAuthenticatedFeatures();
+        }
+    }
+    
+    updateOAuthUI(oauthEnabled) {
+        const loginButtons = document.getElementById('loginButtons');
+        const loginTool = document.getElementById('loginTool');
+        
+        if (!oauthEnabled) {
+            // Hide OAuth buttons if not configured
+            if (loginButtons) {
+                loginButtons.innerHTML = `
+                    <div class="section-header">Sign-in</div>
+                    <div class="oauth-disabled">
+                        <p>OAuth not configured</p>
+                        <small>Contact administrator to enable sign-in</small>
+                    </div>
+                `;
+            }
+            
+            if (loginTool) {
+                loginTool.style.opacity = '0.5';
+                loginTool.title = 'Sign-in not available';
+            }
+        } else {
+            // OAuth is enabled, buttons will be shown in updateAuthUI
+            if (loginTool) {
+                loginTool.style.opacity = '1';
+                loginTool.title = 'Account';
+            }
         }
     }
     
