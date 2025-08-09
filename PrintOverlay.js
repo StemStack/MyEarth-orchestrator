@@ -1250,40 +1250,27 @@ class PrintOverlay {
     }
 
     /**
-     * Draw north arrow with improved positioning
+     * Draw north arrow with improved positioning - Updated to match new design
      */
     drawNorthArrow(ctx, width, height) {
         const arrowX = width - 25;
         const arrowY = 25;
         const arrowSize = 16;
         
-        // Draw arrow background with subtle border
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-        ctx.shadowColor = 'black';
-        ctx.shadowBlur = 2;
-        ctx.shadowOffsetX = 1;
-        ctx.shadowOffsetY = 1;
-        ctx.fillRect(arrowX - 12, arrowY - 12, 24, 24);
-        
-        // Draw arrow border
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(arrowX - 12, arrowY - 12, 24, 24);
-        
-        // Draw arrow
+        // Draw black circle background (matching new design)
         ctx.fillStyle = 'black';
+        ctx.beginPath();
+        ctx.arc(arrowX, arrowY, 12, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        // Draw white upward-pointing arrow
+        ctx.fillStyle = 'white';
         ctx.beginPath();
         ctx.moveTo(arrowX, arrowY - arrowSize / 2);
         ctx.lineTo(arrowX - arrowSize / 3, arrowY + arrowSize / 2);
         ctx.lineTo(arrowX + arrowSize / 3, arrowY + arrowSize / 2);
         ctx.closePath();
         ctx.fill();
-        
-        // Draw "N" label
-        ctx.fillStyle = 'black';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('N', arrowX, arrowY + arrowSize / 2 + 12);
     }
 
     /**
