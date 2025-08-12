@@ -1290,6 +1290,40 @@
             background: linear-gradient(135deg, #27ae60 0%, #2ecc71 50%, #f39c12 100%) !important;
         }
 
+        /* Atmosphere preview */
+        .atmosphere-preview {
+            background: linear-gradient(135deg, rgba(135, 206, 235, 0.6) 0%, rgba(176, 224, 230, 0.7) 50%, rgba(240, 248, 255, 0.9) 100%) !important;
+            position: relative !important;
+        }
+        .atmosphere-preview::after {
+            content: '' !important;
+            position: absolute !important;
+            inset: 0 !important;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6), transparent 60%),
+                        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.4), transparent 60%) !important;
+            pointer-events: none !important;
+        }
+
+        /* 3D terrain preview */
+        .terrain-preview {
+            background: linear-gradient(135deg, #9bc1bc 0%, #5ca4a9 40%, #e6ebe0 100%) !important;
+            position: relative !important;
+        }
+        .terrain-preview::after {
+            content: '' !important;
+            position: absolute !important;
+            inset: 0 !important;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.4) 0px,
+                rgba(255,255,255,0.4) 2px,
+                transparent 2px,
+                transparent 6px
+            ) !important;
+            opacity: 0.6 !important;
+            pointer-events: none !important;
+        }
+
         .satellite-texture {
             width: 100% !important;
             height: 100% !important;
@@ -3640,6 +3674,20 @@
                     </div>
                 </div>
                 
+                <div class="base-map-card" data-value="atmosphere" onclick="selectBaseMap('atmosphere')">
+                    <div class="base-map-preview atmosphere-preview"></div>
+                    <div class="base-map-overlay">
+                        <span>Atmosphere</span>
+                    </div>
+                </div>
+
+                <div class="base-map-card" data-value="terrain_maptile" onclick="selectBaseMap('terrain_maptile')">
+                    <div class="base-map-preview terrain-preview"></div>
+                    <div class="base-map-overlay">
+                        <span>3D Terrain</span>
+                    </div>
+                </div>
+                
                 <div class="base-map-card more-options" onclick="showMoreMaps()">
                     <div class="base-map-preview more-preview">
                         <div class="arrow-icon">></div>
@@ -3668,7 +3716,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
-            <div id="revisionInfo">MyEarth.app v.0.4.3</div>
+            <div id="revisionInfo">MyEarth.app v0.5.0</div>
         </div>
     </div>
 
@@ -4233,7 +4281,7 @@
         
         // Keep initial state stable
         viewer.scene.globe.enableLighting = false;
-        viewer.scene.globe.depthTestAgainstTerrain = false;
+        viewer.scene.globe.depthTestAgainstTerrain = true; // ensure enabled per requirement
         viewer.scene.globe.terrainExaggeration = 1.0;
         viewer.scene.globe.material = undefined;
         
@@ -7934,6 +7982,13 @@ TIP: These shortcuts work when not typing in input fields.
             }
             
             console.log('3D fog effects:', enabled ? 'enabled' : 'disabled');
+
+            // Reflect in bottom band Active Layers text
+            try {
+                updateBottomBand();
+            } catch (e) {
+                // ignore if not yet initialized
+            }
         }
 
         /**
@@ -9118,7 +9173,9 @@ TIP: These shortcuts work when not typing in input fields.
                 'openstreetmap': 'osm',
                 'opentopomap': 'otm',
                 'monochrome': 'cartodb-positron',
-                'esri_world': 'esri-imagery'
+                'esri_world': 'esri-imagery',
+                'atmosphere': 'atmosphere',
+                'terrain_maptile': 'terrain_maptile'
             };
             
             const actualMapType = mapTypeMapping[mapType] || 'osm';
@@ -9128,6 +9185,41 @@ TIP: These shortcuts work when not typing in input fields.
                 // Remove all imagery layers for "no background"
                 viewer.imageryLayers.removeAll();
                 console.log('✓ Removed all base maps');
+            } else if (actualMapType === 'atmosphere') {
+                // Atmosphere is not a base map; toggle the fog effect
+                const checkbox = document.getElementById('atmosphereToggle');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked; // toggle state when card clicked
+                    toggleAtmosphere();
+                } else {
+                    toggleAtmosphere();
+                }
+                // Keep selection visual state consistent (do not persist selection)
+                const cards = document.querySelectorAll('.base-map-card');
+                cards.forEach(card => card.classList.remove('selected'));
+                const currentlySelected = document.querySelector(`[data-value="${currentBaseMap}"]`);
+                if (currentlySelected) currentlySelected.classList.add('selected');
+            } else if (actualMapType === 'terrain_maptile') {
+                // Terrain card: switch to MapTiler terrain and enable depth test
+                try {
+                    (async () => {
+                        const provider = await Cesium.CesiumTerrainProvider.fromUrl(
+                            'https://api.maptiler.com/tiles/terrain-quantized-mesh-v2/?key=ioiUjxTi8AwqFewQeskJ',
+                            { requestVertexNormals: true, requestWaterMask: true }
+                        );
+                        viewer.terrainProvider = provider;
+                        viewer.scene.globe.depthTestAgainstTerrain = true;
+                        viewer.scene.globe.material = undefined;
+                        console.log('✓ MapTiler 3D terrain enabled with depthTestAgainstTerrain');
+                    })();
+                } catch (err) {
+                    console.error('Failed to enable MapTiler terrain:', err);
+                }
+                // Keep selection visual state aligned to current basemap
+                const cards = document.querySelectorAll('.base-map-card');
+                cards.forEach(card => card.classList.remove('selected'));
+                const currentlySelected = document.querySelector(`[data-value="${currentBaseMap}"]`);
+                if (currentlySelected) currentlySelected.classList.add('selected');
             } else if (baseMaps[actualMapType]) {
                 try {
                     // Remove current imagery layers
@@ -9804,6 +9896,11 @@ TIP: These shortcuts work when not typing in input fields.
                     if (selectedOption) {
                         activeLayersList.push(selectedOption.text);
                     }
+                }
+                // Reflect Atmosphere state
+                const atmosphereToggle = document.getElementById('atmosphereToggle');
+                if (atmosphereToggle && atmosphereToggle.checked) {
+                    activeLayersList.push('Atmosphere');
                 }
                 if (document.getElementById('protected_areasWms')?.checked) {
                     activeLayersList.push('Protected Areas');
