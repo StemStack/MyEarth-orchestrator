@@ -42,9 +42,13 @@ jobs:
           git fetch origin
           git reset --hard origin/main
           
-          echo "📦 Updating Python environment..."
+          echo "📦 Rebuilding Python virtualenv..."
+          # Always recreate venv to avoid corruption and Python version drift
+          rm -rf venv
+          python3 -m venv venv
           source venv/bin/activate
-          pip install -r requirements.txt
+          python -m pip install -U pip setuptools wheel
+          python -m pip install -r requirements.txt
           
           echo "🔄 Restarting MyEarth service..."
           sudo systemctl stop myearth
