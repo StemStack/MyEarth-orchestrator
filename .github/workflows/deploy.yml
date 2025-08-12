@@ -42,6 +42,10 @@ jobs:
           git fetch origin
           git reset --hard origin/main
           
+          echo "🏷  Updating version.json from footer"
+          export ENVIRONMENT=production
+          python3 update_version.py || true
+          
           echo "📦 Rebuilding Python virtualenv..."
           # Always recreate venv to avoid corruption and Python version drift
           rm -rf venv

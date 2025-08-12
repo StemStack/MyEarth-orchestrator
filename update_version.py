@@ -47,6 +47,16 @@ def update_version():
     
     # Update with current information
     now = datetime.datetime.utcnow()
+    # Detect version from footer in index.html if present, or keep existing
+    try:
+        html = Path("index.html").read_text(encoding="utf-8")
+        import re
+        m = re.search(r"MyEarth\.app v(\d+\.\d+\.\d+)", html)
+        if m:
+            version_data["version"] = m.group(1)
+    except Exception:
+        pass
+
     version_data.update({
         "buildDate": now.isoformat() + "Z",
         "buildTimestamp": int(now.timestamp()),
