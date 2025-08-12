@@ -222,7 +222,7 @@
             bottom: 5px !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
-            background: rgba(255, 255, 255, 0.3) !important;
+            background: transparent !important; /* avoid covering markers */
             padding: 4px 12px !important;
             font-size: 11px !important;
             color: #fff !important;
@@ -230,6 +230,7 @@
             white-space: nowrap !important;
             backdrop-filter: blur(10px) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            pointer-events: none !important; /* allow clicks to pass through */
         }
 
         /* Modern Right-Side Tool Menu */
@@ -1755,6 +1756,8 @@
             backdrop-filter: blur(15px);
             font-size: 11px;
             overflow: hidden;
+            /* Allow clicks to pass through so markers remain interactive/visible */
+            pointer-events: none;
         }
 
         .bottom-left, .bottom-center, .bottom-right {
@@ -2561,6 +2564,10 @@
         }
         /* Increase only measurement menu opacity by 50% (0.5 -> 0.75) */
         .measurement-controls { background: rgba(42, 42, 42, 0.75); }
+        /* Increase add-marker menu opacity by 50% (0.5 -> 0.75) */
+        .marker-controls { background: rgba(42, 42, 42, 0.75); }
+        /* Slightly wider to show full coordinates */
+        .marker-controls { width: 260px; }
 
         .measurement-header {
             display: flex;
@@ -3726,7 +3733,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
-            <div id="revisionInfo">MyEarth.app v0.5.2</div>
+            <div id="revisionInfo">MyEarth.app v0.5.3</div>
         </div>
     </div>
 
@@ -9899,10 +9906,30 @@ TIP: These shortcuts work when not typing in input fields.
                     if (!markerControls || markerControls.style.display !== 'block') {
                         return;
                     }
-                    
-                    const pickedPosition = viewer.camera.pickEllipsoid(event.position, viewer.scene.globe.ellipsoid);
-                    if (pickedPosition) {
-                        const cartographic = Cesium.Cartographic.fromCartesian(pickedPosition);
+
+                    const scene = viewer.scene;
+                    let cartesian = null;
+
+                    // Prefer precise 3D pick when supported (terrain/3D tiles)
+                    if (scene.pickPositionSupported) {
+                        cartesian = scene.pickPosition(event.position);
+                    }
+
+                    // If not available or failed, try terrain intersection with a pick ray
+                    if (!cartesian) {
+                        const ray = viewer.camera.getPickRay(event.position);
+                        if (ray) {
+                            cartesian = scene.globe.pick(ray, scene);
+                        }
+                    }
+
+                    // Fallback to ellipsoid
+                    if (!cartesian) {
+                        cartesian = viewer.camera.pickEllipsoid(event.position, scene.globe.ellipsoid);
+                    }
+
+                    if (cartesian) {
+                        const cartographic = Cesium.Cartographic.fromCartesian(cartesian);
                         const longitude = Cesium.Math.toDegrees(cartographic.longitude);
                         const latitude = Cesium.Math.toDegrees(cartographic.latitude);
                         placeMarker(longitude, latitude);
@@ -10247,6 +10274,49 @@ TIP: These shortcuts work when not typing in input fields.
                     startX = evt.clientX;
                     startY = evt.clientY;
                     // compute current offset from right/top since panel uses right initially
+                    const rect = panel.getBoundingClientRect();
+                    startLeft = rect.left;
+                    startTop = rect.top;
+                    document.addEventListener('pointermove', onPointerMove);
+                    document.addEventListener('pointerup', onPointerUp);
+                    document.addEventListener('touchmove', onPointerMove, { passive: false });
+                    document.addEventListener('touchend', onPointerUp);
+                }
+                function onPointerMove(e) {
+                    if (!dragging) return;
+                    const evt = e.touches ? e.touches[0] : e;
+                    if (e.cancelable) e.preventDefault();
+                    const dx = evt.clientX - startX;
+                    const dy = evt.clientY - startY;
+                    const left = Math.max(0, Math.min(window.innerWidth - panel.offsetWidth, startLeft + dx));
+                    const top = Math.max(0, Math.min(window.innerHeight - panel.offsetHeight, startTop + dy));
+                    panel.style.left = left + 'px';
+                    panel.style.top = top + 'px';
+                    panel.style.right = 'auto';
+                }
+                function onPointerUp() {
+                    dragging = false;
+                    document.removeEventListener('pointermove', onPointerMove);
+                    document.removeEventListener('pointerup', onPointerUp);
+                    document.removeEventListener('touchmove', onPointerMove);
+                    document.removeEventListener('touchend', onPointerUp);
+                }
+                header.addEventListener('pointerdown', onPointerDown);
+                header.addEventListener('touchstart', onPointerDown, { passive: true });
+            })();
+
+            // Make marker menu draggable
+            (function enableMarkerDrag() {
+                const panel = document.getElementById('markerControls');
+                const header = panel ? panel.querySelector('.measurement-header') : null;
+                if (!panel || !header) return;
+                let startX = 0, startY = 0, startLeft = 0, startTop = 0, dragging = false;
+                panel.style.position = 'fixed';
+                function onPointerDown(e) {
+                    dragging = true;
+                    const evt = e.touches ? e.touches[0] : e;
+                    startX = evt.clientX;
+                    startY = evt.clientY;
                     const rect = panel.getBoundingClientRect();
                     startLeft = rect.left;
                     startTop = rect.top;
@@ -11387,7 +11457,9 @@ TIP: These shortcuts work when not typing in input fields.
                     horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
                     scale: 1.0,
                     pixelOffset: new Cesium.Cartesian2(0, 0),
-                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+                    // Ensure the pin is visible even near the horizon (to match label behavior)
+                    disableDepthTestDistance: Number.POSITIVE_INFINITY
                 },
                 label: {
                     text: label,
@@ -11396,16 +11468,27 @@ TIP: These shortcuts work when not typing in input fields.
                     outlineColor: Cesium.Color.BLACK,
                     outlineWidth: 2,
                     style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+                    heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
                     verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
                     pixelOffset: new Cesium.Cartesian2(0, -36),
                     disableDepthTestDistance: Number.POSITIVE_INFINITY
                 }
             });
 
+            // Compute terrain height (if available) for UI
+            let heightMeters = null;
+            try {
+                const carto = Cesium.Cartographic.fromDegrees(longitude, latitude);
+                const h = viewer.scene.globe.getHeight(carto);
+                if (typeof h === 'number' && !Number.isNaN(h)) {
+                    heightMeters = h;
+                }
+            } catch {}
+
             // Store marker with enhanced metadata
             const markerData = {
                 entity: marker,
-                coordinates: { longitude, latitude },
+                coordinates: { longitude, latitude, height: heightMeters },
                 label: label,
                 color: color,
                 timestamp: new Date(),
@@ -11588,13 +11671,18 @@ TIP: These shortcuts work when not typing in input fields.
             // Use simpler UI that matches the existing marker menu style with editable names
             let listHTML = '';
             markerArray.forEach(marker => {
+                const lon = marker.coordinates.longitude;
+                const lat = marker.coordinates.latitude;
+                const h = marker.coordinates.height;
+                const hText = (typeof h === 'number') ? `${Math.round(h)} m` : '';
                 listHTML += `
-                    <div class="marker-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <input type="text" value="${marker.label}" 
-                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 100px;"
-                               onchange="updateMarkerLabel('${marker.id}', this.value)"
-                               onblur="updateMarkerLabel('${marker.id}', this.value)">
-                        <button onclick="removeMarker('${marker.id}')" style="background: #e74c3c; color: white; border: none; border-radius: 3px; padding: 2px 6px; font-size: 9px; cursor: pointer;">Remove</button>
+                    <div class=\"marker-item\" style=\"display: grid; grid-template-columns: auto 72px 1fr; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.1);\">
+                        <button onclick=\"removeMarker('${marker.id}')\" title=\"Remove\" style=\"background: #e74c3c; color: white; border: none; border-radius: 3px; width: 18px; height: 18px; font-size: 11px; line-height: 18px; text-align: center; cursor: pointer;\">×</button>
+                        <input type=\"text\" value=\"${marker.label}\" 
+                               style=\"background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 11px; padding: 2px 4px; border-radius: 3px; width: 66px;\"
+                               onchange=\"updateMarkerLabel('${marker.id}', this.value)\"
+                               onblur=\"updateMarkerLabel('${marker.id}', this.value)\">
+                        <div style=\"font-size: 10px; color: rgba(255,255,255,0.9); text-align: right; white-space: nowrap;\">${lat.toFixed(5)}°, ${lon.toFixed(5)}° ${hText}</div>
                     </div>
                 `;
             });
