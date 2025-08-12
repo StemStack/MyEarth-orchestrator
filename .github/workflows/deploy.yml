@@ -61,15 +61,67 @@ jobs:
           echo "🌐 Application URL: http://194.230.198.246:5001"
           echo "🌍 Domain URL: https://myearth.app (if nginx configured)"
           
+    - name: Restart MyEarth Service
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: 100.69.50.87
+        username: jc
+        key: ${{ secrets.DEPLOY_KEY }}
+        port: 22
+        script: |
+          echo "🔄 Restarting MyEarth service to load new code..."
+          
+          # Stop the current service
+          sudo systemctl stop myearth || echo "Service was not running"
+          sleep 3
+          
+          # Start the service with new code
+          sudo systemctl start myearth
+          sleep 5
+          
+          # Check service status
+          echo "📊 Service status:"
+          sudo systemctl status myearth --no-pager -l
+          
+          # Verify the new version is running
+          echo "✅ Checking new version..."
+          if curl -s http://localhost:5001/version.json > /dev/null; then
+            echo "📋 Current version info:"
+            curl -s http://localhost:5001/version.json | python3 -m json.tool
+          else
+            echo "⚠️  Version endpoint not responding yet"
+          fi
+          
+          echo "🎉 New version should now be live at https://myearth.app"
+          
     - name: Health check
       run: |
         echo "🏥 Performing health check..."
-        sleep 10
+        sleep 15  # Give more time for service to fully start
+        
         # Try domain first, then fallback to direct IP
         if curl -f https://myearth.app/api/ping; then
           echo "✅ Health check passed via domain!"
+          
+          # Check if new version is actually running
+          echo "🔍 Checking version on deployed app..."
+          if curl -f https://myearth.app/version.json; then
+            echo "✅ Version endpoint accessible!"
+          else
+            echo "⚠️  Version endpoint not accessible"
+          fi
+          
         elif curl -f http://194.230.198.246:5001/api/ping; then
           echo "✅ Health check passed via direct IP!"
+          
+          # Check version on direct IP
+          echo "🔍 Checking version on direct IP..."
+          if curl -f http://194.230.198.246:5001/version.json; then
+            echo "✅ Version endpoint accessible on direct IP!"
+          else
+            echo "⚠️  Version endpoint not accessible on direct IP"
+          fi
+          
         else
           echo "⚠️  Health check failed, but deployment was successful"
           echo "💡 Application is running on the server, check manually:"
