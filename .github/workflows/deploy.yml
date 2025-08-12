@@ -28,104 +28,63 @@ jobs:
         timeout: 60s
         command_timeout: 300s
         script: |
-          echo "🚀 Starting MyEarth.app deployment..."
-          
-          # Navigate to project directory
+          echo "🚀 Starting deployment..."
           cd /home/jc/MyEarth
           
-          # Pull latest code
-          echo "📥 Pulling latest code..."
-          git clean -fd || echo "No untracked files to clean"
-          git pull origin main
+          echo "📋 Current git status:"
+          git status --porcelain
           
-          # Recreate virtual environment
-          echo "🐍 Setting up Python environment..."
-          rm -rf venv
-          python3 -m venv venv
+          echo "🔄 Cleaning up git state..."
+          git reset --hard HEAD
+          git clean -fd
+          
+          echo "📥 Pulling latest changes..."
+          git fetch origin
+          git reset --hard origin/main
+          
+          echo "📦 Updating Python environment..."
           source venv/bin/activate
+          pip install -r requirements.txt
           
-          # Install dependencies
-          echo "📦 Installing dependencies..."
-          pip install -r requirements.txt --break-system-packages || {
-              echo "⚠️  Some dependencies failed, trying key packages..."
-              pip install fastapi uvicorn sqlalchemy psycopg2-binary pyjwt requests --break-system-packages || echo "Key dependencies install failed"
-          }
+          echo "🔄 Restarting MyEarth service..."
+          sudo systemctl stop myearth
+          sleep 2
+          sudo systemctl start myearth
           
-          # Run deployment fix script
-          echo "🔧 Running deployment fix script..."
-          chmod +x fix-deployment.sh
-          ./fix-deployment.sh
+          echo "⏳ Waiting for service to start..."
+          sleep 10
           
-          # Final verification
           echo "✅ Deployment completed!"
-          echo "🌐 Application URL: http://194.230.198.246:5001"
-          echo "🌍 Domain URL: https://myearth.app (if nginx configured)"
           
-    - name: Restart MyEarth Service
+    - name: Health check
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: 100.69.50.87
         username: jc
         key: ${{ secrets.DEPLOY_KEY }}
         port: 22
+        timeout: 60s
+        command_timeout: 120s
         script: |
-          echo "🔄 Restarting MyEarth service to load new code..."
+          echo "🏥 Starting health check..."
           
-          # Stop the current service
-          sudo systemctl stop myearth || echo "Service was not running"
-          sleep 3
-          
-          # Start the service with new code
-          sudo systemctl start myearth
-          sleep 5
+          # Wait for service to be fully ready
+          sleep 15
           
           # Check service status
           echo "📊 Service status:"
           sudo systemctl status myearth --no-pager -l
           
-          # Verify the new version is running
-          echo "✅ Checking new version..."
-          if curl -s http://localhost:5001/version.json > /dev/null; then
-            echo "📋 Current version info:"
-            curl -s http://localhost:5001/version.json | python3 -m json.tool
+          # Check if app is responding
+          echo "🌐 Testing app response..."
+          if curl -f -s https://myearth.app/api/ping > /dev/null; then
+            echo "✅ App is responding on domain"
           else
-            echo "⚠️  Version endpoint not responding yet"
+            echo "❌ App not responding on domain"
           fi
           
-          echo "🎉 New version should now be live at https://myearth.app"
+          # Check version endpoint
+          echo "📋 Checking version:"
+          curl -s https://myearth.app/version.json || echo "Version endpoint not accessible"
           
-    - name: Health check
-      run: |
-        echo "🏥 Performing health check..."
-        sleep 15  # Give more time for service to fully start
-        
-        # Try domain first, then fallback to direct IP
-        if curl -f https://myearth.app/api/ping; then
-          echo "✅ Health check passed via domain!"
-          
-          # Check if new version is actually running
-          echo "🔍 Checking version on deployed app..."
-          if curl -f https://myearth.app/version.json; then
-            echo "✅ Version endpoint accessible!"
-          else
-            echo "⚠️  Version endpoint not accessible"
-          fi
-          
-        elif curl -f http://194.230.198.246:5001/api/ping; then
-          echo "✅ Health check passed via direct IP!"
-          
-          # Check version on direct IP
-          echo "🔍 Checking version on direct IP..."
-          if curl -f http://194.230.198.246:5001/version.json; then
-            echo "✅ Version endpoint accessible on direct IP!"
-          else
-            echo "⚠️  Version endpoint not accessible on direct IP"
-          fi
-          
-        else
-          echo "⚠️  Health check failed, but deployment was successful"
-          echo "💡 Application is running on the server, check manually:"
-          echo "   - Domain: https://myearth.app"
-          echo "   - Direct: http://194.230.198.246:5001"
-          # Don't fail the deployment since the app is running
-        fi
+          echo "🏁 Health check completed!"
