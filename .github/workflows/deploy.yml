@@ -42,35 +42,17 @@ jobs:
           git fetch origin
           git reset --hard origin/main
           
-          echo "📦 Setting up Python environment..."
-          # Remove corrupted venv if it exists
-          if [ -d "venv" ]; then
-            echo "🗑️ Removing existing virtual environment..."
-            rm -rf venv
-          fi
-          
-          # Create fresh virtual environment
-          echo "🔧 Creating new virtual environment..."
-          python3 -m venv venv
+          echo "📦 Updating Python environment..."
           source venv/bin/activate
-          
-          # Upgrade pip and install dependencies
-          echo "📥 Installing dependencies..."
-          pip install --upgrade pip
           pip install -r requirements.txt
           
-          # Ensure main.py is executable
-          echo "🔐 Setting permissions..."
-          chmod +x main.py
-          chmod +x venv/bin/python
-          
           echo "🔄 Restarting MyEarth service..."
-          sudo systemctl stop myearth || true
-          sleep 3
+          sudo systemctl stop myearth
+          sleep 2
           sudo systemctl start myearth
           
           echo "⏳ Waiting for service to start..."
-          sleep 15
+          sleep 10
           
           echo "✅ Deployment completed!"
           
@@ -83,6 +65,7 @@ jobs:
         port: 22
         timeout: 60s
         command_timeout: 120s
+        request_pty: true
         script: |
           echo "🏥 Starting health check..."
           
@@ -91,11 +74,12 @@ jobs:
           
           # Check service status
           echo "📊 Service status:"
-          sudo systemctl status myearth --no-pager -l
+          # Pipe to cat to prevent any pager behavior and avoid blocking
+          sudo systemctl --no-pager -l status myearth | cat || true
           
           # Check if app is responding
           echo "🌐 Testing app response..."
-          if curl -f -s https://myearth.app/api/ping > /dev/null; then
+          if curl -f -sL https://myearth.app/api/ping > /dev/null; then
             echo "✅ App is responding on domain"
           else
             echo "❌ App not responding on domain"
@@ -103,6 +87,6 @@ jobs:
           
           # Check version endpoint
           echo "📋 Checking version:"
-          curl -s https://myearth.app/version.json || echo "Version endpoint not accessible"
+          curl -sL https://myearth.app/version.json || echo "Version endpoint not accessible"
           
           echo "🏁 Health check completed!"
