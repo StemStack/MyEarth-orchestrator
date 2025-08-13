@@ -11,9 +11,7 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        submodules: recursive
-        
+      
     - name: Setup Tailscale
       run: |
         curl -fsSL https://tailscale.com/install.sh | sh
