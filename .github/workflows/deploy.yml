@@ -11,7 +11,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+      with:
+        submodules: recursive
+        
     - name: Setup Tailscale
       run: |
         curl -fsSL https://tailscale.com/install.sh | sh
@@ -29,20 +31,36 @@ jobs:
         command_timeout: 300s
         script: |
           echo "🚀 Starting deployment..."
-          cd /home/jc/MyEarth
+          cd /home/jc
           
           echo "📋 Current git status:"
-          git status --porcelain
+          if [ -d "MyEarth" ]; then
+            cd MyEarth
+            git status --porcelain
+            cd ..
+          fi
           
           echo "🔄 Cleaning up git state..."
-          git reset --hard HEAD
-          git clean -fd
+          if [ -d "MyEarth" ]; then
+            cd MyEarth
+            git reset --hard HEAD
+            git clean -fd
+            cd ..
+          fi
           
           echo "📥 Pulling latest changes..."
-          git fetch origin
-          git reset --hard origin/main
+          if [ -d "MyEarth" ]; then
+            cd MyEarth
+            git fetch origin
+            git reset --hard origin/main
+            cd ..
+          else
+            echo "❌ MyEarth directory not found, cloning..."
+            git clone https://github.com/StemStack/MyEarth.git
+          fi
           
           echo "🏷  Updating version.json from footer"
+          cd MyEarth
           export ENVIRONMENT=production
           python3 update_version.py || true
           
