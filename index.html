@@ -3095,6 +3095,33 @@
             </div>
         </div>
 
+        <!-- Time & Daylight Section (hidden) -->
+        <div class="sidebar-section" style="display: none;">
+            <div class="section-header" onclick="toggleSection('timeSection')">
+                <span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 6v6l4 2" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Time & Daylight
+                </span>
+                <span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6,9 12,15 18,9"/>
+                    </svg>
+                </span>
+            </div>
+            <div class="section-content" id="timeSection" style="display: none;">
+                <button id="timeControlsButton" class="control-button secondary" onclick="toggleTimeControls()" aria-pressed="false" title="Toggle time controls and day/night lighting" style="display:flex;align-items:center;gap:6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M12 7v5l4 2"/>
+                    </svg>
+                    <span style="font-size:11px; font-weight:600;">Time controls</span>
+                </button>
+            </div>
+        </div>
+
         <!-- Authentication Section -->
         <div class="sidebar-section">
             <div class="section-header" onclick="toggleSection('authSection')">
@@ -3117,15 +3144,15 @@
             </div>
         </div>
 
-        <!-- Maps displayed Section -->
-        <div class="sidebar-section">
+        <!-- Maps displayed Section (hidden: empty, managed in right panel) -->
+        <div class="sidebar-section" style="display: none;">
             <div class="section-header" onclick="toggleSection('mapsDisplayed')">
                 <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><rect x="2" y="2" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"/><path d="M6 6h12M6 12h12M6 18h12" stroke="currentColor" stroke-width="1"/></svg>Maps displayed</span>
                 <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
             <div class="section-content" id="mapsDisplayed">
                 <!-- Base Map Selection -->
-                <div style="margin-bottom: 12px;">
+                <div style="margin-bottom: 12px; display: none;">
                     <label style="font-size: 11px; font-weight: 600; color: #555; margin-bottom: 6px; display: block;">Base Map Provider:</label>
                     <select id="baseMapSelector" onchange="switchBaseMap()" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: rgba(255, 255, 255, 0.3);">
                         <option value="openstreetmap" selected>OSM Standard</option>
@@ -3138,15 +3165,15 @@
                 </div>
                 
                 <!-- Layer Visibility Controls -->
-                <div class="control-item">
+                <div class="control-item" style="display: none;">
                     <input type="checkbox" id="baseLayerToggle" checked>
                     <label for="baseLayerToggle">Base Map Visible</label>
                 </div>
-                <div class="control-item">
-                    <input type="checkbox" id="atmosphereToggle" checked onchange="toggleAtmosphere()">
+                <div class="control-item" style="display: none;">
+                    <input type="checkbox" id="atmosphereToggle" onchange="toggleAtmosphere()">
                     <label for="atmosphereToggle">Atmosphere Effects</label>
                 </div>
-                <div class="control-item">
+                <div class="control-item" style="display: none;">
                     <input type="checkbox" id="terrainToggle" checked onchange="toggleTerrain()">
                     <label for="terrainToggle">3D Terrain</label>
                 </div>
@@ -3476,6 +3503,11 @@
 
 
 
+            <!-- 3D/2D Terrain Toggle Button -->
+            <div class="tool-icon" id="terrainModeTool" title="Toggle 3D / 2D Terrain" onclick="toggleTerrainMode()" style="display:flex;align-items:center;justify-content:center;font-weight:600;font-size:10px;letter-spacing:0.5px;">
+                <span>3D</span>
+            </div>
+
             <!-- Row 3 -->
             <div class="tool-icon" id="northArrow" title="North Orientation" onclick="resetNorth()" style="cursor: pointer;">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3507,6 +3539,31 @@
             </svg>
         </div>
 
+            <!-- Atmosphere (fog) toggle -->
+            <div class="tool-icon" id="atmosphereTool" title="Atmosphere" onclick="toggleAtmosphereFromTool()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 16h18"/>
+                    <path d="M7 20h10"/>
+                    <path d="M5 12h14"/>
+                    <path d="M4 8h6"/>
+                </svg>
+            </div>
+
+            <!-- Day/Night lighting toggle (Right panel) -->
+            <div class="tool-icon" id="dayNightTool" title="Day/Night lighting" onclick="toggleDayNightLighting()">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+            </div>
+
 
 
             <!-- Row 7 -->
@@ -3517,7 +3574,7 @@
                     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                 </svg>
             </div>
-            <div class="tool-icon" id="layersTool" title="Layers" onclick="toggleLayersPanel()">
+            <div class="tool-icon" id="layersTool" title="Base maps" onclick="toggleLayersPanel()">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.57 3.91a2 2 0 0 0 1.66 0l8.57-3.9a1 1 0 0 0 0-1.83Z"></path>
                     <path d="m22 12-8.57 3.9a2 2 0 0 1-1.66 0L3 12"></path>
@@ -3641,22 +3698,9 @@
                     <div class="base-map-overlay">
                         <span>OSM Standard</span>
                     </div>
-    </div>
-
-                <div class="base-map-card selected" data-value="openstreetmap" onclick="selectBaseMap('openstreetmap')">
-                    <div class="base-map-preview osm-preview">
-                        <div class="map-details">
-                            <div class="roads"></div>
-                            <div class="buildings"></div>
-                            <div class="water"></div>
-                        </div>
-                    </div>
-                    <div class="base-map-overlay">
-                        <span>OSM Standard</span>
-                    </div>
                 </div>
                 
-                <div class="base-map-card" data-value="opentopomap" onclick="selectBaseMap('opentopomap')">
+                <div class="base-map-card selected" data-value="opentopomap" onclick="selectBaseMap('opentopomap')">
                     <div class="base-map-preview topo-preview">
                         <div class="map-details">
                             <div class="contours"></div>
@@ -3691,26 +3735,31 @@
                     </div>
                 </div>
                 
-                <div class="base-map-card" data-value="atmosphere" onclick="selectBaseMap('atmosphere')">
-                    <div class="base-map-preview atmosphere-preview"></div>
+                <!-- Dark mode (existing provider) -->
+                <div class="base-map-card" data-value="dark_mode" onclick="selectBaseMap('dark_mode')">
+                    <div class="base-map-preview mono-preview">
+                        <div class="map-details">
+                            <div class="roads"></div>
+                            <div class="buildings"></div>
+                            <div class="water"></div>
+                        </div>
+                    </div>
                     <div class="base-map-overlay">
-                        <span>Atmosphere</span>
+                        <span>Dark mode</span>
                     </div>
                 </div>
 
-                <div class="base-map-card" data-value="terrain_maptile" onclick="selectBaseMap('terrain_maptile')">
-                    <div class="base-map-preview terrain-preview"></div>
-                    <div class="base-map-overlay">
-                        <span>3D Terrain</span>
-                    </div>
-                </div>
-                
-                <div class="base-map-card more-options" onclick="showMoreMaps()">
-                    <div class="base-map-preview more-preview">
-                        <div class="arrow-icon">></div>
+                <!-- CartoDB Positron (existing provider) -->
+                <div class="base-map-card" data-value="cartodb_positron" onclick="selectBaseMap('cartodb_positron')">
+                    <div class="base-map-preview mono-preview">
+                        <div class="map-details">
+                            <div class="roads"></div>
+                            <div class="buildings"></div>
+                            <div class="water"></div>
+                        </div>
                     </div>
                     <div class="base-map-overlay">
-                        <span>More...</span>
+                        <span>CartoDB Positron</span>
                     </div>
                 </div>
             </div>
@@ -3733,7 +3782,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
-            <div id="revisionInfo">MyEarth.app v0.5.3</div>
+            <div id="revisionInfo">MyEarth.app v0.5.4</div>
         </div>
     </div>
 
@@ -3919,14 +3968,14 @@
         // Initialize the Cesium viewer with minimal configuration
         const viewer = new Cesium.Viewer('cesiumContainer', {
             // Disable ALL UI widgets for completely clean appearance
-            animation: false,           // Remove animation controls
+            animation: false,           // start hidden; toggled via left panel button
             baseLayerPicker: false,     // Remove base layer picker
             fullscreenButton: false,    // Remove fullscreen button - use custom
             geocoder: false,            // Remove geocoder search
             homeButton: false,          // Remove home button
             infoBox: false,             // Remove info box
             sceneModePicker: false,     // Remove scene mode picker
-            timeline: false,            // Remove timeline slider
+            timeline: false,            // start hidden; toggled via left panel button
             navigationHelpButton: false, // Remove help button
             selectionIndicator: false,  // Remove selection indicator
             navigationInstructionsInitiallyVisible: false, // Remove navigation instructions
@@ -4291,7 +4340,7 @@
 
         // Keep lighting disabled to prevent rendering errors
         viewer.scene.globe.enableLighting = false;
-        viewer.scene.fog.enabled = true;
+        viewer.scene.fog.enabled = false; // start with atmosphere OFF by default
         viewer.scene.fog.density = 0.0003;
         viewer.scene.fog.screenSpaceErrorFactor = 2.0;
         viewer.scene.globe.showWaterEffect = false;
@@ -4309,39 +4358,45 @@
         // Add wireframe material option for 3D visualization
         let wireframeEnabled = false;
         
-        // Apply enhanced terrain visualization with fallback
+        // Apply real 3D terrain (MapTiler quantized mesh) with fallback
         function applyRealTerrain() {
             try {
-                // Start with stable ellipsoid base
-                viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
-                
-                // Apply visual enhancements for 3D effect
-                viewer.scene.globe.material = new Cesium.Material({
-                    fabric: {
-                        type: 'Grid',
-                        uniforms: {
-                            color: new Cesium.Color(0.0, 0.6, 1.0, 0.4),
-                            cellAlpha: 0.04,
-                            lineCount: new Cesium.Cartesian2(64, 32),
-                            lineThickness: new Cesium.Cartesian2(1.2, 1.2)
-                        }
+                (async () => {
+                    const provider = await Cesium.CesiumTerrainProvider.fromUrl(
+                        'https://api.maptiler.com/tiles/terrain-quantized-mesh-v2/?key=ioiUjxTi8AwqFewQeskJ',
+                        { requestVertexNormals: true, requestWaterMask: true }
+                    );
+                    viewer.terrainProvider = provider;
+                    viewer.scene.globe.depthTestAgainstTerrain = true;
+                    viewer.scene.globe.material = undefined;
+                    viewer.scene.globe.enableLighting = false; // keep day/night OFF by default
+                    viewer.scene.globe.terrainExaggeration = 1.0;
+                    const btn = document.getElementById('terrainModeTool');
+                    if (btn) {
+                        const s = btn.querySelector('span');
+                        if (s) s.textContent = '3D';
                     }
-                });
-                
-                viewer.scene.globe.enableLighting = true;
-                viewer.scene.globe.terrainExaggeration = 1.0;
-                console.log('Enhanced terrain visualization applied');
-                
+                    console.log('✓ 3D terrain enabled (MapTiler quantized mesh)');
+                })();
             } catch (error) {
-                console.warn('Terrain enhancement failed, using basic mode:', error);
+                console.warn('3D terrain enable failed, using ellipsoid:', error);
                 viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
                 viewer.scene.globe.material = undefined;
                 viewer.scene.globe.enableLighting = false;
+                viewer.scene.globe.depthTestAgainstTerrain = false;
             }
         }
         
-        // Apply terrain on startup
+        // Apply terrain on startup and initialize 3D button label
         applyRealTerrain();
+        // Initialize label to 3D explicitly
+        (function initTerrainButton(){
+            const el = document.getElementById('terrainModeTool');
+            if (el){
+                const s = el.querySelector('span');
+                if (s) s.textContent = '3D';
+            }
+        })();
         
         console.log('✓ All services using free, open-source providers only');
         
@@ -4385,6 +4440,14 @@
                 }),
                 attribution: '© OpenStreetMap contributors © CARTO'
             },
+             'dark_mode': {
+                 provider: () => new Cesium.UrlTemplateImageryProvider({
+                     url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                     subdomains: ['a', 'b', 'c', 'd'],
+                     credit: '© OpenStreetMap contributors © CARTO'
+                 }),
+                 attribution: '© OpenStreetMap contributors © CARTO'
+             },
             'esri-imagery': {
                 provider: () => new Cesium.UrlTemplateImageryProvider({
                     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -4394,24 +4457,24 @@
             }
         };
 
-        // Current base map - default to OSM Standard for clean appearance
-        let currentBaseMap = 'openstreetmap';
-        
-        // Remove default imagery and add OSM Standard (free open-source service)
+        // Current base map - default to OpenTopoMap
+        let currentBaseMap = 'otm';
+
+        // Remove default imagery and add OpenTopoMap
         viewer.imageryLayers.removeAll();
         const defaultImageryProvider = new Cesium.UrlTemplateImageryProvider({
-            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
             subdomains: ['a', 'b', 'c'],
-            credit: '© OpenStreetMap contributors'
+            credit: 'Map data © OpenStreetMap contributors, SRTM | Map style © OpenTopoMap (CC-BY-SA)'
         });
         viewer.imageryLayers.addImageryProvider(defaultImageryProvider);
-        
-        console.log('✓ Using OSM Standard - free, open-source base map provider');
-        
-        // Set attribution for OSM Standard  
+
+        console.log('✓ Using OpenTopoMap base map');
+
+        // Set attribution for OpenTopoMap
         const attributionElement = document.querySelector('.cesium-credit-textContainer');
         if (attributionElement) {
-            attributionElement.innerHTML = '© OpenStreetMap contributors';
+            attributionElement.innerHTML = '© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)';
         }
 
         // Define Europe and North Africa overview with straight down perspective
@@ -4426,6 +4489,19 @@
 
         // Set initial camera position centered on Europe
         viewer.camera.setView(europeHomeView);
+
+        // Ensure default: time controls hidden and lighting off
+        (function initTimeControls() {
+            try {
+                if (viewer.animation && viewer.animation.container) {
+                    viewer.animation.container.style.display = 'none';
+                }
+                if (viewer.timeline && viewer.timeline.container) {
+                    viewer.timeline.container.style.display = 'none';
+                }
+            } catch (e) { /* ignore */ }
+            viewer.scene.globe.enableLighting = false;
+        })();
 
         // Home button is disabled - no need for override
         
@@ -8430,15 +8506,37 @@ TIP: These shortcuts work when not typing in input fields.
             if (enabled) {
                 // Enable enhanced terrain visualization
                 applyRealTerrain();
+                const btn = document.getElementById('terrainModeTool');
+                if (btn) {
+                    const s = btn.querySelector('span');
+                    if (s) s.textContent = '3D';
+                }
             } else {
                 // Use clean flat terrain
                 viewer.terrainProvider = new Cesium.EllipsoidTerrainProvider();
                 viewer.scene.globe.material = undefined;
                 viewer.scene.globe.enableLighting = false;
                 viewer.scene.globe.terrainExaggeration = 1.0;
+                const btn = document.getElementById('terrainModeTool');
+                if (btn) {
+                    const s = btn.querySelector('span');
+                    if (s) s.textContent = '2D';
+                }
             }
             
             console.log('3D terrain:', enabled ? 'enabled' : 'disabled');
+        }
+
+        /**
+         * Toggle terrain via right-panel 3D/2D button.
+         * Delegates to the checkbox-driven toggle to keep state consistent.
+         */
+        function toggleTerrainMode() {
+            const chk = document.getElementById('terrainToggle');
+            if (chk) {
+                chk.checked = !chk.checked;
+                toggleTerrain();
+            }
         }
 
         /**
@@ -9582,6 +9680,45 @@ TIP: These shortcuts work when not typing in input fields.
             }
         }
 
+        // Toggle Cesium time controls (animation + timeline) and daylight
+        let timeControlsEnabled = false;
+        function toggleTimeControls() {
+            timeControlsEnabled = !timeControlsEnabled;
+
+            // Show/hide Cesium timeline and animation widgets
+            viewer.animation.container.style.display = timeControlsEnabled ? 'block' : 'none';
+            viewer.timeline.container.style.display = timeControlsEnabled ? 'block' : 'none';
+
+            // Enable lighting to see day/night shading when controls are on
+            viewer.scene.globe.enableLighting = timeControlsEnabled;
+
+            // Update button state
+            const btn = document.getElementById('timeControlsButton');
+            if (btn) {
+                btn.setAttribute('aria-pressed', String(timeControlsEnabled));
+                btn.classList.toggle('active', timeControlsEnabled);
+            }
+        }
+
+        // Right-panel Day/Night lighting toggle (independent of time controls)
+        let dayNightEnabled = false;
+        function toggleDayNightLighting() {
+            dayNightEnabled = !dayNightEnabled;
+            // Enable or disable uniform globe lighting
+            viewer.scene.globe.enableLighting = dayNightEnabled;
+            // Update button visual state if needed in the future
+            const btn = document.getElementById('dayNightTool');
+            if (btn) btn.classList.toggle('active', dayNightEnabled);
+        }
+
+        // Bridge for right-panel atmosphere tool (syncs with hidden checkbox)
+        function toggleAtmosphereFromTool() {
+            const chk = document.getElementById('atmosphereToggle');
+            if (!chk) return;
+            chk.checked = !chk.checked;
+            toggleAtmosphere();
+        }
+
         function selectBaseMap(mapType) {
             // Update visual selection
             const cards = document.querySelectorAll('.base-map-card');
@@ -9602,6 +9739,8 @@ TIP: These shortcuts work when not typing in input fields.
                 'openstreetmap': 'osm',
                 'opentopomap': 'otm',
                 'monochrome': 'cartodb-positron',
+                'dark_mode': 'dark_mode',
+                'cartodb_positron': 'cartodb-positron',
                 'esri_world': 'esri-imagery',
                 'atmosphere': 'atmosphere',
                 'terrain_maptile': 'terrain_maptile'
@@ -9640,6 +9779,11 @@ TIP: These shortcuts work when not typing in input fields.
                         viewer.scene.globe.depthTestAgainstTerrain = true;
                         viewer.scene.globe.material = undefined;
                         console.log('✓ MapTiler 3D terrain enabled with depthTestAgainstTerrain');
+                        const btn = document.getElementById('terrainModeTool');
+                        if (btn) {
+                            const s = btn.querySelector('span');
+                            if (s) s.textContent = '3D';
+                        }
                     })();
                 } catch (err) {
                     console.error('Failed to enable MapTiler terrain:', err);
