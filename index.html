@@ -3283,6 +3283,33 @@
             </div>
         </div>
         
+        <!-- 3D Polygons Section -->
+        <div class="sidebar-section">
+            <div class="section-header" onclick="toggleSection('polygons3d')">
+                <span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;">
+                        <path d="M3 8 L12 3 L21 8 L12 13 Z" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 13 L12 21" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    3D Polygons
+                </span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
+            </div>
+            <div class="section-content" id="polygons3d">
+                <div class="control-item" style="display:flex; gap:6px; align-items:center;">
+                    <button class="control-button primary" id="startPolygon3DButton" onclick="start3DPolygonDrawing()">Start drawing</button>
+                    <button class="control-button secondary" id="cancelPolygon3DButton" onclick="cancel3DPolygonDrawing()" style="display:none;">Cancel</button>
+                </div>
+                <div class="control-item" style="margin-top:8px;">
+                    <label for="polygonExtrusionHeight" style="font-size: 11px; font-weight: 600; color: #555;">Height (m):</label>
+                    <input type="number" id="polygonExtrusionHeight" value="5" min="0" step="1" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; background: rgba(255, 255, 255, 0.3);" oninput="setPolygonExtrusionHeight(parseFloat(this.value)||0)" />
+                </div>
+                <div style="font-size: 11px; color: #666; margin-top: 6px;">
+                    1) Click to add vertices, double‑click to finish. 2) Drag the vertical handle to adjust height, or enter a value.
+                </div>
+            </div>
+        </div>
+        
 
     </div>
 
@@ -3782,7 +3809,7 @@
         <div class="bottom-right">
             <div id="activeLayersInfo">Active Layers: OSM Standard</div>
             <div id="attributionInfo">© OpenStreetMap contributors</div>
-            <div id="revisionInfo">MyEarth.app v0.5.4</div>
+            <div id="revisionInfo">MyEarth.app v0.5.5</div>
         </div>
     </div>
 
@@ -4544,6 +4571,352 @@
             event.target.classList.add('active');
             
             updateGizmoStatus(`Mode: ${mode}`);
+        };
+
+        // ============================
+        // 3D POLYGONS DRAWING TOOL
+        // ============================
+        const polygon3DTool = {
+            isActive: false,
+            isDraggingHeight: false,
+            draggingVertexIndex: -1,
+            activePositions: [],
+            polygonEntity: null,
+            dynamicPolygon: null,
+            heightMeters: 5,
+            handler: null,
+            dragStartScreenY: 0,
+            dragStartHeight: 5,
+            handleEntity: null,
+            heightLabel: null,
+            vertexHandles: [],
+            prevDblClickAction: null,
+        };
+
+        function getGlobePositionFromClick(clickPosition) {
+            const scene = viewer.scene;
+            let cartesian = null;
+            try {
+                if (scene.pickPositionSupported) {
+                    cartesian = scene.pickPosition(clickPosition);
+                }
+                if (!cartesian) {
+                    const ray = viewer.camera.getPickRay(clickPosition);
+                    cartesian = viewer.scene.globe.pick(ray, scene);
+                }
+            } catch (e) {
+                // ignore and fallback
+            }
+            if (!cartesian) {
+                const ellipsoid = scene.globe.ellipsoid;
+                cartesian = scene.camera.pickEllipsoid(clickPosition, ellipsoid);
+            }
+            return cartesian;
+        }
+
+        function computeCentroidCartesian(positions) {
+            if (!positions || positions.length === 0) return null;
+            const sphere = Cesium.BoundingSphere.fromPoints(positions);
+            return sphere.center;
+        }
+
+        function updatePolygonVisualization() {
+            if (!polygon3DTool.dynamicPolygon) {
+                polygon3DTool.dynamicPolygon = viewer.entities.add({
+                    polygon: {
+                        hierarchy: new Cesium.CallbackProperty(() => new Cesium.PolygonHierarchy(polygon3DTool.activePositions.slice()), false),
+                        material: Cesium.Color.CORNFLOWERBLUE.withAlpha(0.35),
+                        outline: true,
+                        outlineColor: Cesium.Color.DODGERBLUE,
+                        perPositionHeight: false,
+                        height: 0,
+                        heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                        extrudedHeight: new Cesium.CallbackProperty(() => polygon3DTool.heightMeters, false),
+                        extrudedHeightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+                    }
+                });
+            }
+
+            // Update handles and label
+            updateHeightHandleAndLabel();
+            updateVertexHandles();
+        }
+
+        function updateVertexHandles() {
+            const positions = polygon3DTool.activePositions;
+            // Remove extra handles if positions shrank
+            if (polygon3DTool.vertexHandles.length > positions.length) {
+                for (let i = positions.length; i < polygon3DTool.vertexHandles.length; i++) {
+                    const ent = polygon3DTool.vertexHandles[i];
+                    if (ent) viewer.entities.remove(ent);
+                }
+                polygon3DTool.vertexHandles.length = positions.length;
+            }
+
+            for (let i = 0; i < positions.length; i++) {
+                const pos = positions[i];
+                if (!polygon3DTool.vertexHandles[i]) {
+                    const handle = viewer.entities.add({
+                        position: pos,
+                        point: {
+                            pixelSize: 11,
+                            color: Cesium.Color.ORANGE,
+                            outlineColor: Cesium.Color.WHITE,
+                            outlineWidth: 2,
+                            disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND
+                        },
+                        properties: new Cesium.PropertyBag({ isPolygonVertexHandle: true, vertexIndex: i })
+                    });
+                    polygon3DTool.vertexHandles[i] = handle;
+                } else {
+                    polygon3DTool.vertexHandles[i].position = pos;
+                }
+            }
+        }
+
+        function updateHeightHandleAndLabel() {
+            if (polygon3DTool.activePositions.length < 3) {
+                if (polygon3DTool.handleEntity) {
+                    viewer.entities.remove(polygon3DTool.handleEntity);
+                    polygon3DTool.handleEntity = null;
+                }
+                if (polygon3DTool.heightLabel) {
+                    viewer.entities.remove(polygon3DTool.heightLabel);
+                    polygon3DTool.heightLabel = null;
+                }
+                return;
+            }
+
+            const centroid = computeCentroidCartesian(polygon3DTool.activePositions);
+            if (!centroid) return;
+
+            // Compute top point by converting to cartographic and adding height above terrain
+            const cartographic = Cesium.Ellipsoid.WGS84.cartesianToCartographic(centroid);
+            const groundHeight = viewer.scene.globe.getHeight(cartographic) || 0;
+            const groundPoint = Cesium.Cartesian3.fromRadians(cartographic.longitude, cartographic.latitude, groundHeight);
+            const topPoint = Cesium.Cartesian3.fromRadians(
+                cartographic.longitude,
+                cartographic.latitude,
+                Math.max(0, groundHeight + polygon3DTool.heightMeters)
+            );
+
+            if (!polygon3DTool.handleEntity) {
+                polygon3DTool.handleEntity = viewer.entities.add({
+                    polyline: {
+                        positions: [groundPoint, topPoint],
+                        width: 2,
+                        material: Cesium.Color.DODGERBLUE
+                    },
+                    point: {
+                        pixelSize: 10,
+                        color: Cesium.Color.DODGERBLUE,
+                        outlineColor: Cesium.Color.WHITE,
+                        outlineWidth: 2,
+                    },
+                    position: topPoint,
+                    properties: { isPolygonHeightHandle: true }
+                });
+            } else {
+                polygon3DTool.handleEntity.polyline.positions = [groundPoint, topPoint];
+                polygon3DTool.handleEntity.position = topPoint;
+            }
+
+            const labelText = `${Math.round(Math.max(0, polygon3DTool.heightMeters))} m`;
+            if (!polygon3DTool.heightLabel) {
+                polygon3DTool.heightLabel = viewer.entities.add({
+                    position: topPoint,
+                    label: {
+                        text: labelText,
+                        font: '12px sans-serif',
+                        fillColor: Cesium.Color.WHITE,
+                        outlineColor: Cesium.Color.BLACK,
+                        outlineWidth: 2,
+                        pixelOffset: new Cesium.Cartesian2(0, -18),
+                        verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+                        heightReference: Cesium.HeightReference.NONE
+                    }
+                });
+            } else {
+                polygon3DTool.heightLabel.position = topPoint;
+                polygon3DTool.heightLabel.label.text = labelText;
+            }
+        }
+
+        window.setPolygonExtrusionHeight = function(newHeight) {
+            polygon3DTool.heightMeters = Math.max(0, Number.isFinite(newHeight) ? newHeight : 0);
+            if (polygon3DTool.dynamicPolygon) {
+                // triggers callback properties
+            }
+            updateHeightHandleAndLabel();
+        };
+
+        window.start3DPolygonDrawing = function() {
+            if (polygon3DTool.isActive) return;
+            polygon3DTool.isActive = true;
+            polygon3DTool.activePositions = [];
+            polygon3DTool.heightMeters = parseFloat(document.getElementById('polygonExtrusionHeight').value) || 0;
+            if (polygon3DTool.dynamicPolygon) { viewer.entities.remove(polygon3DTool.dynamicPolygon); polygon3DTool.dynamicPolygon = null; }
+            if (polygon3DTool.handleEntity) { viewer.entities.remove(polygon3DTool.handleEntity); polygon3DTool.handleEntity = null; }
+            if (polygon3DTool.heightLabel) { viewer.entities.remove(polygon3DTool.heightLabel); polygon3DTool.heightLabel = null; }
+            if (polygon3DTool.vertexHandles && polygon3DTool.vertexHandles.length) {
+                polygon3DTool.vertexHandles.forEach(h => { if (h) viewer.entities.remove(h); });
+                polygon3DTool.vertexHandles = [];
+            }
+
+            document.getElementById('startPolygon3DButton').style.display = 'none';
+            document.getElementById('cancelPolygon3DButton').style.display = 'inline-block';
+
+            // Disable default Cesium double-click to zoom while drawing
+            try {
+                const wHandler = viewer.cesiumWidget && viewer.cesiumWidget.screenSpaceEventHandler;
+                if (wHandler) {
+                    polygon3DTool.prevDblClickAction = wHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+                    wHandler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+                }
+            } catch (e) {}
+
+            polygon3DTool.handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+            polygon3DTool.handler.setInputAction((movement) => {
+                // If over a handle, start drag instead of adding a new point
+                const hits = viewer.scene.drillPick(movement.position) || [];
+                const handleHit = hits.find(h => h && h.id && h.id.properties && (h.id.properties.isPolygonVertexHandle || (h.id.properties.getValue && h.id.properties.getValue(Cesium.JulianDate.now()).isPolygonVertexHandle)));
+                if (handleHit) {
+                    const props = handleHit.id.properties;
+                    const now = Cesium.JulianDate.now();
+                    const idx = (props.vertexIndex && typeof props.vertexIndex.getValue === 'function') ? props.vertexIndex.getValue(now) : props.vertexIndex;
+                    polygon3DTool.draggingVertexIndex = Number(idx);
+                    return;
+                }
+                if (polygon3DTool.isDraggingHeight || polygon3DTool.draggingVertexIndex >= 0) return;
+                const pos = getGlobePositionFromClick(movement.position);
+                if (!pos) return;
+                polygon3DTool.activePositions.push(pos);
+                // Show a handle immediately for the newly added vertex
+                updateVertexHandles();
+                updatePolygonVisualization();
+            }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+
+            polygon3DTool.handler.setInputAction((movement) => {
+                if (polygon3DTool.activePositions.length === 0) return;
+                const pos = getGlobePositionFromClick(movement.endPosition);
+                if (!pos) return;
+                const tempPositions = polygon3DTool.activePositions.slice();
+                tempPositions.push(pos);
+                // temporarily show preview by replacing callback source
+                if (!polygon3DTool.previewEntity) {
+                    polygon3DTool.previewEntity = viewer.entities.add({
+                        polygon: {
+                            hierarchy: new Cesium.CallbackProperty(() => new Cesium.PolygonHierarchy(tempPositions.slice()), false),
+                            material: Cesium.Color.CORNFLOWERBLUE.withAlpha(0.2),
+                            outline: true,
+                            outlineColor: Cesium.Color.DODGERBLUE,
+                            extrudedHeight: new Cesium.CallbackProperty(() => polygon3DTool.heightMeters, false)
+                        }
+                    });
+                } else {
+                    polygon3DTool.previewEntity.polygon.hierarchy = new Cesium.CallbackProperty(() => new Cesium.PolygonHierarchy(tempPositions.slice()), false);
+                }
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+            polygon3DTool.handler.setInputAction(() => {
+                if (polygon3DTool.activePositions.length < 3) return;
+                // finalize
+                if (polygon3DTool.previewEntity) { viewer.entities.remove(polygon3DTool.previewEntity); polygon3DTool.previewEntity = null; }
+                // stop preview updates and adding points so last point no longer follows the cursor
+                polygon3DTool.handler.removeInputAction(Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+                polygon3DTool.handler.removeInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
+                updatePolygonVisualization();
+                enableHeightDrag();
+            }, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+        };
+
+        function enableHeightDrag() {
+            if (!polygon3DTool.handler) return;
+            polygon3DTool.handler.setInputAction((click) => {
+                const hits = viewer.scene.drillPick(click.position) || [];
+                const now = Cesium.JulianDate.now();
+                const heightHandle = hits.find(h => h && h.id && h.id.properties && ((h.id.properties.isPolygonHeightHandle === true) || (h.id.properties.getValue && h.id.properties.getValue(now).isPolygonHeightHandle)));
+                if (heightHandle) {
+                    const ctrl = viewer.scene.screenSpaceCameraController;
+                    if (ctrl) ctrl.enableRotate = false;
+                    polygon3DTool.isDraggingHeight = true;
+                    polygon3DTool.dragStartScreenY = click.position.y;
+                    polygon3DTool.dragStartHeight = polygon3DTool.heightMeters;
+                    return;
+                }
+                const handleHit = hits.find(h => h && h.id && h.id.properties && ((h.id.properties.isPolygonVertexHandle === true) || (h.id.properties.getValue && h.id.properties.getValue(now).isPolygonVertexHandle)));
+                if (handleHit) {
+                    const props = handleHit.id.properties;
+                    const idx = (props.vertexIndex && typeof props.vertexIndex.getValue === 'function') ? props.vertexIndex.getValue(now) : props.vertexIndex;
+                    polygon3DTool.draggingVertexIndex = Number(idx);
+                    const ctrl = viewer.scene.screenSpaceCameraController;
+                    if (ctrl) {
+                        ctrl.enableRotate = false;
+                        ctrl.enableTranslate = false;
+                    }
+                    return;
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_DOWN);
+
+            polygon3DTool.handler.setInputAction((movement) => {
+                if (polygon3DTool.isDraggingHeight) {
+                    const dy = movement.endPosition.y - polygon3DTool.dragStartScreenY;
+                    const delta = -dy * 2; // 2 meters per pixel drag upwards
+                    const newHeight = Math.max(0, polygon3DTool.dragStartHeight + delta);
+                    polygon3DTool.heightMeters = newHeight;
+                    const input = document.getElementById('polygonExtrusionHeight');
+                    if (input) input.value = Math.round(newHeight);
+                    updatePolygonVisualization();
+                    return;
+                }
+                if (polygon3DTool.draggingVertexIndex >= 0) {
+                    const pos = getGlobePositionFromClick(movement.endPosition);
+                    if (!pos) return;
+                    const idx = polygon3DTool.draggingVertexIndex;
+                    if (idx >= 0 && idx < polygon3DTool.activePositions.length) {
+                        polygon3DTool.activePositions[idx] = pos;
+                        updatePolygonVisualization();
+                        // keep the rest of the polygon consistent: update centroid-based handle
+                    }
+                }
+            }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+            polygon3DTool.handler.setInputAction(() => {
+                polygon3DTool.isDraggingHeight = false;
+                polygon3DTool.draggingVertexIndex = -1;
+                const ctrl = viewer.scene.screenSpaceCameraController;
+                if (ctrl) {
+                    ctrl.enableRotate = true;
+                    ctrl.enableTranslate = true;
+                }
+            }, Cesium.ScreenSpaceEventType.LEFT_UP);
+        }
+
+        window.cancel3DPolygonDrawing = function() {
+            polygon3DTool.isActive = false;
+            if (polygon3DTool.handler) { polygon3DTool.handler.destroy(); polygon3DTool.handler = null; }
+            if (polygon3DTool.dynamicPolygon) { viewer.entities.remove(polygon3DTool.dynamicPolygon); polygon3DTool.dynamicPolygon = null; }
+            if (polygon3DTool.previewEntity) { viewer.entities.remove(polygon3DTool.previewEntity); polygon3DTool.previewEntity = null; }
+            if (polygon3DTool.handleEntity) { viewer.entities.remove(polygon3DTool.handleEntity); polygon3DTool.handleEntity = null; }
+            if (polygon3DTool.heightLabel) { viewer.entities.remove(polygon3DTool.heightLabel); polygon3DTool.heightLabel = null; }
+            if (polygon3DTool.vertexHandles && polygon3DTool.vertexHandles.length) {
+                polygon3DTool.vertexHandles.forEach(h => { if (h) viewer.entities.remove(h); });
+                polygon3DTool.vertexHandles = [];
+            }
+            polygon3DTool.activePositions = [];
+            document.getElementById('startPolygon3DButton').style.display = 'inline-block';
+            document.getElementById('cancelPolygon3DButton').style.display = 'none';
+
+            // Restore default Cesium double-click behavior
+            try {
+                const wHandler = viewer.cesiumWidget && viewer.cesiumWidget.screenSpaceEventHandler;
+                if (wHandler && polygon3DTool.prevDblClickAction) {
+                    wHandler.setInputAction(polygon3DTool.prevDblClickAction, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+                    polygon3DTool.prevDblClickAction = null;
+                }
+            } catch (e) {}
         };
         
         window.toggleGizmo = function() {
