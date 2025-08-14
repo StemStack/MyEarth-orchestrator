@@ -912,20 +912,22 @@
             top: 0;
             left: 0;
             width: 280px;
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(30px) saturate(200%) brightness(1.5);
-            -webkit-backdrop-filter: blur(30px) saturate(200%) brightness(1.5);
+            height: calc(100vh - 40px);
+            bottom: 40px; /* account for bottom band */
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
             color: #333;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             font-size: 13px;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1000;
             transition: transform 0.3s ease;
             overflow-y: auto;
-            padding-top: 40px;
+            padding-top: 48px;
             padding-bottom: 20px; /* Add padding at the bottom */
             box-sizing: border-box;
+            border-right: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         /* New 2-Column Grid Layout for Right Panel */
