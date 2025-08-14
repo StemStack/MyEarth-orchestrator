@@ -190,12 +190,9 @@ async def logout():
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Root route → serves index.html directly
-BASE_DIR = Path(__file__).resolve().parent
-INDEX_FILE = (BASE_DIR / "index.html").resolve()
-
 @app.get("/")
 def serve_index():
-    return FileResponse(str(INDEX_FILE))
+    return FileResponse("index.html")
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
