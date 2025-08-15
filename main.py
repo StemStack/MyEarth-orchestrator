@@ -199,13 +199,7 @@ from fastapi.responses import RedirectResponse
 
 @app.get("/")
 def serve_index():
-    return RedirectResponse(url="/MyEarth/")
-
-# Allow accessing the app under a path prefix for local testing
-@app.get("/MyEarth")
-@app.get("/MyEarth/")
-def serve_index_myearth():
-    return FileResponse(str(INDEX_FILE))
+    return RedirectResponse(url="/MyEarth/"))
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
