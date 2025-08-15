@@ -187,12 +187,17 @@ async def logout():
 # Serve static files
 # --------------------
 # Mount static folder for assets (favicon, logos, etc.)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = (BASE_DIR / "static").resolve()
+INDEX_FILE = (BASE_DIR / "index.html").resolve()
+VERSION_FILE = (BASE_DIR / "version.json").resolve()
+
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Root route → serves index.html directly
 @app.get("/")
 def serve_index():
-    return FileResponse("index.html")
+    return FileResponse(str(INDEX_FILE))
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
@@ -229,7 +234,7 @@ async def serve_print_overlay_styles():
 async def serve_version():
     """Serve the version.json file with current build information"""
     try:
-        with open("version.json", "r") as f:
+        with open(str(VERSION_FILE), "r") as f:
             version_data = json.load(f)
         return JSONResponse(content=version_data)
     except FileNotFoundError:
