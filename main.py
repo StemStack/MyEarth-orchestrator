@@ -199,6 +199,12 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 def serve_index():
     return FileResponse(str(INDEX_FILE))
 
+# Allow accessing the app under a path prefix for local testing
+@app.get("/MyEarth")
+@app.get("/MyEarth/")
+def serve_index_myearth():
+    return FileResponse(str(INDEX_FILE))
+
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
 async def serve_model_importer():
