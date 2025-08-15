@@ -195,9 +195,11 @@ VERSION_FILE = (BASE_DIR / "version.json").resolve()
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Root route → serves index.html directly
+from fastapi.responses import RedirectResponse
+
 @app.get("/")
 def serve_index():
-    return FileResponse(str(INDEX_FILE))
+    return RedirectResponse(url="/MyEarth/")
 
 # Allow accessing the app under a path prefix for local testing
 @app.get("/MyEarth")
