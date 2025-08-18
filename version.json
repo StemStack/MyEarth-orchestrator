@@ -1,7 +1,7 @@
 {
-  "version": "0.6.4",
-  "buildDate": "2025-08-18T06:05:33.000000Z",
-  "buildTimestamp": 1755497133,
-  "commitHash": "f22daeb",
+  "version": "0.6.5",
+  "buildDate": "2025-08-18T20:54:30.705282Z",
+  "buildTimestamp": 1755543270,
+  "commitHash": "0f5d2f0",
   "environment": "development"
 }
