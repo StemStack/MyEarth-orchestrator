@@ -199,7 +199,7 @@ from fastapi.responses import RedirectResponse
 
 @app.get("/")
 def serve_index():
-    return RedirectResponse(url="/MyEarth/"))
+    return FileResponse(str(INDEX_FILE))
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
