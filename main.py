@@ -188,8 +188,9 @@ async def logout():
 # --------------------
 # Mount static folder for assets (favicon, logos, etc.)
 BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = (BASE_DIR / "static").resolve()
-INDEX_FILE = (BASE_DIR / "index.html").resolve()
+UI_DIR = (BASE_DIR / "MyEarth").resolve()
+STATIC_DIR = (UI_DIR / "static").resolve()
+INDEX_FILE = (UI_DIR / "index.html").resolve()
 VERSION_FILE = (BASE_DIR / "version.json").resolve()
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
@@ -205,32 +206,32 @@ def serve_index():
 @app.get("/CesiumModelImporter.js")
 async def serve_model_importer():
     """Serve the CesiumModelImporter.js file"""
-    return FileResponse("CesiumModelImporter.js")
+    return FileResponse(str(UI_DIR / "CesiumModelImporter.js"))
 
 @app.get("/CesiumGizmo.js")
 async def serve_gizmo():
     """Serve the CesiumGizmo.js file"""
-    return FileResponse("CesiumGizmo.js")
+    return FileResponse(str(UI_DIR / "CesiumGizmo.js"))
 
 @app.get("/printService.js")
 async def serve_print_service():
     """Serve the printService.js file"""
-    return FileResponse("printService.js")
+    return FileResponse(str(UI_DIR / "printService.js"))
 
 @app.get("/printStyles.css")
 async def serve_print_styles():
     """Serve the printStyles.css file"""
-    return FileResponse("printStyles.css")
+    return FileResponse(str(UI_DIR / "printStyles.css"))
 
 @app.get("/PrintOverlay.js")
 async def serve_print_overlay():
     """Serve the PrintOverlay.js file"""
-    return FileResponse("PrintOverlay.js")
+    return FileResponse(str(UI_DIR / "PrintOverlay.js"))
 
 @app.get("/printOverlayStyles.css")
 async def serve_print_overlay_styles():
     """Serve the printOverlayStyles.css file"""
-    return FileResponse("printOverlayStyles.css")
+    return FileResponse(str(UI_DIR / "printOverlayStyles.css"))
 
 @app.get("/version.json")
 async def serve_version():
