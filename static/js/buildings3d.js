@@ -5,7 +5,10 @@
 	const CONTROLLER_NAME = 'osm-buildings';
 	const DEBOUNCE_MS = 600;
 	const MAX_VIEW_DEG = 1.0; // Increased to allow larger areas for tilted camera views
-	const MAX_FEATURES = 20000; // Doubled from 10000 for better coverage
+	const MAX_FEATURES = 20000; // Upper safety cap from server
+	const DISPLAY_SAMPLE_RATE = 0.5; // Render only 50% of fetched buildings
+	const HIGH_ALTITUDE_M = 20000; // Above this, prioritize exact center
+	const HORIZON_PITCH_THRESHOLD = -0.35; // ~ -20deg (near-horizon)
 	const DEFAULT_OPACITY = 0.8;
 	const COLOR_HEX = '#ff4444'; // Bright red for visibility
 
@@ -166,6 +169,31 @@
 		}
 	}
 
+	// Strong forward-focused bbox used when camera is near horizon
+	function computeForwardViewBBoxStrong() {
+		const camera = viewer.camera;
+		const cartographic = viewer.scene.globe.ellipsoid.cartesianToCartographic(camera.position);
+		const lat = cesium.Math.toDegrees(cartographic.latitude);
+		const lon = cesium.Math.toDegrees(cartographic.longitude);
+		const height = cartographic.height;
+		const heading = camera.heading;
+		const aspect = camera.frustum.aspectRatio;
+
+		let baseSpan = Math.max(0.01, Math.min(0.08, height / 3000000));
+		const latSpan = baseSpan * 1.6;
+		const lonSpan = (baseSpan * 1.4) * aspect;
+		const forwardLatOffset = Math.cos(heading) * baseSpan * 0.6;
+		const forwardLonOffset = Math.sin(heading) * baseSpan * 0.6;
+		const centerLat = lat + forwardLatOffset;
+		const centerLon = lon + forwardLonOffset;
+		return [
+			centerLat - (latSpan / 2),
+			centerLon - (lonSpan / 2),
+			centerLat + (latSpan / 2),
+			centerLon + (lonSpan / 2)
+		];
+	}
+
 	function bboxTooLarge(bbox) {
 		const width = Math.abs(bbox[3] - bbox[1]);
 		const height = Math.abs(bbox[2] - bbox[0]);
@@ -237,6 +265,10 @@
 		let bbox = computeViewBBox();
 		let usingPrioritized = false;
 		
+		const pitch = viewer.camera.pitch;
+		const nearHorizon = pitch > HORIZON_PITCH_THRESHOLD;
+		if (nearHorizon) { bbox = computeForwardViewBBoxStrong(); usingPrioritized = true; }
+
 		if (!bbox || bboxTooLarge(bbox)) {
 			// Primary method failed or area too large - use prioritized approach
 			try { console.log('Buildings3D: Using prioritized bbox (camera-focused)'); } catch(e) {}
@@ -387,17 +419,86 @@
 				}
 			}
 
+			// Helper to compute centroid of outer ring
+			function centroidOfCoords(coords) {
+				try {
+					const outer = coords && coords[0];
+					if (!outer || outer.length === 0) return null;
+					let sx = 0, sy = 0, n = 0;
+					for (const c of outer) {
+						if (Array.isArray(c) && c.length >= 2 && !isNaN(c[0]) && !isNaN(c[1])) { sx += c[0]; sy += c[1]; n++; }
+					}
+					if (n === 0) return null;
+					return { lon: sx / n, lat: sy / n };
+				} catch (_) { return null; }
+			}
+
+			// Filter features to only those in front of the camera and optionally prioritize center if very high
+			const cam = viewer.camera;
+			const camPos = cam.positionWC;
+			const camDir = cam.directionWC;
+			const camCarto = viewer.scene.globe.ellipsoid.cartesianToCartographic(cam.position);
+			const camHeight = camCarto ? camCarto.height : 0;
+			const centerCartesian = cesium.Cartesian3.fromDegrees(cesium.Math.toDegrees(camCarto.longitude), cesium.Math.toDegrees(camCarto.latitude), 0);
+
+			const frontFeatures = [];
+			const scratch = new cesium.Cartesian3();
+			function isInFront(lon, lat) {
+				const tgt = cesium.Cartesian3.fromDegrees(lon, lat, 0);
+				cesium.Cartesian3.subtract(tgt, camPos, scratch);
+				cesium.Cartesian3.normalize(scratch, scratch);
+				return cesium.Cartesian3.dot(scratch, camDir) > 0; // strictly in front of camera
+			}
+
 			for (const feature of geojson.features) {
 				const height = feature.properties?.height || 10;
 				const geom = feature.geometry;
 				if (!geom) continue;
+				if (geom.type === 'Polygon') {
+					const c = centroidOfCoords(geom.coordinates);
+					if (!c || !isInFront(c.lon, c.lat)) continue;
+					frontFeatures.push({ feature, height, centroid: c });
+				} else if (geom.type === 'MultiPolygon') {
+					if (!Array.isArray(geom.coordinates) || geom.coordinates.length === 0) continue;
+					const c = centroidOfCoords(geom.coordinates[0]);
+					if (!c || !isInFront(c.lon, c.lat)) continue;
+					frontFeatures.push({ feature, height, centroid: c });
+				}
+			}
+
+			// If camera is very high, prioritize closest-to-center first
+			if (camHeight > HIGH_ALTITUDE_M) {
+				frontFeatures.sort((a, b) => {
+					const A = cesium.Cartesian3.fromDegrees(a.centroid.lon, a.centroid.lat, 0);
+					const B = cesium.Cartesian3.fromDegrees(b.centroid.lon, b.centroid.lat, 0);
+					return cesium.Cartesian3.distance(A, centerCartesian) - cesium.Cartesian3.distance(B, centerCartesian);
+				});
+			}
+
+			// Always include the N nearest buildings, then downsample the rest
+			const NEAREST_ALWAYS = 40;
+			frontFeatures.sort((a, b) => {
+				const A = cesium.Cartesian3.fromDegrees(a.centroid.lon, a.centroid.lat, 0);
+				const B = cesium.Cartesian3.fromDegrees(b.centroid.lon, b.centroid.lat, 0);
+				return cesium.Cartesian3.distance(A, camPos) - cesium.Cartesian3.distance(B, camPos);
+			});
+			const toRender = frontFeatures.slice(0, NEAREST_ALWAYS);
+			for (let i = NEAREST_ALWAYS; i < frontFeatures.length; i++) {
+				if ((i - NEAREST_ALWAYS) % Math.round(1 / DISPLAY_SAMPLE_RATE) === 0) {
+					toRender.push(frontFeatures[i]);
+				}
+			}
+
+			for (const item of toRender) {
+				const geom = item.feature.geometry;
+				const height = item.height;
 				if (geom.type === 'Polygon') {
 					addPolygonEntity(geom.coordinates, height);
 				} else if (geom.type === 'MultiPolygon') {
 					for (const part of geom.coordinates) addPolygonEntity(part, height);
 				}
 			}
-			try { console.log('Buildings3D: Created entities', created); } catch(e) {}
+			try { console.log('Buildings3D: Created entities', created, 'from', frontFeatures.length, 'front-facing, rendered', toRender.length); } catch(e) {}
 			viewer.scene.requestRender();
 			// Update active layers display after loading buildings
 			this.updateActiveLayersDisplay();
