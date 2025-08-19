@@ -186,21 +186,50 @@ async def logout():
 # --------------------
 # Serve static files
 # --------------------
-# Mount static folder for assets (favicon, logos, etc.)
+# Mount static folder for assets (favicon, logos, etc.) with robust fallbacks
 BASE_DIR = Path(__file__).resolve().parent
-UI_DIR = (BASE_DIR / "MyEarth").resolve()
-STATIC_DIR = (UI_DIR / "static").resolve()
-INDEX_FILE = (UI_DIR / "index.html").resolve()
+
+# Prefer nested UI (BASE_DIR/MyEarth) when present, else fall back to root UI
+_candidate_ui_dirs = [
+    BASE_DIR / "MyEarth",  # nested app directory
+    BASE_DIR                # root as fallback
+]
+UI_DIR = None
+for _d in _candidate_ui_dirs:
+    if (_d / "index.html").exists():
+        UI_DIR = _d.resolve()
+        break
+if UI_DIR is None:
+    # Default to nested path even if index is missing (will fallback later)
+    UI_DIR = (BASE_DIR / "MyEarth").resolve()
+
+# Choose a static directory that actually exists
+_candidate_static_dirs = [
+    UI_DIR / "static",
+    BASE_DIR / "static",
+    BASE_DIR / "MyEarth" / "static"
+]
+STATIC_DIR = None
+for _s in _candidate_static_dirs:
+    if _s.is_dir():
+        STATIC_DIR = _s.resolve()
+        break
+
+INDEX_FILE = (UI_DIR / "index.html") if (UI_DIR / "index.html").exists() else None
 VERSION_FILE = (BASE_DIR / "version.json").resolve()
 
-app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+if STATIC_DIR is not None:
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
-# Root route → serves index.html directly
+# Root route → serves index.html directly (with fallback response)
 from fastapi.responses import RedirectResponse
 
 @app.get("/")
 def serve_index():
-    return FileResponse(str(INDEX_FILE))
+    if INDEX_FILE and INDEX_FILE.exists():
+        return FileResponse(str(INDEX_FILE))
+    # Fallback: minimal response to avoid startup crash if index is missing
+    return JSONResponse({"error": "index.html not found"}, status_code=404)
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
