@@ -3,10 +3,10 @@
 
 (function () {
 	const CONTROLLER_NAME = 'osm-buildings';
-	const DEBOUNCE_MS = 600;
+	const DEBOUNCE_MS = 300;
 	const MAX_VIEW_DEG = 1.0; // Increased to allow larger areas for tilted camera views
 	const MAX_FEATURES = 20000; // Upper safety cap from server
-	const DISPLAY_SAMPLE_RATE = 0.5; // Render only 50% of fetched buildings
+	const DISPLAY_SAMPLE_RATE = 0.6; // Default sample; may be increased adaptively
 	const HIGH_ALTITUDE_M = 20000; // Above this, prioritize exact center
 	const HORIZON_PITCH_THRESHOLD = -0.35; // ~ -20deg (near-horizon)
 	const DEFAULT_OPACITY = 0.8;
@@ -208,6 +208,35 @@
 		'https://overpass.osm.ch/api/interpreter'
 	];
 
+	// Race multiple Overpass endpoints and return the first successful JSON
+	async function fetchOverpassRaced(query, signal) {
+		const urls = OVERPASS_ENDPOINTS.map((ep) => `${ep}?data=${encodeURIComponent(query)}`);
+		const controllers = urls.map(() => new AbortController());
+		// Tie to outer signal
+		if (signal) {
+			try { signal.addEventListener('abort', () => controllers.forEach(c => c.abort())); } catch (_) {}
+		}
+		const attempts = urls.map((url, i) => fetch(url, { signal: controllers[i].signal })
+			.then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); }));
+		try {
+			const json = await Promise.any(attempts);
+			controllers.forEach(c => { try { c.abort(); } catch(_){} });
+			return json;
+		} catch (e) {
+			controllers.forEach(c => { try { c.abort(); } catch(_){} });
+			throw e;
+		}
+	}
+
+	function splitBBox(b) {
+		const [s,w,n,e] = b;
+		const midLat = (s+n)/2; const midLon = (w+e)/2;
+		return [
+			[s,w,midLat,midLon],[s,midLon,midLat,e],
+			[midLat,w,n,midLon],[midLat,midLon,n,e]
+		];
+	}
+
 	function buildOverpassQuery(bbox) {
 		const bboxStr = `${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]}`; // south,west,north,east
 		// Simplified query: just basic building ways with geometry
@@ -293,22 +322,16 @@
 		let geojson = cache.get(key);
 		if (!geojson) {
 			await loadOsmToGeoJson();
-			for (const ep of OVERPASS_ENDPOINTS) {
-				const url = overpassUrl(ep, bbox);
-				try { console.log('Buildings3D: Trying endpoint', ep); } catch(e) {}
-				try {
-					const res = await fetch(url, { signal });
-					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					const osmJson = await res.json();
-					try { console.log('Buildings3D: Raw OSM response', { elements: (osmJson && osmJson.elements) ? osmJson.elements.length : 0 }); } catch(e) {}
-					const gj = parseOverpassToGeoJSON_viaLib(osmJson);
-					try { console.log('Buildings3D: Converted to GeoJSON', { features: (gj && gj.features) ? gj.features.length : 0 }); } catch(e) {}
-					if (gj.features && gj.features.length) { geojson = gj; break; }
-				} catch (err) {
-					if (err.name === 'AbortError') return;
-					try { console.error('Buildings3D: Endpoint failed', ep, err); } catch(e2) {}
-				}
-			}
+			// Fetch 2x2 micro-tiles in parallel and merge to improve reliability
+			const tiles = splitBBox(bbox);
+			const settled = await Promise.allSettled(tiles.map(async (tb) => {
+				const osm = await fetchOverpassRaced(buildOverpassQuery(tb), signal);
+				const gj = parseOverpassToGeoJSON_viaLib(osm);
+				return gj.features || [];
+			}));
+			const feats = [];
+			for (const r of settled) if (r.status === 'fulfilled') feats.push(...r.value);
+			geojson = { type: 'FeatureCollection', features: feats };
 			if (!geojson) { 
 				try { console.log('Buildings3D: Network error, trying prioritized bbox'); } catch(e) {}
 				// Instead of showing error, try with prioritized bbox
@@ -318,18 +341,11 @@
 					let prioritizedGeojson = cache.get(prioritizedKey);
 					if (!prioritizedGeojson) {
 						// Try again with smaller area
-						for (const ep of OVERPASS_ENDPOINTS) {
-							const url = overpassUrl(ep, prioritizedBbox);
-							try {
-								const res = await fetch(url, { signal });
-								if (!res.ok) throw new Error(`HTTP ${res.status}`);
-								const osmJson = await res.json();
-								const gj = parseOverpassToGeoJSON_viaLib(osmJson);
-								if (gj.features && gj.features.length) { prioritizedGeojson = gj; break; }
-							} catch (err) {
-								if (err.name === 'AbortError') return;
-							}
-						}
+						try {
+							const osm = await fetchOverpassRaced(buildOverpassQuery(prioritizedBbox), signal);
+							const gj = parseOverpassToGeoJSON_viaLib(osm);
+							if (gj.features && gj.features.length) { prioritizedGeojson = gj; }
+						} catch (_) {}
 						if (prioritizedGeojson) cache.set(prioritizedKey, prioritizedGeojson);
 					}
 					if (prioritizedGeojson) geojson = prioritizedGeojson;
@@ -346,21 +362,11 @@
 					let prioritizedGeojson = cache.get(prioritizedKey);
 					if (!prioritizedGeojson) {
 						// Try again with smaller prioritized area
-						for (const ep of OVERPASS_ENDPOINTS) {
-							const url = overpassUrl(ep, prioritizedBbox);
-							try {
-								const res = await fetch(url, { signal });
-								if (!res.ok) throw new Error(`HTTP ${res.status}`);
-								const osmJson = await res.json();
-								const gj = parseOverpassToGeoJSON_viaLib(osmJson);
-								if (gj.features && gj.features.length <= MAX_FEATURES) { 
-									prioritizedGeojson = gj; 
-									break; 
-								}
-							} catch (err) {
-								if (err.name === 'AbortError') return;
-							}
-						}
+						try {
+							const osm = await fetchOverpassRaced(buildOverpassQuery(prioritizedBbox), signal);
+							const gj = parseOverpassToGeoJSON_viaLib(osm);
+							if (gj.features && gj.features.length <= MAX_FEATURES) { prioritizedGeojson = gj; }
+						} catch (_) {}
 						if (prioritizedGeojson) cache.set(prioritizedKey, prioritizedGeojson);
 					}
 					if (prioritizedGeojson && prioritizedGeojson.features.length <= MAX_FEATURES) {
@@ -409,8 +415,8 @@
 							extrudedHeightReference: cesium.HeightReference.RELATIVE_TO_GROUND,
 							material: materialColor,
 							outline: true,
-							outlineColor: cesium.Color.YELLOW,
-							outlineWidth: 3
+							outlineColor: cesium.Color.YELLOW.withAlpha(0.6),
+							outlineWidth: 1
 						}
 					});
 					created++;
@@ -447,7 +453,7 @@
 				const tgt = cesium.Cartesian3.fromDegrees(lon, lat, 0);
 				cesium.Cartesian3.subtract(tgt, camPos, scratch);
 				cesium.Cartesian3.normalize(scratch, scratch);
-				return cesium.Cartesian3.dot(scratch, camDir) > 0; // strictly in front of camera
+				return cesium.Cartesian3.dot(scratch, camDir) > 0.05; // relaxed front-facing test
 			}
 
 			for (const feature of geojson.features) {
@@ -476,17 +482,17 @@
 			}
 
 			// Always include the N nearest buildings, then downsample the rest
-			const NEAREST_ALWAYS = 40;
+			const NEAREST_ALWAYS = 150;
 			frontFeatures.sort((a, b) => {
 				const A = cesium.Cartesian3.fromDegrees(a.centroid.lon, a.centroid.lat, 0);
 				const B = cesium.Cartesian3.fromDegrees(b.centroid.lon, b.centroid.lat, 0);
 				return cesium.Cartesian3.distance(A, camPos) - cesium.Cartesian3.distance(B, camPos);
 			});
 			const toRender = frontFeatures.slice(0, NEAREST_ALWAYS);
-			for (let i = NEAREST_ALWAYS; i < frontFeatures.length; i++) {
-				if ((i - NEAREST_ALWAYS) % Math.round(1 / DISPLAY_SAMPLE_RATE) === 0) {
-					toRender.push(frontFeatures[i]);
-				}
+			const sr = computeSampleRate();
+			const step = Math.max(1, Math.round(1 / sr));
+			for (let i = NEAREST_ALWAYS; i < frontFeatures.length; i += step) {
+				toRender.push(frontFeatures[i]);
 			}
 
 			for (const item of toRender) {
@@ -510,6 +516,16 @@
 	}
 
 	function debouncedLoad() { if (!enabled) return; if (debounceTimer) clearTimeout(debounceTimer); debounceTimer = setTimeout(_loadForView, DEBOUNCE_MS); }
+
+	// Adaptive sampling based on approximate frame time
+	function computeSampleRate() {
+		const now = viewer.clock._lastSystemTime;
+		const last = viewer.clock._lastTick;
+		const dt = now && last ? (now - last) : 0;
+		if (!dt || dt > 40) return 0.35;
+		if (dt < 18) return 0.9;
+		return 0.6;
+	}
 	function onMoveEnd() { debouncedLoad(); }
 	function attachCameraListener() { viewer.camera.moveEnd.addEventListener(onMoveEnd); }
 	function detachCameraListener() { try { viewer.camera.moveEnd.removeEventListener(onMoveEnd); } catch(e) {} }
