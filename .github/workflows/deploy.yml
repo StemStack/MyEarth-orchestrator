@@ -14,9 +14,9 @@ jobs:
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: 100.69.50.87
+          username: jc
+          key: ${{ secrets.DEPLOY_KEY }}
           port: 22
           timeout: 120s
           command_timeout: 600s
@@ -65,9 +65,9 @@ jobs:
       - name: Health check
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: 100.69.50.87
+          username: jc
+          key: ${{ secrets.DEPLOY_KEY }}
           port: 22
           timeout: 60s
           command_timeout: 120s
