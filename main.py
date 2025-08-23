@@ -224,24 +224,32 @@ if STATIC_DIR is not None:
 # Root route → serves index.html directly (with fallback response)
 from fastapi.responses import RedirectResponse
 
-@app.get("/")
-def serve_index():
-    """Serve index.html with robust runtime fallbacks.
-
-    We resolve the file path at request time to avoid returning 404s when
-    deployment layout differs (nested UI vs root UI) or when submodules were
-    updated after app startup.
-    """
-    candidate_paths = [
+def _index_candidate_paths():
+    return [
         (BASE_DIR / "MyEarth" / "index.html"),               # nested UI (preferred)
         (BASE_DIR / "index.html"),                            # root UI
         (BASE_DIR / "MyEarth" / "MyEarth" / "index.html"),  # double-nested safety
     ]
-    for path in candidate_paths:
+
+@app.get("/")
+def serve_index():
+    """Serve index.html with robust runtime fallbacks."""
+    for path in _index_candidate_paths():
         if path.exists():
             return FileResponse(str(path.resolve()))
-    # Fallback: minimal response to avoid startup crash if index is missing
     return JSONResponse({"error": "index.html not found"}, status_code=404)
+
+@app.get("/api/debug-index")
+def debug_index():
+    """Debug helper to inspect which index.html candidates exist on the server."""
+    data = []
+    for p in _index_candidate_paths():
+        data.append({
+            "path": str(p.resolve()),
+            "exists": p.exists(),
+            "size": (p.stat().st_size if p.exists() else 0)
+        })
+    return {"base_dir": str(BASE_DIR.resolve()), "candidates": data}
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
