@@ -2,32 +2,28 @@ name: Deploy to MyEarth Server
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (no submodules needed)
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy over SSH
+      - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: 100.69.50.87
+          username: jc
+          key: ${{ secrets.DEPLOY_KEY }}
           port: 22
+          timeout: 60s
+          command_timeout: 600s
           script: |
             set -e
             echo "🚀 Starting deployment..."
             cd /home/jc
-
-            echo "📋 Current git status:"
-            if [ -d MyEarth ]; then cd MyEarth && git status --porcelain || true; cd ..; fi
-
-            echo "🔄 Cleaning up git state..."
-            if [ -d MyEarth ]; then cd MyEarth && git reset --hard HEAD && git clean -fd && cd ..; fi
 
             echo "📥 Pulling latest changes..."
             if [ -d MyEarth ]; then
@@ -35,7 +31,7 @@ jobs:
               git fetch origin
               git reset --hard origin/main
             else
-              git clone git@github.com:StemStack/MyEarth.git
+              git clone https://github.com/StemStack/MyEarth.git
               cd MyEarth
             fi
 
@@ -54,13 +50,10 @@ jobs:
             ROOT=/home/jc/MyEarth
             CAND=$(find "$ROOT" -maxdepth 3 -type f -name index.html -printf '%s %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
             if [ -n "$CAND" ]; then cp "$CAND" "$ROOT/index.html"; fi
-            # Inject B3D tag if missing (safe init)
             perl -0777 -i -pe 'BEGIN{$a=q{<script src="/static/js/buildings3d.js"></script>\n<script>try{window.Buildings3DController&&window.Buildings3DController.init(window.viewer);}catch(e){console.warn("B3D init",e)}</script>\n};} unless(/buildings3d\.js/i){ s#</body>#$a</body>#i or $_ .= "\n$a\n"; }' "$ROOT/index.html" || true
 
             echo "🔄 Restarting MyEarth service..."
-            sudo systemctl stop myearth || true
-            sleep 2
-            sudo systemctl start myearth
+            sudo systemctl restart myearth
 
             echo "⏳ Waiting for service to start..."
             sleep 10
@@ -68,119 +61,28 @@ jobs:
             echo "📋 Checking version:"
             curl -sL https://myearth.app/version.json || true
             echo "✅ Deployment completed!"
-name: Deploy to MyEarth Server
 
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup Tailscale
-      run: |
-        curl -fsSL https://tailscale.com/install.sh | sh
-        sudo tailscale up --authkey ${{ secrets.TAILSCALE_AUTHKEY }} --ssh=false
-        sleep 10  # Wait for Tailscale to connect
-        
-    - name: Deploy to server via SSH
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: 100.69.50.87
-        username: jc
-        key: ${{ secrets.DEPLOY_KEY }}
-        port: 22
-        timeout: 60s
-        command_timeout: 300s
-        script: |
-          echo "🚀 Starting deployment..."
-          cd /home/jc
-          
-          echo "📋 Current git status:"
-          if [ -d "MyEarth" ]; then
-            cd MyEarth
-            git status --porcelain
-            cd ..
-          fi
-          
-          echo "🔄 Cleaning up git state..."
-          if [ -d "MyEarth" ]; then
-            cd MyEarth
-            git reset --hard HEAD
-            git clean -fd
-            cd ..
-          fi
-          
-          echo "📥 Pulling latest changes..."
-          if [ -d "MyEarth" ]; then
-            cd MyEarth
-            git fetch origin
-            git reset --hard origin/main
-            cd ..
-          else
-            echo "❌ MyEarth directory not found, cloning..."
-            git clone https://github.com/StemStack/MyEarth.git
-          fi
-          
-          echo "🏷  Updating version.json from footer"
-          cd MyEarth
-          export ENVIRONMENT=production
-          python3 update_version.py || true
-          
-          echo "📦 Rebuilding Python virtualenv..."
-          # Always recreate venv to avoid corruption and Python version drift
-          rm -rf venv
-          python3 -m venv venv
-          source venv/bin/activate
-          python -m pip install -U pip setuptools wheel
-          python -m pip install -r requirements.txt
-          
-          echo "🔄 Restarting MyEarth service..."
-          sudo systemctl stop myearth
-          sleep 2
-          sudo systemctl start myearth
-          
-          echo "⏳ Waiting for service to start..."
-          sleep 10
-          
-          echo "✅ Deployment completed!"
-          
-    - name: Health check
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: 100.69.50.87
-        username: jc
-        key: ${{ secrets.DEPLOY_KEY }}
-        port: 22
-        timeout: 60s
-        command_timeout: 120s
-        request_pty: true
-        script: |
-          echo "🏥 Starting health check..."
-          
-          # Wait for service to be fully ready
-          sleep 20
-          
-          # Check service status
-          echo "📊 Service status:"
-          # Pipe to cat to prevent any pager behavior and avoid blocking
-          sudo systemctl --no-pager -l status myearth | cat || true
-          
-          # Check if app is responding
-          echo "🌐 Testing app response..."
-          if curl -f -sL https://myearth.app/api/ping > /dev/null; then
-            echo "✅ App is responding on domain"
-          else
-            echo "❌ App not responding on domain"
-          fi
-          
-          # Check version endpoint
-          echo "📋 Checking version:"
-          curl -sL https://myearth.app/version.json || echo "Version endpoint not accessible"
-          
-          echo "🏁 Health check completed!"
+      - name: Health check
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 100.69.50.87
+          username: jc
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 120s
+          request_pty: true
+          script: |
+            echo "🏥 Starting health check..."
+            sleep 15
+            echo "📊 Service status:"
+            sudo systemctl --no-pager -l status myearth | cat || true
+            echo "🌐 Testing app response..."
+            if curl -f -sL https://myearth.app/api/ping > /dev/null; then
+              echo "✅ App is responding on domain"
+            else
+              echo "❌ App not responding on domain"
+            fi
+            echo "📋 Checking version:"
+            curl -sL https://myearth.app/version.json || echo "Version endpoint not accessible"
+            echo "🏁 Health check completed!"
