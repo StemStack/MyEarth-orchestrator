@@ -226,8 +226,20 @@ from fastapi.responses import RedirectResponse
 
 @app.get("/")
 def serve_index():
-    if INDEX_FILE and INDEX_FILE.exists():
-        return FileResponse(str(INDEX_FILE))
+    """Serve index.html with robust runtime fallbacks.
+
+    We resolve the file path at request time to avoid returning 404s when
+    deployment layout differs (nested UI vs root UI) or when submodules were
+    updated after app startup.
+    """
+    candidate_paths = [
+        (BASE_DIR / "MyEarth" / "index.html"),               # nested UI (preferred)
+        (BASE_DIR / "index.html"),                            # root UI
+        (BASE_DIR / "MyEarth" / "MyEarth" / "index.html"),  # double-nested safety
+    ]
+    for path in candidate_paths:
+        if path.exists():
+            return FileResponse(str(path.resolve()))
     # Fallback: minimal response to avoid startup crash if index is missing
     return JSONResponse({"error": "index.html not found"}, status_code=404)
 
