@@ -241,7 +241,20 @@ def serve_index():
     """
     for path in _index_candidate_paths():
         if path.exists():
-            return FileResponse(str(path.resolve()))
+            # If the file looks like a pointer (e.g., contains just 'MyEarth/index.html'),
+            # resolve it to the nested target to avoid serving invalid content.
+            try:
+                text = path.read_text(encoding="utf-8")
+                stripped = text.strip()
+                if len(stripped) < 200 and stripped.endswith("index.html"):
+                    target = (BASE_DIR / stripped)
+                    if target.exists():
+                        return FileResponse(str(target.resolve()))
+                # Otherwise, serve the file as-is
+                return FileResponse(str(path.resolve()))
+            except Exception:
+                # Fall back to serving the file directly
+                return FileResponse(str(path.resolve()))
     # Remote fallback to ensure site stays up even if files missing locally
     try:
         # Try outer repo root index first
