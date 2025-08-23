@@ -233,10 +233,28 @@ def _index_candidate_paths():
 
 @app.get("/")
 def serve_index():
-    """Serve index.html with robust runtime fallbacks."""
+    """Serve index.html with robust runtime fallbacks.
+
+    Order:
+    1) Local candidate files
+    2) Remote fallback from GitHub raw (outer repo then nested UI)
+    """
     for path in _index_candidate_paths():
         if path.exists():
             return FileResponse(str(path.resolve()))
+    # Remote fallback to ensure site stays up even if files missing locally
+    try:
+        # Try outer repo root index first
+        raw_urls = [
+            "https://raw.githubusercontent.com/StemStack/MyEarth/main/index.html",
+            "https://raw.githubusercontent.com/StemStack/MyEarth/main/MyEarth/index.html",
+        ]
+        for url in raw_urls:
+            r = requests.get(url, timeout=5)
+            if r.status_code == 200 and "</html>" in r.text:
+                return JSONResponse(content=r.text, media_type="text/html")
+    except Exception:
+        pass
     return JSONResponse({"error": "index.html not found"}, status_code=404)
 
 @app.get("/api/debug-index")
