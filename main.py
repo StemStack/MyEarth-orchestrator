@@ -8,7 +8,7 @@ FastAPI server for MyEarth:
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer
 import psycopg2
@@ -252,7 +252,7 @@ def serve_index():
         for url in raw_urls:
             r = requests.get(url, timeout=5)
             if r.status_code == 200 and "</html>" in r.text:
-                return JSONResponse(content=r.text, media_type="text/html")
+                return Response(content=r.text, media_type="text/html")
     except Exception:
         pass
     return JSONResponse({"error": "index.html not found"}, status_code=404)
