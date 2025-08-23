@@ -239,22 +239,29 @@ def serve_index():
     1) Local candidate files
     2) Remote fallback from GitHub raw (outer repo then nested UI)
     """
+    # Choose the best local candidate by content (prefer real HTML over tiny pointer files)
+    best_path = None
+    best_score = -1
     for path in _index_candidate_paths():
-        if path.exists():
-            # If the file looks like a pointer (e.g., contains just 'MyEarth/index.html'),
-            # resolve it to the nested target to avoid serving invalid content.
-            try:
-                text = path.read_text(encoding="utf-8")
-                stripped = text.strip()
-                if len(stripped) < 200 and stripped.endswith("index.html"):
-                    target = (BASE_DIR / stripped)
-                    if target.exists():
-                        return FileResponse(str(target.resolve()))
-                # Otherwise, serve the file as-is
-                return FileResponse(str(path.resolve()))
-            except Exception:
-                # Fall back to serving the file directly
-                return FileResponse(str(path.resolve()))
+        if not path.exists():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            text = ""
+        size = len(text)
+        is_html = ("<html" in text.lower() or "<!doctype" in text.lower())
+        looks_like_pointer = (size < 200 and text.strip().endswith("index.html"))
+        # Score: large size and contains html wins; pointer gets score -1
+        score = (size if is_html else 0)
+        if looks_like_pointer:
+            score = -1
+        if score > best_score:
+            best_score = score
+            best_path = path
+
+    if best_path and best_score >= 0:
+        return FileResponse(str(best_path.resolve()))
     # Remote fallback to ensure site stays up even if files missing locally
     try:
         # Try outer repo root index first
