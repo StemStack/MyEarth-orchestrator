@@ -2,6 +2,76 @@ name: Deploy to MyEarth Server
 
 on:
   push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (no submodules needed)
+        uses: actions/checkout@v4
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            echo "🚀 Starting deployment..."
+            cd /home/jc
+
+            echo "📋 Current git status:"
+            if [ -d MyEarth ]; then cd MyEarth && git status --porcelain || true; cd ..; fi
+
+            echo "🔄 Cleaning up git state..."
+            if [ -d MyEarth ]; then cd MyEarth && git reset --hard HEAD && git clean -fd && cd ..; fi
+
+            echo "📥 Pulling latest changes..."
+            if [ -d MyEarth ]; then
+              cd MyEarth
+              git fetch origin
+              git reset --hard origin/main
+            else
+              git clone git@github.com:StemStack/MyEarth.git
+              cd MyEarth
+            fi
+
+            echo "🏷  Updating version.json from footer"
+            export ENVIRONMENT=production
+            python3 update_version.py || true
+
+            echo "📦 Rebuilding Python virtualenv..."
+            rm -rf venv
+            python3 -m venv venv
+            source venv/bin/activate
+            python -m pip install -U pip setuptools wheel
+            python -m pip install -r requirements.txt
+
+            echo "🧹 Normalize root index.html (prefer real HTML, not pointer)"
+            ROOT=/home/jc/MyEarth
+            CAND=$(find "$ROOT" -maxdepth 3 -type f -name index.html -printf '%s %p\n' | sort -nr | head -1 | cut -d' ' -f2-)
+            if [ -n "$CAND" ]; then cp "$CAND" "$ROOT/index.html"; fi
+            # Inject B3D tag if missing (safe init)
+            perl -0777 -i -pe 'BEGIN{$a=q{<script src="/static/js/buildings3d.js"></script>\n<script>try{window.Buildings3DController&&window.Buildings3DController.init(window.viewer);}catch(e){console.warn("B3D init",e)}</script>\n};} unless(/buildings3d\.js/i){ s#</body>#$a</body>#i or $_ .= "\n$a\n"; }' "$ROOT/index.html" || true
+
+            echo "🔄 Restarting MyEarth service..."
+            sudo systemctl stop myearth || true
+            sleep 2
+            sudo systemctl start myearth
+
+            echo "⏳ Waiting for service to start..."
+            sleep 10
+
+            echo "📋 Checking version:"
+            curl -sL https://myearth.app/version.json || true
+            echo "✅ Deployment completed!"
+name: Deploy to MyEarth Server
+
+on:
+  push:
     branches: [ main ]
 
 jobs:
