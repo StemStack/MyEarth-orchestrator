@@ -189,9 +189,10 @@ async def logout():
 # Mount static folder for assets (favicon, logos, etc.) with robust fallbacks
 BASE_DIR = Path(__file__).resolve().parent
 
-# Prefer nested UI (BASE_DIR/MyEarth) when present, else fall back to root UI
+# Prefer frontend directory, then nested UI (BASE_DIR/MyEarth), then root UI as fallback
 _candidate_ui_dirs = [
-    BASE_DIR / "MyEarth",  # nested app directory
+    BASE_DIR / "frontend",  # new frontend directory
+    BASE_DIR / "MyEarth",   # nested app directory
     BASE_DIR                # root as fallback
 ]
 UI_DIR = None
@@ -200,12 +201,13 @@ for _d in _candidate_ui_dirs:
         UI_DIR = _d.resolve()
         break
 if UI_DIR is None:
-    # Default to nested path even if index is missing (will fallback later)
-    UI_DIR = (BASE_DIR / "MyEarth").resolve()
+    # Default to frontend path even if index is missing (will fallback later)
+    UI_DIR = (BASE_DIR / "frontend").resolve()
 
 # Choose a static directory that actually exists
 _candidate_static_dirs = [
     UI_DIR / "static",
+    BASE_DIR / "frontend" / "static",
     BASE_DIR / "static",
     BASE_DIR / "MyEarth" / "static"
 ]
@@ -226,7 +228,8 @@ from fastapi.responses import RedirectResponse
 
 def _index_candidate_paths():
     return [
-        (BASE_DIR / "MyEarth" / "index.html"),               # nested UI (preferred)
+        (BASE_DIR / "frontend" / "index.html"),              # new frontend directory (preferred)
+        (BASE_DIR / "MyEarth" / "index.html"),               # nested UI
         (BASE_DIR / "index.html"),                            # root UI
         (BASE_DIR / "MyEarth" / "MyEarth" / "index.html"),  # double-nested safety
     ]
