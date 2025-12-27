@@ -6,7 +6,7 @@ FastAPI server for MyEarth:
 - Replaces old Flask + custom HTTP server setup
 """
 
-from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -289,7 +289,14 @@ def serve_index():
     1) Local candidate files
     2) Remote fallback from GitHub raw (outer repo then nested UI)
     """
-    # Choose the best local candidate by content (prefer real HTML over tiny pointer files)
+    # Hard-prefer the frontend/index.html (this is where the UI is maintained now)
+    preferred_frontend = (BASE_DIR / "frontend" / "index.html")
+    if preferred_frontend.exists():
+        return FileResponse(str(preferred_frontend.resolve()), headers={
+            "X-MyEarth-Index-Path": str(preferred_frontend.resolve())
+        })
+
+    # Otherwise, choose the best local candidate by content (prefer real HTML over tiny pointer files)
     best_path = None
     best_score = -1
     for path in _index_candidate_paths():
@@ -311,10 +318,12 @@ def serve_index():
             best_path = path
 
     if best_path and best_score >= 0:
-        return FileResponse(str(best_path.resolve()))
+        return FileResponse(str(best_path.resolve()), headers={
+            "X-MyEarth-Index-Path": str(best_path.resolve())
+        })
+
     # Remote fallback to ensure site stays up even if files missing locally
     try:
-        # Try outer repo root index first
         raw_urls = [
             "https://raw.githubusercontent.com/StemStack/MyEarth/main/index.html",
             "https://raw.githubusercontent.com/StemStack/MyEarth/main/MyEarth/index.html",
@@ -322,9 +331,14 @@ def serve_index():
         for url in raw_urls:
             r = requests.get(url, timeout=5)
             if r.status_code == 200 and "</html>" in r.text:
-                return Response(content=r.text, media_type="text/html")
+                return Response(
+                    content=r.text,
+                    media_type="text/html",
+                    headers={"X-MyEarth-Index-Path": f"remote:{url}"},
+                )
     except Exception:
         pass
+
     return JSONResponse({"error": "index.html not found"}, status_code=404)
 
 @app.get("/api/debug-index")
@@ -337,7 +351,12 @@ def debug_index():
             "exists": p.exists(),
             "size": (p.stat().st_size if p.exists() else 0)
         })
-    return {"base_dir": str(BASE_DIR.resolve()), "candidates": data}
+    return {
+        "base_dir": str(BASE_DIR.resolve()),
+        "ui_dir": str(UI_DIR) if UI_DIR is not None else None,
+        "preferred_frontend": str((BASE_DIR / "frontend" / "index.html").resolve()),
+        "candidates": data,
+    }
 
 # Serve gizmo JavaScript files
 @app.get("/CesiumModelImporter.js")
@@ -475,120 +494,302 @@ async def get_arcgis_item(item_id: str):
         logger.error(f"Failed to fetch ArcGIS item {item_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch item: {str(e)}")
 
-@app.get("/api/arcgis/search-slpk")
-async def search_arcgis_slpk(q: str = "buildings city 3d", num: int = 20):
-    """Search ArcGIS Online for public Scene Layer Packages"""
-    import logging
-    logger = logging.getLogger("myearth.arcgis")
-    
-    search_url = "https://www.arcgis.com/sharing/rest/search"
-    
-    # Build query: Scene Layer Package type, public access, user query
-    query = f'type:"Scene Layer Package" AND {q} AND access:public'
-    
-    params = {
-        "q": query,
-        "f": "pjson",
-        "num": min(num, 100),  # Cap at 100
-        "sortField": "modified",
-        "sortOrder": "desc"
-    }
-    
-    try:
-        response = requests.get(search_url, params=params, timeout=15)
-        response.raise_for_status()
-        results = response.json()
-        
-        # Extract relevant fields
-        items = []
-        for item in results.get("results", []):
-            items.append({
-                "id": item.get("id"),
-                "title": item.get("title"),
-                "owner": item.get("owner"),
-                "size": item.get("size"),
-                "modified": item.get("modified"),
-                "snippet": item.get("snippet"),
-                "tags": item.get("tags", []),
-                "thumbnail": item.get("thumbnail"),
-                "url": f"https://www.arcgis.com/home/item.html?id={item.get('id')}"
-            })
-        
-        logger.info(f"Found {len(items)} SLPK items for query: {q}")
-        
-        return JSONResponse({
-            "query": q,
-            "total": results.get("total", 0),
-            "num": results.get("num", 0),
-            "items": items
-        })
-        
-    except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to search ArcGIS: {e}")
-        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+# --------------------
+# Sample Layers (Read-only test datasets)
+# --------------------
 
-@app.get("/api/arcgis/download/{item_id}")
-async def download_arcgis_slpk(item_id: str):
-    """Download SLPK from ArcGIS Online and process it"""
-    import logging
-    logger = logging.getLogger("myearth.arcgis")
+@app.get("/api/sample-layers/earthquakes")
+async def load_sample_earthquakes():
+    """
+    Load World Earthquakes 2000-2010 sample SLPK layer.
     
-    # First, check if item is public
+    Technical Note:
+    - SLPK files cannot be loaded directly by Cesium from a URL
+    - SLPK is a ZIP archive containing I3S data structure
+    - Must be downloaded, extracted, and served via /i3s/ endpoint
+    - This endpoint downloads once, caches locally, and returns I3S URL
+    """
+    import logging
+    logger = logging.getLogger("myearth.sample_layers")
+    
+    sample_name = "sample_earthquakes"
+    sample_dir = UPLOADS_DIR / sample_name
+    slpk_url = "https://github.com/Esri/arcgis-python-api/raw/master/samples/05_content_publishers/data/World_earthquakes_2000_2010.slpk"
+    
+    # Check if already downloaded and extracted
+    if sample_dir.exists() and (sample_dir / "3dSceneLayer.json").exists():
+        logger.info(f"✅ Sample layer already exists: {sample_name}")
+        return JSONResponse({
+            "success": True,
+            "url": f"/i3s/{sample_name}",
+            "processing_type": "i3s",
+            "title": "World Earthquakes 2000–2010",
+            "cached": True,
+            "message": "Sample layer ready (cached)"
+        })
+    
+    # Download and extract SLPK
+    temp_slpk = None  # Initialize to prevent NameError in exception handler
     try:
-        metadata_url = f"https://www.arcgis.com/sharing/rest/content/items/{item_id}"
-        metadata_response = requests.get(metadata_url, params={"f": "pjson"}, timeout=10)
-        metadata_response.raise_for_status()
-        metadata = metadata_response.json()
+        logger.info(f"⬇️ Downloading sample SLPK: {slpk_url}")
         
-        if metadata.get("access") != "public":
-            raise HTTPException(status_code=403, detail="Item is not public. Authentication required.")
+        # Download to temp file
+        temp_slpk = UPLOADS_DIR / f"{sample_name}_temp.slpk"
         
-        title = metadata.get("title", "Unknown")
-        size = metadata.get("size", 0)
-        
-        logger.info(f"Downloading SLPK: {title} (ID: {item_id}, Size: {size} bytes)")
-        
-        # Download the SLPK file
-        download_url = f"https://www.arcgis.com/sharing/rest/content/items/{item_id}/data"
-        
-        # Stream download to temp file
-        temp_file = UPLOADS_DIR / f"arcgis_{item_id}_{int(time.time())}.slpk"
-        
-        with requests.get(download_url, stream=True, timeout=300) as r:
+        with requests.get(slpk_url, stream=True, timeout=60) as r:
             r.raise_for_status()
-            with open(temp_file, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192*1024):  # 8MB chunks
+            with open(temp_slpk, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192*1024):
                     if chunk:
                         f.write(chunk)
         
-        logger.info(f"Downloaded SLPK to: {temp_file}")
+        logger.info(f"✅ Downloaded: {temp_slpk.stat().st_size} bytes")
         
-        # Create a job for processing
-        job_id = create_job(temp_file.name)
+        # Extract using existing handle_slpk logic
+        # Rename sample_name to match expected pattern
+        final_slpk = UPLOADS_DIR / f"{sample_name}.slpk"
+        temp_slpk.rename(final_slpk)
         
-        # Process in background
-        asyncio.create_task(
-            process_model_background(job_id, temp_file, ".slpk", temp_file.name)
-        )
+        result = await handle_slpk(final_slpk, "World_earthquakes_2000_2010.slpk")
+
+        # Do NOT delete final_slpk here.
+        # handle_slpk() owns the lifecycle and may move/rename/delete the file.
+
+        # Rename extracted directory to sample_name
+        if result.get("processing_type") == "i3s":
+            # Extract folder name from result URL
+            original_url = result.get("url", "")
+            if original_url.startswith("/i3s/"):
+                original_folder = original_url.replace("/i3s/", "")
+                original_path = UPLOADS_DIR / original_folder
+                if original_path.exists() and original_path != sample_dir:
+                    original_path.rename(sample_dir)
+        
+        logger.info(f"✅ Sample layer ready: {sample_name}")
         
         return JSONResponse({
             "success": True,
-            "job_id": job_id,
-            "filename": temp_file.name,
-            "title": title,
-            "size": size,
-            "message": "SLPK download started, processing in background"
+            "url": f"/i3s/{sample_name}",
+            "processing_type": "i3s",
+            "title": "World Earthquakes 2000–2010",
+            "cached": False,
+            "message": "Sample layer downloaded and ready"
         })
         
     except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to download SLPK {item_id}: {e}")
+        logger.error(f"❌ Failed to download sample SLPK: {e}")
         raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
     except Exception as e:
-        logger.error(f"Error processing SLPK download: {e}", exc_info=True)
-        # Clean up temp file if it exists
-        if 'temp_file' in locals() and temp_file.exists():
-            temp_file.unlink()
-        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
+        logger.error(f"❌ Failed to process sample SLPK: {e}", exc_info=True)
+        # Clean up on error
+        for p in [temp_slpk, (UPLOADS_DIR / f"{sample_name}.slpk")]:
+            try:
+                if p and p.exists():
+                    p.unlink()
+            except Exception:
+                pass
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
+# --------------------
+# I3S Shim Endpoint (for proper I3S REST API simulation)
+# --------------------
+
+@app.get("/i3s/{slpk_folder}/{path:path}")
+@app.get("/i3s/{slpk_folder}")
+async def serve_i3s(slpk_folder: str, path: str = "", request: Request = None):
+    """
+    I3S REST-style endpoint that maps Cesium's I3S requests to actual files.
+    
+    This is needed because FastAPI's StaticFiles doesn't handle I3S service roots properly.
+    Cesium.I3SDataProvider expects REST-style URLs like:
+    - /i3s/<folder>?f=json → service metadata (service.json or 3dSceneLayer.json)
+    - /i3s/<folder>/layers/0 → layer metadata (layer.json or 3dSceneLayer.json)
+    - /i3s/<folder>/layers/0/nodes/... → node data (binary or JSON)
+    """
+    import logging
+    import mimetypes
+    import gzip
+    logger = logging.getLogger("myearth.i3s")
+    
+    # Log the request
+    query_params = dict(request.query_params) if request else {}
+    logger.info(f"📥 I3S Request: /i3s/{slpk_folder}/{path} (params: {query_params})")
+    # Normalize path to avoid trailing-slash directory lookups from clients
+    path = (path or "").lstrip("/").rstrip("/")
+    
+    extract_dir = UPLOADS_DIR / slpk_folder
+    
+    if not extract_dir.exists() or not extract_dir.is_dir():
+        logger.error(f"❌ SLPK folder not found: {extract_dir}")
+        raise HTTPException(status_code=404, detail=f"SLPK folder '{slpk_folder}' not found")
+    
+    attempted_paths = []
+    resolved_file = None
+    
+    # ============================================================
+    # Special case: Root metadata (service.json or 3dSceneLayer.json)
+    # ============================================================
+    if not path or path == "" or path == "/":
+        logger.info("   → Root metadata request")
+        candidates = [
+            extract_dir / "service.json",
+            extract_dir / "SceneServer" / "service.json",
+            extract_dir / "SceneServer" / "3dSceneLayer.json",
+            extract_dir / "3dSceneLayer.json"
+        ]
+        
+        for candidate in candidates:
+            attempted_paths.append(str(candidate))
+            if candidate.exists():
+                resolved_file = candidate
+                logger.info(f"   ✅ Resolved to: {candidate.relative_to(UPLOADS_DIR)}")
+                break
+    
+    # ============================================================
+    # Special case: Layer metadata (layers/N or layers/N?f=json)
+    # ============================================================
+    elif path.startswith("layers/") and path.count("/") == 1:
+        logger.info(f"   → Layer metadata request: {path}")
+        layer_path = path.rstrip("/")
+        
+        candidates = [
+            extract_dir / layer_path / "layer.json",
+            extract_dir / layer_path / "3dSceneLayer.json",
+            extract_dir / "SceneServer" / layer_path / "layer.json",
+            extract_dir / "SceneServer" / layer_path / "3dSceneLayer.json"
+        ]
+        
+        for candidate in candidates:
+            attempted_paths.append(str(candidate))
+            if candidate.exists():
+                resolved_file = candidate
+                logger.info(f"   ✅ Resolved to: {candidate.relative_to(UPLOADS_DIR)}")
+                break
+    
+    # ============================================================
+    # All other paths: direct file resolution
+    # ============================================================
+    else:
+        logger.info(f"   → Direct file request: {path}")
+        # Some extracted SLPKs place nodes/ at the root (e.g., nodes/root/...) while clients request layers/<id>/nodes/...
+        # If the request is for nodes/features/resources under a layer, also try stripping the `layers/<id>/` prefix.
+        alt_path = None
+        if path.startswith("layers/"):
+            parts = path.split("/")
+            # layers/<layerId>/...
+            if len(parts) >= 3 and parts[1].isdigit():
+                alt_path = "/".join(parts[2:])
+
+        candidates = []
+
+        # Direct path
+        candidates.append(extract_dir / path)
+        logger.info(f"   ↪ alt_path: {alt_path}")
+        candidates.append(extract_dir / "SceneServer" / path)
+
+        # Alternate mapping for root-level nodes/
+        if alt_path:
+            candidates.append(extract_dir / alt_path)
+            candidates.append(extract_dir / "SceneServer" / alt_path)
+
+        # Common JSON fallbacks (Cesium sometimes requests node paths without .json)
+        candidates.append(extract_dir / f"{path}.json")
+        candidates.append(extract_dir / "SceneServer" / f"{path}.json")
+        if alt_path:
+            candidates.append(extract_dir / f"{alt_path}.json")
+            candidates.append(extract_dir / "SceneServer" / f"{alt_path}.json")
+
+        # If the request points to a directory, try common entry docs
+        candidates.append(extract_dir / path / "index.json")
+        candidates.append(extract_dir / "SceneServer" / path / "index.json")
+        candidates.append(extract_dir / path / "3dNodeIndexDocument.json")
+        candidates.append(extract_dir / "SceneServer" / path / "3dNodeIndexDocument.json")
+        if alt_path:
+            candidates.append(extract_dir / alt_path / "index.json")
+            candidates.append(extract_dir / "SceneServer" / alt_path / "index.json")
+            candidates.append(extract_dir / alt_path / "3dNodeIndexDocument.json")
+            candidates.append(extract_dir / "SceneServer" / alt_path / "3dNodeIndexDocument.json")
+
+        for candidate in candidates:
+            attempted_paths.append(str(candidate))
+            if candidate.exists() and candidate.is_file():
+                resolved_file = candidate
+                logger.info(f"   ✅ Resolved to: {candidate.relative_to(UPLOADS_DIR)}")
+                break
+            if candidate.exists() and candidate.is_dir():
+                # Some I3S node directories use 3dNodeIndexDocument.json instead of index.json
+                for entry_name in ["index.json", "3dNodeIndexDocument.json"]:
+                    entry = candidate / entry_name
+                    attempted_paths.append(str(entry))
+                    if entry.exists() and entry.is_file():
+                        resolved_file = entry
+                        logger.info(f"   ✅ Resolved to: {entry.relative_to(UPLOADS_DIR)}")
+                        break
+                if resolved_file:
+                    break
+    
+    # ============================================================
+    # Handle gzipped files (*.json.gz → decompress)
+    # ============================================================
+    if not resolved_file:
+        for attempted in attempted_paths[:]:  # Check attempted paths for .gz versions
+            gz_path = Path(attempted + ".gz")
+            if gz_path.exists():
+                logger.info(f"   ℹ️  Found gzipped version: {gz_path.relative_to(UPLOADS_DIR)}")
+                resolved_file = gz_path
+                break
+    
+    # ============================================================
+    # File not found: return helpful 404 with attempted paths
+    # ============================================================
+    if not resolved_file:
+        logger.error(f"   ❌ File not found. Attempted paths:")
+        for p in attempted_paths:
+            logger.error(f"      • {p}")
+        
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": "File not found",
+                "requested": f"/i3s/{slpk_folder}/{path}",
+                "attempted_paths": [str(Path(p).relative_to(UPLOADS_DIR)) for p in attempted_paths]
+            }
+        )
+    
+    # ============================================================
+    # Serve the file
+    # ============================================================
+    try:
+        # Handle gzipped files
+        if resolved_file.suffix == ".gz":
+            logger.info(f"   📦 Decompressing gzipped file")
+            with gzip.open(resolved_file, 'rb') as f:
+                content = f.read()
+            
+            # Guess content type from original filename (without .gz)
+            original_name = resolved_file.stem
+            content_type, _ = mimetypes.guess_type(original_name)
+            if not content_type:
+                content_type = "application/json" if original_name.endswith(".json") else "application/octet-stream"
+            
+            logger.info(f"   ✅ 200 OK ({len(content)} bytes, {content_type})")
+            return Response(content=content, media_type=content_type)
+        
+        # Regular file serving
+        content_type, _ = mimetypes.guess_type(str(resolved_file))
+        if not content_type:
+            # Default to JSON for common I3S files, binary otherwise
+            if resolved_file.suffix in [".json", ".json.gz"]:
+                content_type = "application/json"
+            else:
+                content_type = "application/octet-stream"
+        
+        logger.info(f"   ✅ 200 OK ({resolved_file.stat().st_size} bytes, {content_type})")
+        return FileResponse(str(resolved_file), media_type=content_type)
+    
+    except Exception as e:
+        logger.error(f"   ❌ Error serving file: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error serving file: {str(e)}")
 
 # --------------------
 # Health check endpoint
@@ -1304,7 +1505,7 @@ async def handle_slpk(file_path: Path, original_filename: str, job_id: str = Non
         
         # Strategy 0: Root-level 3dSceneLayer.json (direct I3S layer at root)
         if (extract_dir / "3dSceneLayer.json").exists():
-            i3s_url = f"/uploads/{extract_dir.name}/3dSceneLayer.json"
+            i3s_url = f"/i3s/{extract_dir.name}"
             detection_strategy = "root-level 3dSceneLayer.json"
             logger.info(f"✅ Strategy 0: Found 3dSceneLayer.json at root: {i3s_url}")
         
@@ -1318,8 +1519,7 @@ async def handle_slpk(file_path: Path, original_filename: str, job_id: str = Non
                     scene_server_dir = candidates[0]
             
             if scene_server_dir and scene_server_dir.exists():
-                rel_path = scene_server_dir.relative_to(extract_dir)
-                i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+                i3s_url = f"/i3s/{extract_dir.name}"
                 detection_strategy = "SceneServer root"
                 logger.info(f"✅ Strategy 1: Found SceneServer root: {i3s_url}")
         
@@ -1328,8 +1528,7 @@ async def handle_slpk(file_path: Path, original_filename: str, job_id: str = Non
             for service_file in service_json_files:
                 parent = service_file.parent
                 if (parent / "layers").exists():
-                    rel_path = parent.relative_to(extract_dir)
-                    i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+                    i3s_url = f"/i3s/{extract_dir.name}"
                     detection_strategy = "service.json + layers/"
                     logger.info(f"✅ Strategy 2: Found service root with service.json + layers/: {i3s_url}")
                     break
@@ -1341,27 +1540,23 @@ async def handle_slpk(file_path: Path, original_filename: str, job_id: str = Non
                 if layer_0.exists() and layer_0.is_dir():
                     # Check if this layer has metadata
                     if (layer_0 / "3dSceneLayer.json").exists() or (layer_0 / "layer.json").exists():
-                        # Return the parent of "layers" as the service root
-                        service_root = layers_folder.parent
-                        rel_path = service_root.relative_to(extract_dir)
-                        i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+                        # Return the service root (handled by I3S shim endpoint)
+                        i3s_url = f"/i3s/{extract_dir.name}"
                         detection_strategy = "layers/0/ folder"
                         logger.info(f"✅ Strategy 3: Found service root via layers/0/: {i3s_url}")
                         break
         
         # Strategy 4: Direct layer folder (folder containing 3dSceneLayer.json)
         if not i3s_url and scene_layer_files:
-            # Return the FILE path, not the folder
-            rel_path = scene_layer_files[0].relative_to(extract_dir)
-            i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+            # Return the service root (I3S shim will resolve to the file)
+            i3s_url = f"/i3s/{extract_dir.name}"
             detection_strategy = "direct layer file (3dSceneLayer.json)"
             logger.info(f"✅ Strategy 4: Found 3dSceneLayer.json file: {i3s_url}")
         
         # Strategy 5: Direct layer folder (folder containing layer.json)
         if not i3s_url and layer_json_files:
-            # Return the FILE path, not the folder
-            rel_path = layer_json_files[0].relative_to(extract_dir)
-            i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+            # Return the service root (I3S shim will resolve to the file)
+            i3s_url = f"/i3s/{extract_dir.name}"
             detection_strategy = "direct layer file (layer.json)"
             logger.info(f"✅ Strategy 5: Found layer.json file: {i3s_url}")
 
@@ -1407,7 +1602,7 @@ async def handle_slpk(file_path: Path, original_filename: str, job_id: str = Non
             
             return {
                 "filename": original_filename,
-                "url": f"/uploads/{extract_dir.name}",
+                "url": f"/i3s/{extract_dir.name}",
                 "size": sum(p.stat().st_size for p in extract_dir.rglob('*') if p.is_file()),
                 "processing_type": "slpk_extracted_unrecognized",
                 "message": error_message
