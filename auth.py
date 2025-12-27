@@ -13,7 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import User, Base
+from models import User, Base, UserPlan, Workspace
 import requests
 from dotenv import load_dotenv
 
@@ -138,6 +138,43 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+async def get_current_user_or_anonymous(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """
+    Get current authenticated user or None if anonymous.
+    
+    This dependency allows optional authentication - endpoints can be accessed
+    by both authenticated and anonymous users, with different behavior based on auth status.
+    
+    Used for freemium model where:
+    - Anonymous users: can view public content
+    - Authenticated users: can view public + their own private content
+    """
+    if credentials is None:
+        return None
+    
+    try:
+        token = credentials.credentials
+        payload = verify_token(token)
+        user_id = payload.get("sub")
+        
+        if user_id is None:
+            return None
+        
+        user = db.query(User).filter(User.id == user_id).first()
+        if user is None or not user.is_active:
+            return None
+        
+        return user
+    except HTTPException:
+        # Invalid token - treat as anonymous
+        return None
+    except Exception:
+        # Any other error - treat as anonymous
+        return None
+
 # OAuth2 Provider Functions
 async def verify_google_token(token: str) -> Dict[str, Any]:
     """Verify Google OAuth2 token"""
@@ -176,6 +213,7 @@ async def verify_linkedin_token(token: str) -> Dict[str, Any]:
 def get_or_create_user(db: Session, oauth_data: Dict[str, Any], provider: str) -> User:
     """Get existing user or create new one from OAuth data"""
     oauth_id = str(oauth_data.get("id") or oauth_data.get("sub"))
+    provider_sub = oauth_data.get("sub")  # OAuth 'sub' claim (optional)
     email = oauth_data.get("email")
     
     # Try to find existing user by OAuth ID
@@ -194,10 +232,11 @@ def get_or_create_user(db: Session, oauth_data: Dict[str, Any], provider: str) -
             # Update existing user with OAuth info
             user.oauth_provider = provider
             user.oauth_id = oauth_id
+            user.provider_sub = provider_sub
             db.commit()
             return user
     
-    # Create new user
+    # Create new user (defaults to FREE plan)
     username = oauth_data.get("login") or oauth_data.get("preferred_username") or email.split("@")[0]
     
     # Ensure unique username
@@ -213,12 +252,39 @@ def get_or_create_user(db: Session, oauth_data: Dict[str, Any], provider: str) -
         full_name=oauth_data.get("name") or oauth_data.get("full_name"),
         avatar_url=oauth_data.get("picture") or oauth_data.get("avatar_url"),
         oauth_provider=provider,
-        oauth_id=oauth_id
+        oauth_id=oauth_id,
+        provider_sub=provider_sub,
+        plan=UserPlan.FREE  # New users start as free
     )
     
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
+
+def get_or_create_workspace(db: Session, user: User) -> Workspace:
+    """
+    Get user's default workspace or create one if it doesn't exist.
+    
+    For v1, each user has one default workspace (created on first login).
+    Future: support multiple workspaces.
+    """
+    # Try to find existing workspace
+    workspace = db.query(Workspace).filter(Workspace.owner_user_id == user.id).first()
+    
+    if workspace:
+        return workspace
+    
+    # Create default workspace
+    workspace = Workspace(
+        owner_user_id=user.id,
+        name=f"{user.username or user.email}'s Workspace",
+        description="Default workspace"
+    )
+    
+    db.add(workspace)
+    db.commit()
+    db.refresh(workspace)
+    return workspace
 
 # Authentication endpoints will be added to main.py

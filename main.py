@@ -33,9 +33,19 @@ SERVER_START_TS = int(time.time())
 # --------------------
 # Import our modules
 # --------------------
-from auth import get_current_active_user, get_db, create_access_token, verify_google_token, verify_github_token, verify_linkedin_token, get_or_create_user
+from auth import (
+    get_current_active_user, 
+    get_current_user_or_anonymous,
+    get_db, 
+    create_access_token, 
+    verify_google_token, 
+    verify_github_token, 
+    verify_linkedin_token, 
+    get_or_create_user,
+    get_or_create_workspace
+)
 from layer_api import router as layer_router
-from models import User, Layer, LayerRating, LayerCategory, License
+from models import User, Layer, LayerRating, LayerCategory, License, Workspace, UserPlan, LayerVisibility
 
 # --------------------
 # Database configuration
@@ -222,6 +232,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_active_
         "full_name": current_user.full_name,
         "avatar_url": current_user.avatar_url,
         "is_admin": current_user.is_admin,
+        "plan": current_user.plan.value if current_user.plan else "free",
         "created_at": current_user.created_at
     }
 
@@ -229,6 +240,32 @@ async def get_current_user_info(current_user: User = Depends(get_current_active_
 async def logout():
     """Logout endpoint (client should discard token)"""
     return {"message": "Logged out successfully"}
+
+# --------------------
+# Workspace endpoints
+# --------------------
+@app.get("/api/workspaces/me")
+async def get_my_workspace(
+    current_user: User = Depends(get_current_active_user),
+    db = Depends(get_db)
+):
+    """
+    Get current user's workspace (create if doesn't exist).
+    
+    For v1 freemium model:
+    - Each user has one default workspace (auto-created on first access)
+    - Future: support multiple workspaces for paid users
+    """
+    workspace = get_or_create_workspace(db, current_user)
+    
+    return {
+        "id": str(workspace.id),
+        "owner_user_id": str(workspace.owner_user_id),
+        "name": workspace.name,
+        "description": workspace.description,
+        "created_at": workspace.created_at,
+        "updated_at": workspace.updated_at
+    }
 
 # --------------------
 # Serve static files

@@ -23,18 +23,33 @@ class AuthManager {
             const config = await response.json();
             
             // Google OAuth2
+            // TODO: Properly initialize Google Sign-In button with GSI library
+            // Current implementation is incomplete - needs Google Sign-In script loaded
             if (config.google_client_id && typeof google !== 'undefined' && google.accounts) {
-                google.accounts.id.initialize({
-                    client_id: config.google_client_id,
-                    callback: this.handleGoogleSignIn.bind(this)
-                });
+                try {
+                    google.accounts.id.initialize({
+                        client_id: config.google_client_id,
+                        callback: this.handleGoogleSignIn.bind(this)
+                    });
+                    console.log('✅ Google OAuth initialized');
+                } catch (gErr) {
+                    console.warn('Google OAuth init failed:', gErr);
+                }
+            } else {
+                console.log('⚠️  Google OAuth not available (client_id missing or GSI not loaded)');
             }
             
             // GitHub OAuth2
             this.githubClientId = config.github_client_id || '';
+            if (!this.githubClientId) {
+                console.log('⚠️  GitHub OAuth not configured');
+            }
             
             // LinkedIn OAuth2
             this.linkedinClientId = config.linkedin_client_id || '';
+            if (!this.linkedinClientId) {
+                console.log('⚠️  LinkedIn OAuth not configured');
+            }
             
             // Update UI based on OAuth availability
             this.updateOAuthUI(config.oauth_enabled);
@@ -45,12 +60,23 @@ class AuthManager {
     }
     
     async handleGoogleSignIn(response) {
+        // TODO: This method expects a Google Sign-In response object with a credential
+        // Current button implementation doesn't provide this - needs proper GSI integration
         try {
+            // Guard against undefined response (happens when button is clicked without GSI setup)
+            if (!response || !response.credential) {
+                console.error('Google sign-in failed: No credential received');
+                console.error('This likely means Google Sign-In (GSI) is not properly configured.');
+                console.error('TODO: Add Google Sign-In script to index.html and configure OAuth client ID');
+                this.showAuthError('Google OAuth not configured. Contact administrator.');
+                return;
+            }
+            
             const result = await this.authenticateWithProvider('google', response.credential);
             this.handleAuthSuccess(result);
         } catch (error) {
             console.error('Google sign-in failed:', error);
-            this.showAuthError('Google sign-in failed');
+            this.showAuthError('Google sign-in failed: ' + (error.message || 'Unknown error'));
         }
     }
     
@@ -229,9 +255,12 @@ class AuthManager {
             }
             
             if (loginButtons) {
+                // TODO: These buttons currently don't work without proper OAuth setup
+                // Google: Needs GSI script + proper button rendering
+                // GitHub/LinkedIn: Need OAuth flow implementation
                 loginButtons.innerHTML = `
                     <div class="section-header">Sign-in</div>
-                    <button onclick="authManager.handleGoogleSignIn()" class="auth-btn google-btn" title="Sign in with Google">
+                    <button onclick="authManager.handleGoogleSignInButton()" class="auth-btn google-btn" title="Sign in with Google">
                         <svg viewBox="0 0 24 24">
                             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -327,10 +356,24 @@ class AuthManager {
         // You can implement a toast notification system here
     }
     
+    // Wrapper for button click (separate from OAuth callback)
+    async handleGoogleSignInButton() {
+        // This is called when user clicks the Google button
+        // TODO: Replace with proper Google Sign-In button rendering
+        console.log('Google sign-in button clicked');
+        console.error('Google OAuth not fully configured yet.');
+        console.error('TODO: Add Google Sign-In library and render proper GSI button');
+        this.showAuthError('Google OAuth not configured. Please contact administrator to enable sign-in.');
+    }
+    
     showAuthError(message) {
         // Show error message (you can customize this)
         console.error('Auth error:', message);
-        // You can implement a toast notification system here
+        
+        // Simple alert for now (TODO: replace with toast/modal)
+        if (typeof message === 'string' && message.includes('not configured')) {
+            alert('⚠️ ' + message + '\n\nOAuth setup is required. See OAUTH_SETUP_GUIDE.md for instructions.');
+        }
     }
     
     triggerAuthChange() {

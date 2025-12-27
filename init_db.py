@@ -2,26 +2,45 @@
 """
 Database initialization script for MyEarth.app
 Creates tables and populates initial data
+
+Schema v1.1 (Freemium Model):
+- users: Added plan (free/paid), provider_sub fields
+- workspaces: NEW table for user workspaces
+- layers: Added visibility (public/private) and workspace_id fields
+- layer_categories: Categories for layer organization
+- layer_ratings: User ratings for layers
+- licenses: License information for layers
 """
 
 import os
 import sys
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, LayerCategory, License
+from models import Base, LayerCategory, License, User, Workspace, Layer, UserPlan
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
 
 def init_database():
-    """Initialize the database with tables and initial data"""
+    """
+    Initialize the database with tables and initial data.
+    
+    Creates/updates:
+    - All tables (users, workspaces, layers, layer_ratings, layer_categories, licenses)
+    - Default categories
+    - Default licenses
+    
+    Note: SQLAlchemy create_all() is idempotent - it won't recreate existing tables.
+    For migrations, use Alembic or manual ALTER TABLE statements.
+    """
     
     # Database configuration
     DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost/myearth")
     
     print("🔧 Initializing MyEarth.app database...")
     print(f"📊 Database URL: {DATABASE_URL}")
+    print("📋 Schema version: v1.1 (Freemium Model)")
     
     try:
         # Create engine and session
@@ -29,9 +48,15 @@ def init_database():
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         
         # Create all tables
-        print("📋 Creating database tables...")
+        print("📋 Creating/updating database tables...")
+        print("   → users (with plan, provider_sub)")
+        print("   → workspaces (NEW)")
+        print("   → layers (with visibility, workspace_id)")
+        print("   → layer_ratings")
+        print("   → layer_categories")
+        print("   → licenses")
         Base.metadata.create_all(bind=engine)
-        print("✅ Tables created successfully")
+        print("✅ Tables created/updated successfully")
         
         # Create session for data insertion
         db = SessionLocal()
@@ -224,7 +249,7 @@ def init_licenses(db):
             print(f"  ⏭️ License already exists: {lic_data['name']}")
 
 def create_admin_user():
-    """Create an admin user (optional)"""
+    """Create an admin user (optional) - NOTE: OAuth required for actual login"""
     print("\n👤 Would you like to create an admin user? (y/n): ", end="")
     response = input().lower().strip()
     
@@ -232,24 +257,32 @@ def create_admin_user():
         from models import User
         from auth import get_db
         
-        print("Enter admin user details:")
+        print("⚠️  Note: Admin users must sign in via OAuth (Google/GitHub/LinkedIn)")
+        print("Enter admin user details (for pre-registration):")
         email = input("Email: ").strip()
         username = input("Username: ").strip()
         full_name = input("Full Name: ").strip()
+        oauth_provider = input("OAuth Provider (google/github/linkedin): ").strip().lower()
+        oauth_id = input("OAuth User ID (from provider): ").strip()
         
-        if email and username:
+        if email and username and oauth_provider and oauth_id:
             try:
                 db = next(get_db())
                 user = User(
                     email=email,
                     username=username,
                     full_name=full_name,
+                    oauth_provider=oauth_provider,
+                    oauth_id=oauth_id,
+                    plan=UserPlan.FREE,  # Start as free, can be upgraded manually
                     is_admin=True,
                     is_active=True
                 )
                 db.add(user)
                 db.commit()
                 print(f"✅ Admin user created: {email}")
+                print(f"   Plan: {user.plan.value}")
+                print(f"   OAuth: {oauth_provider}")
             except Exception as e:
                 print(f"❌ Failed to create admin user: {e}")
             finally:

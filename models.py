@@ -3,14 +3,25 @@ Database models for MyEarth application
 Defines SQLAlchemy ORM models for users, layers, ratings, categories, and licenses
 """
 
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, ARRAY, Float
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, ARRAY, Float, Enum as SQLEnum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 from datetime import datetime
+from enum import Enum
 
 Base = declarative_base()
+
+class UserPlan(str, Enum):
+    """User subscription plan"""
+    FREE = "free"
+    PAID = "paid"
+
+class LayerVisibility(str, Enum):
+    """Layer visibility for freemium model"""
+    PUBLIC = "public"   # Readable by anyone
+    PRIVATE = "private"  # Readable only by owner
 
 class User(Base):
     """User model for authentication and user management"""
@@ -21,30 +32,60 @@ class User(Base):
     username = Column(String, unique=True, nullable=True, index=True)
     full_name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
+    
+    # OAuth fields
     oauth_provider = Column(String, nullable=False)  # google, github, linkedin
-    oauth_id = Column(String, nullable=False)
+    oauth_id = Column(String, nullable=False)  # Provider's user ID
+    provider_sub = Column(String, nullable=True)  # OAuth 'sub' claim (optional, for JWT compatibility)
+    
+    # Freemium model
+    plan = Column(SQLEnum(UserPlan), nullable=False, default=UserPlan.FREE)
+    
+    # Account status
     is_active = Column(Boolean, default=True)
     is_admin = Column(Boolean, default=False)
+    
+    # Timestamps
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
     # Relationships
     layers = relationship("Layer", back_populates="user", cascade="all, delete-orphan")
     ratings = relationship("LayerRating", back_populates="user", cascade="all, delete-orphan")
+    workspaces = relationship("Workspace", back_populates="owner", cascade="all, delete-orphan")
+
+class Workspace(Base):
+    """Workspace model for organizing user data"""
+    __tablename__ = "workspaces"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    owner_user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String, nullable=False, default="My Workspace")
+    description = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    owner = relationship("User", back_populates="workspaces")
+    layers = relationship("Layer", back_populates="workspace")
 
 class Layer(Base):
     """Layer model for geospatial data layers"""
     __tablename__ = "layers"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)  # Owner of the layer
+    workspace_id = Column(String, ForeignKey("workspaces.id"), nullable=True)  # Optional workspace association
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     tags = Column(ARRAY(String), default=[])
     source_url = Column(String, nullable=True)
     license = Column(String, nullable=True)
     category = Column(String, nullable=True)
-    is_public = Column(Boolean, default=True)
+    
+    # Visibility and access control (freemium model)
+    is_public = Column(Boolean, default=True)  # Legacy field, kept for compatibility
+    visibility = Column(SQLEnum(LayerVisibility), nullable=False, default=LayerVisibility.PUBLIC)
     
     # File information
     file_path = Column(String, nullable=True)
@@ -68,6 +109,7 @@ class Layer(Base):
     
     # Relationships
     user = relationship("User", back_populates="layers")
+    workspace = relationship("Workspace", back_populates="layers")
     ratings = relationship("LayerRating", back_populates="layer", cascade="all, delete-orphan")
     
     @property
