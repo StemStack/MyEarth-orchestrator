@@ -22,7 +22,13 @@ import time
 import json
 import requests
 import zipfile
-from typing import Optional
+import asyncio
+import uuid
+from typing import Optional, Dict
+from enum import Enum
+
+# Server start timestamp (for BUILD badge) - set once at import time
+SERVER_START_TS = int(time.time())
 
 # --------------------
 # Import our modules
@@ -65,6 +71,47 @@ app = FastAPI(
     description="GIS platform API for 3D globe visualization and layer management",
     version="1.0.0"
 )
+
+# --------------------
+# Job Tracking System for Long-Running Uploads/Conversions
+# --------------------
+class JobStatus(str, Enum):
+    QUEUED = "queued"
+    PROCESSING = "processing"
+    DONE = "done"
+    ERROR = "error"
+
+class JobStage(str, Enum):
+    UPLOAD_SAVED = "upload_saved"
+    EXTRACTING_SLPK = "extracting_slpk"
+    CONVERTING_POINTCLOUD = "converting_pointcloud"
+    GENERATING_TILESET = "generating_tileset"
+    DONE = "done"
+
+# In-memory job storage (use Redis/DB for production)
+jobs: Dict[str, dict] = {}
+
+def create_job(filename: str) -> str:
+    """Create a new job and return job_id"""
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = {
+        "job_id": job_id,
+        "filename": filename,
+        "status": JobStatus.QUEUED,
+        "stage": JobStage.UPLOAD_SAVED,
+        "progress": 0,
+        "message": "Upload saved, starting processing...",
+        "error": None,
+        "result": None,
+        "created_at": time.time()
+    }
+    return job_id
+
+def update_job(job_id: str, **kwargs):
+    """Update job status"""
+    if job_id in jobs:
+        jobs[job_id].update(kwargs)
+        jobs[job_id]["updated_at"] = time.time()
 
 # Enable CORS (all origins allowed)
 app.add_middleware(
@@ -325,20 +372,46 @@ async def serve_print_overlay_styles():
 
 @app.get("/version.json")
 async def serve_version():
-    """Serve the version.json file with current build information"""
+    """Serve version info with separate server start time and build time"""
+    import datetime
+ 
+    # SERVER START: when THIS Python process started (changes on server restart)
+    # BUILD: when the app was built (static, from VERSION_FILE or fallback to server start)
+    version_data = {
+        "version": "0.6.5-dev",
+        "serverStartTimestamp": SERVER_START_TS,
+        "serverStartDate": datetime.datetime.utcfromtimestamp(SERVER_START_TS).isoformat() + "Z",
+        "buildTimestamp": SERVER_START_TS,  # Fallback if no VERSION_FILE
+        "buildDate": datetime.datetime.utcfromtimestamp(SERVER_START_TS).isoformat() + "Z",
+        "commitHash": "dev",
+        "environment": os.getenv("APP_ENV", "development")
+    }
+ 
+    # Try to read build timestamp from VERSION_FILE (production builds)
     try:
-        with open(str(VERSION_FILE), "r") as f:
-            version_data = json.load(f)
-        return JSONResponse(content=version_data)
-    except FileNotFoundError:
-        # Fallback if version.json doesn't exist
-        return JSONResponse(content={
-            "version": "0.3",
-            "buildDate": "unknown",
-            "buildTimestamp": 0,
-            "commitHash": "unknown",
-            "environment": "development"
-        })
+        if VERSION_FILE.exists():
+            with open(str(VERSION_FILE), "r") as f:
+                file_data = json.load(f) or {}
+            # Use file data for build info (but keep serverStart* from current process)
+            if "buildTimestamp" in file_data:
+                version_data["buildTimestamp"] = file_data["buildTimestamp"]
+            if "buildDate" in file_data:
+                version_data["buildDate"] = file_data["buildDate"]
+            if "version" in file_data:
+                version_data["version"] = file_data["version"]
+            if "commitHash" in file_data:
+                version_data["commitHash"] = file_data["commitHash"]
+    except Exception as e:
+        print(f"Could not read version.json: {e}")
+ 
+    return JSONResponse(
+        content=version_data,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0"
+        }
+    )
 
 @app.get("/api/oauth-config")
 async def get_oauth_config():
@@ -349,6 +422,173 @@ async def get_oauth_config():
         "linkedin_client_id": os.getenv("LINKEDIN_CLIENT_ID", ""),
         "oauth_enabled": bool(os.getenv("GOOGLE_CLIENT_ID") or os.getenv("GITHUB_CLIENT_ID") or os.getenv("LINKEDIN_CLIENT_ID"))
     }
+
+# --------------------
+# ArcGIS Integration Endpoints
+# --------------------
+
+@app.get("/arcgis")
+async def serve_arcgis_viewer():
+    """Serve ArcGIS Scene Viewer page"""
+    arcgis_html = UI_DIR / "arcgis.html"
+    if not arcgis_html.exists():
+        raise HTTPException(status_code=404, detail="ArcGIS viewer page not found")
+    return FileResponse(str(arcgis_html))
+
+@app.get("/api/arcgis/item/{item_id}")
+async def get_arcgis_item(item_id: str):
+    """Fetch ArcGIS Portal item metadata and data"""
+    import logging
+    logger = logging.getLogger("myearth.arcgis")
+    
+    base_url = "https://www.arcgis.com/sharing/rest"
+    
+    try:
+        # Fetch item metadata
+        metadata_url = f"{base_url}/content/items/{item_id}"
+        metadata_params = {"f": "pjson"}
+        metadata_response = requests.get(metadata_url, params=metadata_params, timeout=10)
+        metadata_response.raise_for_status()
+        metadata = metadata_response.json()
+        
+        # Fetch item data (WebScene JSON for Scene items)
+        data_url = f"{base_url}/content/items/{item_id}/data"
+        data_params = {"f": "pjson"}
+        data_response = requests.get(data_url, params=data_params, timeout=10)
+        
+        data = None
+        if data_response.status_code == 200:
+            try:
+                data = data_response.json()
+            except Exception:
+                data = {"error": "Data is not JSON"}
+        
+        logger.info(f"Fetched ArcGIS item {item_id}: {metadata.get('title', 'Unknown')}")
+        
+        return JSONResponse({
+            "metadata": metadata,
+            "data": data,
+            "item_id": item_id
+        })
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to fetch ArcGIS item {item_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch item: {str(e)}")
+
+@app.get("/api/arcgis/search-slpk")
+async def search_arcgis_slpk(q: str = "buildings city 3d", num: int = 20):
+    """Search ArcGIS Online for public Scene Layer Packages"""
+    import logging
+    logger = logging.getLogger("myearth.arcgis")
+    
+    search_url = "https://www.arcgis.com/sharing/rest/search"
+    
+    # Build query: Scene Layer Package type, public access, user query
+    query = f'type:"Scene Layer Package" AND {q} AND access:public'
+    
+    params = {
+        "q": query,
+        "f": "pjson",
+        "num": min(num, 100),  # Cap at 100
+        "sortField": "modified",
+        "sortOrder": "desc"
+    }
+    
+    try:
+        response = requests.get(search_url, params=params, timeout=15)
+        response.raise_for_status()
+        results = response.json()
+        
+        # Extract relevant fields
+        items = []
+        for item in results.get("results", []):
+            items.append({
+                "id": item.get("id"),
+                "title": item.get("title"),
+                "owner": item.get("owner"),
+                "size": item.get("size"),
+                "modified": item.get("modified"),
+                "snippet": item.get("snippet"),
+                "tags": item.get("tags", []),
+                "thumbnail": item.get("thumbnail"),
+                "url": f"https://www.arcgis.com/home/item.html?id={item.get('id')}"
+            })
+        
+        logger.info(f"Found {len(items)} SLPK items for query: {q}")
+        
+        return JSONResponse({
+            "query": q,
+            "total": results.get("total", 0),
+            "num": results.get("num", 0),
+            "items": items
+        })
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to search ArcGIS: {e}")
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
+
+@app.get("/api/arcgis/download/{item_id}")
+async def download_arcgis_slpk(item_id: str):
+    """Download SLPK from ArcGIS Online and process it"""
+    import logging
+    logger = logging.getLogger("myearth.arcgis")
+    
+    # First, check if item is public
+    try:
+        metadata_url = f"https://www.arcgis.com/sharing/rest/content/items/{item_id}"
+        metadata_response = requests.get(metadata_url, params={"f": "pjson"}, timeout=10)
+        metadata_response.raise_for_status()
+        metadata = metadata_response.json()
+        
+        if metadata.get("access") != "public":
+            raise HTTPException(status_code=403, detail="Item is not public. Authentication required.")
+        
+        title = metadata.get("title", "Unknown")
+        size = metadata.get("size", 0)
+        
+        logger.info(f"Downloading SLPK: {title} (ID: {item_id}, Size: {size} bytes)")
+        
+        # Download the SLPK file
+        download_url = f"https://www.arcgis.com/sharing/rest/content/items/{item_id}/data"
+        
+        # Stream download to temp file
+        temp_file = UPLOADS_DIR / f"arcgis_{item_id}_{int(time.time())}.slpk"
+        
+        with requests.get(download_url, stream=True, timeout=300) as r:
+            r.raise_for_status()
+            with open(temp_file, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192*1024):  # 8MB chunks
+                    if chunk:
+                        f.write(chunk)
+        
+        logger.info(f"Downloaded SLPK to: {temp_file}")
+        
+        # Create a job for processing
+        job_id = create_job(temp_file.name)
+        
+        # Process in background
+        asyncio.create_task(
+            process_model_background(job_id, temp_file, ".slpk", temp_file.name)
+        )
+        
+        return JSONResponse({
+            "success": True,
+            "job_id": job_id,
+            "filename": temp_file.name,
+            "title": title,
+            "size": size,
+            "message": "SLPK download started, processing in background"
+        })
+        
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Failed to download SLPK {item_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Download failed: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error processing SLPK download: {e}", exc_info=True)
+        # Clean up temp file if it exists
+        if 'temp_file' in locals() and temp_file.exists():
+            temp_file.unlink()
+        raise HTTPException(status_code=500, detail=f"Processing error: {str(e)}")
 
 # --------------------
 # Health check endpoint
@@ -447,6 +687,10 @@ async def test_wms():
 UPLOADS_DIR = Path("uploads")
 UPLOADS_DIR.mkdir(exist_ok=True)
 
+# Serve uploads as static so extracted folders (e.g., SLPK -> I3S) are reachable
+# NOTE: This must exist before requests hit /uploads/... URLs.
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
 # Universal 3D model format support
 UNIVERSAL_3D_FORMATS = {
     # Cesium 3D Tiles
@@ -484,6 +728,7 @@ UNIVERSAL_3D_FORMATS = {
     '.kmz': 'application/vnd.google-earth.kmz',
     '.citygml': 'application/gml+xml',
     '.gml': 'application/gml+xml',
+    '.slpk': 'application/octet-stream',  # ArcGIS Scene Layer Package (I3S in a zip)
     
     # Archive formats
     '.zip': 'application/zip',
@@ -507,53 +752,179 @@ UNIVERSAL_3D_FORMATS = {
 CESIUM_ION_ACCESS_TOKEN = os.getenv("CESIUM_ION_ACCESS_TOKEN", "")
 CESIUM_ION_API_URL = "https://api.cesium.com/v1"
 
+@app.get("/api/jobs/{job_id}")
+async def get_job_status(job_id: str):
+    """Get status of a background processing job"""
+    if job_id not in jobs:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    job = jobs[job_id]
+    return JSONResponse({
+        "job_id": job["job_id"],
+        "filename": job["filename"],
+        "status": job["status"],
+        "stage": job["stage"],
+        "progress": job["progress"],
+        "message": job.get("message"),
+        "error": job.get("error"),
+        "result": job.get("result")
+    })
+
+async def process_model_background(job_id: str, file_path: Path, file_ext: str, original_filename: str):
+    """Background task to process 3D model"""
+    import logging
+    logger = logging.getLogger("myearth.assets")
+    
+    try:
+        update_job(job_id, status=JobStatus.PROCESSING, progress=0, message="Starting processing...")
+        
+        # Process the model
+        processing_result = await process_3d_model(file_path, file_ext, original_filename, job_id)
+        
+        # Check if processing failed (e.g., SLPK with no I3S entrypoint)
+        if processing_result.get("processing_type") == "slpk_extracted_unrecognized":
+            # Mark as error so UI doesn't get stuck
+            update_job(
+                job_id,
+                status=JobStatus.ERROR,
+                stage=JobStage.DONE,
+                progress=100,
+                error=processing_result.get("message", "SLPK extraction failed"),
+                message="SLPK extracted but no I3S entrypoint found",
+                result={
+                    "success": False,
+                    "filename": processing_result["filename"],
+                    "url": processing_result["url"],
+                    "size": processing_result["size"],
+                    "original_format": file_ext,
+                    "processing_type": processing_result["processing_type"],
+                    "message": processing_result["message"]
+                }
+            )
+            logger.error(f"Job {job_id} failed: {processing_result.get('message')}")
+            return
+        
+        # Mark job as complete
+        update_job(
+            job_id,
+            status=JobStatus.DONE,
+            stage=JobStage.DONE,
+            progress=100,
+            message="Processing complete",
+            result={
+                "success": True,
+                "filename": processing_result["filename"],
+                "url": processing_result["url"],
+                "size": processing_result["size"],
+                "original_format": file_ext,
+                "processing_type": processing_result["processing_type"],
+                "cesium_ion_asset_id": processing_result.get("cesium_ion_asset_id"),
+                "message": processing_result["message"]
+            }
+        )
+        
+        logger.info(f"Job {job_id} completed successfully")
+        
+    except Exception as e:
+        logger.error(f"Job {job_id} failed: {str(e)}", exc_info=True)
+        update_job(
+            job_id,
+            status=JobStatus.ERROR,
+            progress=0,
+            error=str(e),
+            message=f"Processing failed: {str(e)}"
+        )
+        
+        # Clean up on error
+        try:
+            if file_path.exists():
+                file_path.unlink()
+        except Exception:
+            pass
+
 @app.post("/api/upload-model")
 async def upload_model(file: UploadFile = File(...)):
     """Universal 3D model upload with Cesium ion integration and multi-format support"""
+    import logging
+    logger = logging.getLogger("myearth.assets")
     
     # Get file extension
     file_ext = Path(file.filename).suffix.lower()
     
+    logger.info(f"Upload request: {file.filename} | Extension: {file_ext} | Size: {file.size or 'unknown'} bytes")
+    
     # Check if format is supported
     if file_ext not in UNIVERSAL_3D_FORMATS:
+        logger.error(f"Unsupported format: {file_ext}")
         raise HTTPException(
             status_code=400, 
             detail=f"Unsupported format: {file_ext}. Supported formats: {', '.join(list(UNIVERSAL_3D_FORMATS.keys())[:10])}... and more"
         )
     
-    # Check file size (increased to 500MB for large models)
-    if file.size > 500 * 1024 * 1024:  # 500MB
-        raise HTTPException(status_code=400, detail="File too large. Maximum size: 500MB")
+    # Define max size (5GB)
+    MAX_FILE_SIZE = 5 * 1024 * 1024 * 1024  # 5GB in bytes
+    CHUNK_SIZE = 8 * 1024 * 1024  # 8MB chunks for streaming
     
+    # Pre-check file size if available (optimization)
+    if file.size and file.size > MAX_FILE_SIZE:
+        logger.error(f"File too large: {file.size} bytes")
+        raise HTTPException(status_code=400, detail="File too large. Maximum size: 5GB")
+    
+    original_path = None
     try:
-        # Save original file
+        # Save original file with streaming + size validation
         original_filename = f"original_{int(time.time())}_{file.filename}"
         original_path = UPLOADS_DIR / original_filename
         
+        logger.info(f"Saving to: {original_path} (streaming in {CHUNK_SIZE // (1024*1024)}MB chunks)")
+        
+        bytes_written = 0
         with open(original_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+            while True:
+                # Read chunk
+                chunk = await file.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                
+                # Check size limit before writing
+                bytes_written += len(chunk)
+                if bytes_written > MAX_FILE_SIZE:
+                    logger.error(f"File exceeded size limit during upload: {bytes_written} bytes")
+                    # Delete partial file
+                    if original_path.exists():
+                        original_path.unlink()
+                    raise HTTPException(status_code=400, detail="File too large. Maximum size: 5GB")
+                
+                # Write chunk to disk
+                buffer.write(chunk)
         
-        # Determine processing strategy based on file type
-        processing_result = await process_3d_model(original_path, file_ext, file.filename)
+        logger.info(f"File saved successfully: {bytes_written} bytes ({bytes_written / (1024*1024):.1f}MB)")
         
+        # Create job for background processing
+        job_id = create_job(file.filename)
+        logger.info(f"Created job {job_id} for {file.filename}")
+        
+        # Start background processing
+        asyncio.create_task(process_model_background(job_id, original_path, file_ext, file.filename))
+        
+        # Return job_id immediately (202 Accepted)
         return JSONResponse({
-            "success": True,
-            "filename": processing_result["filename"],
-            "url": processing_result["url"],
-            "size": processing_result["size"],
-            "original_format": file_ext,
-            "processing_type": processing_result["processing_type"],
-            "cesium_ion_asset_id": processing_result.get("cesium_ion_asset_id"),
-            "message": processing_result["message"]
-        })
+            "job_id": job_id,
+            "status": "processing",
+            "message": "Upload complete, processing started"
+        }, status_code=202)
         
+    except HTTPException:
+        # Re-raise HTTP exceptions (already logged)
+        raise
     except Exception as e:
+        logger.error(f"Upload failed: {str(e)}", exc_info=True)
         # Clean up on error
         if original_path and original_path.exists():
             original_path.unlink()
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
-async def process_3d_model(file_path: Path, file_ext: str, original_filename: str) -> dict:
+async def process_3d_model(file_path: Path, file_ext: str, original_filename: str, job_id: str = None) -> dict:
     """Process 3D model based on format type"""
     
     # Strategy 1: Cesium 3D Tiles (direct support)
@@ -564,31 +935,44 @@ async def process_3d_model(file_path: Path, file_ext: str, original_filename: st
     elif file_ext in ['.gltf', '.glb']:
         return await handle_gltf(file_path, original_filename)
     
-    # Strategy 3: Point clouds (LAS/LAZ)
-    elif file_ext in ['.las', '.laz']:
-        return await handle_point_cloud(file_path, original_filename)
+    # Strategy 3: Point clouds (LAS/LAZ/PLY)
+    # CRITICAL: Cesium does NOT support raw point cloud formats (PLY/LAS/LAZ).
+    # Point clouds MUST be converted to 3D Tiles (tileset.json + .pnts binary tiles).
+    # Raw PLY/LAS/LAZ files will NOT render in CesiumJS.
+    elif file_ext in ['.las', '.laz', '.ply']:
+        if job_id:
+            update_job(job_id, stage=JobStage.CONVERTING_POINTCLOUD, progress=20, message="Converting point cloud to 3D Tiles...")
+        return await handle_point_cloud(file_path, original_filename, job_id)
     
     # Strategy 4: Gaussian Splatting
-    elif file_ext in ['.splat', '.ply']:
+    # NOTE: .splat is a dedicated Gaussian splat format (not point cloud or mesh)
+    elif file_ext in ['.splat']:
         return await handle_gaussian_splats(file_path, original_filename)
-    
-    # Strategy 5: Traditional 3D formats (convert to glTF)
-    elif file_ext in ['.obj', '.fbx', '.dae', '.3ds', '.stl', '.ply']:
+
+    # Strategy 5: Traditional 3D mesh formats (convert to glTF)
+    # These are polygon meshes, not point clouds
+    elif file_ext in ['.obj', '.fbx', '.dae', '.3ds', '.stl']:
         return await handle_traditional_3d(file_path, original_filename)
     
     # Strategy 6: Geospatial formats
     elif file_ext in ['.kml', '.kmz', '.citygml', '.gml']:
         return await handle_geospatial(file_path, original_filename)
     
-    # Strategy 7: Archive formats
+    # Strategy 7: ArcGIS Scene Layer Package (SLPK -> I3S)
+    elif file_ext in ['.slpk']:
+        if job_id:
+            update_job(job_id, stage=JobStage.EXTRACTING_SLPK, progress=20, message="Extracting SLPK to I3S format...")
+        return await handle_slpk(file_path, original_filename, job_id)
+
+    # Strategy 8: Archive formats
     elif file_ext in ['.zip', '.7z', '.rar']:
         return await handle_archive(file_path, original_filename)
     
-    # Strategy 8: Image formats (photogrammetry)
+    # Strategy 9: Image formats (photogrammetry)
     elif file_ext in ['.jpg', '.jpeg', '.png', '.tiff', '.tif']:
         return await handle_photogrammetry(file_path, original_filename)
     
-    # Strategy 9: BIM formats
+    # Strategy 10: BIM formats
     elif file_ext in ['.ifc', '.rvt', '.dwg']:
         return await handle_bim(file_path, original_filename)
     
@@ -612,49 +996,93 @@ async def handle_3d_tiles(file_path: Path, original_filename: str) -> dict:
 
 async def handle_gltf(file_path: Path, original_filename: str) -> dict:
     """Handle glTF formats"""
+    import logging
+    logger = logging.getLogger("myearth.assets")
+    
     filename = f"gltf_{int(time.time())}_{original_filename}"
     new_path = UPLOADS_DIR / filename
     shutil.move(str(file_path), str(new_path))
     
+    file_size = new_path.stat().st_size
+    asset_url = f"/uploads/{filename}"
+    
+    logger.info(f"GLB/glTF ready: {filename} | Size: {file_size} bytes | URL: {asset_url}")
+    
     return {
         "filename": filename,
-        "url": f"/uploads/{filename}",
-        "size": new_path.stat().st_size,
+        "url": asset_url,
+        "size": file_size,
         "processing_type": "gltf",
         "message": "glTF file ready for CesiumJS"
     }
 
-async def handle_point_cloud(file_path: Path, original_filename: str) -> dict:
-    """Handle point cloud formats (LAS/LAZ)"""
+async def handle_point_cloud(file_path: Path, original_filename: str, job_id: str = None) -> dict:
+    """
+    Handle point cloud formats (LAS/LAZ/PLY).
+    
+    CRITICAL: CesiumJS does NOT support raw point cloud files.
+    Point clouds MUST be converted to 3D Tiles format (tileset.json + .pnts binary tiles).
+    
+    This handler attempts conversion using py3dtiles or similar tools.
+    If conversion fails, we return HTTP 400 with explicit error.
+    """
+    import logging
+    logger = logging.getLogger("myearth.assets")
+    
+    file_ext = file_path.suffix.lower()
+    logger.info(f"Point cloud upload: {original_filename} | Format: {file_ext}")
+    
     try:
-        # Try to convert to 3D Tiles using PotreeConverter
-        if await convert_point_cloud_to_3dtiles(file_path):
-            filename = f"pointcloud_{int(time.time())}_{Path(original_filename).stem}.json"
-            tileset_path = UPLOADS_DIR / filename
-            
+        # Try to convert to 3D Tiles
+        if job_id:
+            update_job(job_id, progress=30, message="Starting point cloud conversion...")
+        conversion_result = await convert_point_cloud_to_3dtiles(file_path, original_filename, job_id)
+        
+        if conversion_result and conversion_result.get("success"):
+            logger.info(f"Point cloud converted successfully: {conversion_result['tileset_url']}")
             return {
-                "filename": filename,
-                "url": f"/uploads/{filename}",
-                "size": tileset_path.stat().st_size,
+                "filename": conversion_result["tileset_name"],
+                "url": conversion_result["tileset_url"],
+                "size": conversion_result["size"],
                 "processing_type": "point_cloud_3dtiles",
-                "message": "Point cloud converted to 3D Tiles"
+                "message": f"Point cloud converted to 3D Tiles ({conversion_result.get('tile_count', '?')} tiles)"
             }
         else:
-            # Fallback: serve original file
-            filename = f"pointcloud_{int(time.time())}_{original_filename}"
-            new_path = UPLOADS_DIR / filename
-            shutil.move(str(file_path), str(new_path))
+            # Conversion failed - this is NOT acceptable for Cesium
+            error_detail = conversion_result.get("error") if conversion_result else "Conversion tool not available"
+            logger.error(f"Point cloud conversion failed: {error_detail}")
             
-            return {
-                "filename": filename,
-                "url": f"/uploads/{filename}",
-                "size": new_path.stat().st_size,
-                "processing_type": "point_cloud_raw",
-                "message": "Point cloud file (may need client-side processing)"
-            }
+            # Clean up original file
+            try:
+                file_path.unlink()
+            except Exception:
+                pass
+            
+            # Return explicit error
+            raise HTTPException(
+                status_code=400,
+                detail=f"Point clouds must be converted to 3D Tiles to render in Cesium. "
+                       f"Conversion failed: {error_detail}. "
+                       f"Please upload LAS/LAZ with py3dtiles installed, or upload pre-generated tileset.json."
+            )
+            
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Point cloud processing error: {e}")
-        # Fallback to original file
+        logger.error(f"Point cloud processing error: {e}", exc_info=True)
+        
+        # Clean up
+        try:
+            file_path.unlink()
+        except Exception:
+            pass
+        
+        raise HTTPException(
+            status_code=400,
+            detail=f"Point cloud processing failed: {str(e)}. "
+                   f"Cesium requires point clouds as 3D Tiles (tileset.json). "
+                   f"Please upload LAS/LAZ with conversion tools installed, or upload pre-generated tileset.json."
+        )
         filename = f"pointcloud_{int(time.time())}_{original_filename}"
         new_path = UPLOADS_DIR / filename
         shutil.move(str(file_path), str(new_path))
@@ -759,6 +1187,274 @@ async def handle_traditional_3d(file_path: Path, original_filename: str) -> dict
         }
 
 async def handle_geospatial(file_path: Path, original_filename: str) -> dict:
+    """Handle geospatial formats (KML/KMZ/CityGML/GML)"""
+    # For now, serve as-is (may need conversion in future)
+    filename = f"geospatial_{int(time.time())}_{original_filename}"
+    new_path = UPLOADS_DIR / filename
+    shutil.move(str(file_path), str(new_path))
+    
+    return {
+        "filename": filename,
+        "url": f"/uploads/{filename}",
+        "size": new_path.stat().st_size,
+        "processing_type": "geospatial_raw",
+        "message": "Geospatial file (may need client-side processing)"
+    }
+
+async def handle_slpk(file_path: Path, original_filename: str, job_id: str = None) -> dict:
+    """Handle ArcGIS Scene Layer Package (.slpk).
+
+    SLPK is essentially a ZIP containing an I3S SceneServer structure.
+    CesiumJS can load I3S via `Cesium.I3SDataProvider.fromUrl(...)`.
+
+    This handler extracts the SLPK into a folder under uploads and returns a URL
+    pointing to the I3S layer root.
+    """
+    import logging
+    logger = logging.getLogger("myearth.assets")
+
+    extract_dir = UPLOADS_DIR / f"slpk_{int(time.time())}_{Path(original_filename).stem}"
+    extract_dir.mkdir(exist_ok=True)
+
+    try:
+        # SLPK is a zip container
+        if job_id:
+            update_job(job_id, progress=30, message="Extracting SLPK archive...")
+        
+        with zipfile.ZipFile(file_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        # Decompress all *.json.gz files to *.json (common in I3S packages)
+        import gzip
+        for gz_file in extract_dir.rglob("*.json.gz"):
+            json_file = gz_file.with_suffix('')  # Remove .gz extension
+            try:
+                with gzip.open(gz_file, 'rb') as f_in:
+                    with open(json_file, 'wb') as f_out:
+                        f_out.write(f_in.read())
+                gz_file.unlink()  # Remove .gz file after decompression
+                logger.info(f"   Decompressed: {gz_file.relative_to(extract_dir)} → {json_file.name}")
+            except Exception as e:
+                logger.warning(f"   Failed to decompress {gz_file.name}: {e}")
+        
+        if job_id:
+            update_job(job_id, progress=60, message="Locating I3S layer entry point...")
+
+        # Remove original package to save space
+        try:
+            file_path.unlink()
+        except Exception:
+            pass
+
+        # ============================================================
+        # DEEP INSPECTION: Log extracted structure comprehensively
+        # ============================================================
+        logger.info(f"📂 Extracted SLPK to: {extract_dir.name}")
+        
+        # Gather all directories and files (deep scan)
+        all_dirs = sorted([str(p.relative_to(extract_dir)) for p in extract_dir.rglob("*") if p.is_dir()])
+        all_files = sorted([str(p.relative_to(extract_dir)) for p in extract_dir.rglob("*") if p.is_file()])
+        json_files = sorted([str(p.relative_to(extract_dir)) for p in extract_dir.rglob("*.json")])
+        
+        logger.info(f"📊 SLPK Statistics:")
+        logger.info(f"   • Total directories: {len(all_dirs)}")
+        logger.info(f"   • Total files: {len(all_files)}")
+        logger.info(f"   • JSON files: {len(json_files)}")
+        
+        # Show first 50 directories
+        logger.info(f"📁 First {min(50, len(all_dirs))} directories:")
+        for d in all_dirs[:50]:
+            logger.info(f"   • {d}/")
+        
+        # Show first 50 files
+        logger.info(f"📄 First {min(50, len(all_files))} files:")
+        for f in all_files[:50]:
+            logger.info(f"   • {f}")
+        
+        # Show ALL JSON files (critical for I3S detection)
+        logger.info(f"📋 All {len(json_files)} JSON files:")
+        for json_file in json_files:
+            logger.info(f"   • {json_file}")
+        
+        # Search for I3S-specific files
+        service_json_files = list(extract_dir.glob("**/service.json"))
+        layers_folders = [p for p in extract_dir.rglob("*") if p.is_dir() and p.name == "layers"]
+        scene_layer_files = list(extract_dir.glob("**/3dSceneLayer.json"))
+        layer_json_files = list(extract_dir.glob("**/layer.json"))
+        
+        logger.info(f"🔍 I3S-specific candidates:")
+        logger.info(f"   • service.json files: {len(service_json_files)}")
+        for f in service_json_files:
+            logger.info(f"      - {f.relative_to(extract_dir)}")
+        logger.info(f"   • layers/ folders: {len(layers_folders)}")
+        for d in layers_folders:
+            logger.info(f"      - {d.relative_to(extract_dir)}/")
+        logger.info(f"   • 3dSceneLayer.json files: {len(scene_layer_files)}")
+        for f in scene_layer_files:
+            logger.info(f"      - {f.relative_to(extract_dir)}")
+        logger.info(f"   • layer.json files: {len(layer_json_files)}")
+        for f in layer_json_files:
+            logger.info(f"      - {f.relative_to(extract_dir)}")
+
+        # ============================================================
+        # ROBUST I3S DETECTION: Multiple strategies
+        # ============================================================
+        i3s_url = None
+        detection_strategy = None
+        
+        # Strategy 0: Root-level 3dSceneLayer.json (direct I3S layer at root)
+        if (extract_dir / "3dSceneLayer.json").exists():
+            i3s_url = f"/uploads/{extract_dir.name}/3dSceneLayer.json"
+            detection_strategy = "root-level 3dSceneLayer.json"
+            logger.info(f"✅ Strategy 0: Found 3dSceneLayer.json at root: {i3s_url}")
+        
+        # Strategy 1: SceneServer root (most common for SLPK)
+        if not i3s_url:
+            scene_server_dir = extract_dir / "SceneServer"
+            if not scene_server_dir.exists():
+                # Case-insensitive search
+                candidates = list(extract_dir.glob("**/SceneServer"))
+                if candidates:
+                    scene_server_dir = candidates[0]
+            
+            if scene_server_dir and scene_server_dir.exists():
+                rel_path = scene_server_dir.relative_to(extract_dir)
+                i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+                detection_strategy = "SceneServer root"
+                logger.info(f"✅ Strategy 1: Found SceneServer root: {i3s_url}")
+        
+        # Strategy 2: Folder with service.json + layers/ subfolder
+        if not i3s_url:
+            for service_file in service_json_files:
+                parent = service_file.parent
+                if (parent / "layers").exists():
+                    rel_path = parent.relative_to(extract_dir)
+                    i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+                    detection_strategy = "service.json + layers/"
+                    logger.info(f"✅ Strategy 2: Found service root with service.json + layers/: {i3s_url}")
+                    break
+        
+        # Strategy 3: Folder containing layers/0/ with scene layer metadata
+        if not i3s_url:
+            for layers_folder in layers_folders:
+                layer_0 = layers_folder / "0"
+                if layer_0.exists() and layer_0.is_dir():
+                    # Check if this layer has metadata
+                    if (layer_0 / "3dSceneLayer.json").exists() or (layer_0 / "layer.json").exists():
+                        # Return the parent of "layers" as the service root
+                        service_root = layers_folder.parent
+                        rel_path = service_root.relative_to(extract_dir)
+                        i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+                        detection_strategy = "layers/0/ folder"
+                        logger.info(f"✅ Strategy 3: Found service root via layers/0/: {i3s_url}")
+                        break
+        
+        # Strategy 4: Direct layer folder (folder containing 3dSceneLayer.json)
+        if not i3s_url and scene_layer_files:
+            # Return the FILE path, not the folder
+            rel_path = scene_layer_files[0].relative_to(extract_dir)
+            i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+            detection_strategy = "direct layer file (3dSceneLayer.json)"
+            logger.info(f"✅ Strategy 4: Found 3dSceneLayer.json file: {i3s_url}")
+        
+        # Strategy 5: Direct layer folder (folder containing layer.json)
+        if not i3s_url and layer_json_files:
+            # Return the FILE path, not the folder
+            rel_path = layer_json_files[0].relative_to(extract_dir)
+            i3s_url = f"/uploads/{extract_dir.name}/{rel_path.as_posix()}"
+            detection_strategy = "direct layer file (layer.json)"
+            logger.info(f"✅ Strategy 5: Found layer.json file: {i3s_url}")
+
+        # ============================================================
+        # NO I3S ENTRY POINT FOUND: Return detailed diagnostic
+        # ============================================================
+        if not i3s_url:
+            if job_id:
+                update_job(job_id, progress=50, message="No I3S entrypoint found")
+            
+            logger.error(f"❌ SLPK extracted but no I3S entry point found in {extract_dir.name}")
+            logger.error(f"   Extraction path: {extract_dir}")
+            logger.error(f"   • Directories: {len(all_dirs)}")
+            logger.error(f"   • Files: {len(all_files)}")
+            logger.error(f"   • JSON files: {len(json_files)}")
+            logger.error(f"   • service.json: {len(service_json_files)}")
+            logger.error(f"   • layers/ folders: {len(layers_folders)}")
+            logger.error(f"   • 3dSceneLayer.json: {len(scene_layer_files)}")
+            logger.error(f"   • layer.json: {len(layer_json_files)}")
+            
+            # Get top-level folder names
+            top_level = sorted([p.name for p in extract_dir.iterdir()])
+            logger.error(f"   • Top-level items: {', '.join(top_level)}")
+            
+            # Build detailed error message
+            error_parts = [
+                f"SLPK extracted but no I3S entry point found.",
+                f"Statistics: {len(all_dirs)} dirs, {len(all_files)} files, {len(json_files)} JSONs.",
+                f"Top-level: {', '.join(top_level)}.",
+            ]
+            
+            if json_files:
+                json_list = ", ".join(json_files[:30])
+                error_parts.append(f"JSON files: {json_list}.")
+            
+            if not layers_folders:
+                error_parts.append("No 'layers/' folders found (expected for valid I3S).")
+            
+            if not service_json_files and not scene_layer_files and not layer_json_files:
+                error_parts.append("No I3S metadata files found (service.json, 3dSceneLayer.json, layer.json).")
+            
+            error_message = " ".join(error_parts)
+            
+            return {
+                "filename": original_filename,
+                "url": f"/uploads/{extract_dir.name}",
+                "size": sum(p.stat().st_size for p in extract_dir.rglob('*') if p.is_file()),
+                "processing_type": "slpk_extracted_unrecognized",
+                "message": error_message
+            }
+
+        total_size = sum(p.stat().st_size for p in extract_dir.rglob('*') if p.is_file())
+        logger.info(f"✅ SLPK extracted successfully: {extract_dir.name}")
+        logger.info(f"   • Detection strategy: {detection_strategy}")
+        logger.info(f"   • I3S URL: {i3s_url}")
+        logger.info(f"   • Total size: {total_size} bytes")
+        logger.info(f"   • Directories: {len(all_dirs)}, Files: {len(all_files)}, JSONs: {len(json_files)}")
+        
+        if job_id:
+            update_job(job_id, progress=90, message="I3S layer ready")
+
+        # Final log: show exactly what URL we're returning
+        logger.info(f"🎯 FINAL I3S URL: {i3s_url}")
+        logger.info(f"🎯 Detection strategy used: {detection_strategy}")
+
+        return {
+            "filename": original_filename,
+            "url": i3s_url,
+            "size": total_size,
+            "processing_type": "i3s",
+            "message": "SLPK extracted as I3S (load with Cesium.I3SDataProvider)"
+        }
+
+    except Exception as e:
+        logger.error(f"SLPK processing error: {e}", exc_info=True)
+        # Clean up
+        try:
+            if extract_dir.exists():
+                shutil.rmtree(extract_dir)
+        except Exception:
+            pass
+        # Fallback: serve original file
+        filename = f"slpk_{int(time.time())}_{original_filename}"
+        new_path = UPLOADS_DIR / filename
+        shutil.move(str(file_path), str(new_path))
+
+        return {
+            "filename": filename,
+            "url": f"/uploads/{filename}",
+            "size": new_path.stat().st_size,
+            "processing_type": "slpk_raw",
+            "message": "SLPK could not be extracted; serving raw file"
+        }
     """Handle geospatial formats"""
     try:
         # Try to convert to 3D Tiles
@@ -1050,34 +1746,109 @@ bpy.ops.export_scene.gltf(
         print(f"Blender conversion failed: {e}")
         return None
 
-async def convert_point_cloud_to_3dtiles(input_path: Path) -> bool:
-    """Convert point cloud to 3D Tiles using PotreeConverter"""
+async def convert_point_cloud_to_3dtiles(input_path: Path, original_filename: str, job_id: str = None) -> dict:
+    """
+    Convert point cloud (PLY/LAS/LAZ) to 3D Tiles format.
+    
+    Uses py3dtiles library (https://github.com/Oslandia/py3dtiles).
+    Output: folder with tileset.json + .pnts binary tiles.
+    
+    Returns dict with:
+      - success: bool
+      - tileset_url: str (URL to tileset.json)
+      - tileset_name: str (folder name)
+      - size: int (total bytes)
+      - tile_count: int
+      - error: str (if failed)
+    """
+    import logging
+    logger = logging.getLogger("myearth.assets")
+    
+    file_ext = input_path.suffix.lower()
+    output_dirname = f"pointcloud_{int(time.time())}_{Path(original_filename).stem}"
+    output_dir = UPLOADS_DIR / output_dirname
+    output_dir.mkdir(exist_ok=True)
+    
     try:
-        output_dir = UPLOADS_DIR / f"pointcloud_tiles_{int(time.time())}"
-        output_dir.mkdir(exist_ok=True)
-        
-        # Try using PotreeConverter
-        result = subprocess.run([
-            "PotreeConverter", str(input_path), "-o", str(output_dir)
-        ], capture_output=True, timeout=300)
-        
-        if result.returncode == 0:
-            # Find the tileset.json file
-            tileset_file = output_dir / "tileset.json"
-            if tileset_file.exists():
-                # Move to uploads directory
-                final_tileset = UPLOADS_DIR / f"pointcloud_{int(time.time())}.json"
-                shutil.move(str(tileset_file), str(final_tileset))
+        # Try py3dtiles first (preferred, pure Python)
+        try:
+            import subprocess
+            
+            if job_id:
+                update_job(job_id, stage=JobStage.GENERATING_TILESET, progress=40, message="Running py3dtiles converter...")
+            
+            result = subprocess.run([
+                "py3dtiles", "convert", str(input_path),
+                "--out", str(output_dir),
+                "--overwrite"
+            ], capture_output=True, text=True, timeout=600)
+            
+            if result.returncode == 0:
+                if job_id:
+                    update_job(job_id, progress=70, message="Conversion complete, finalizing...")
                 
-                # Clean up temporary directory
-                shutil.rmtree(output_dir)
-                return True
+                tileset_path = output_dir / "tileset.json"
+                if tileset_path.exists():
+                    # Count tiles
+                    tile_count = len(list(output_dir.rglob("*.pnts")))
+                    total_size = sum(f.stat().st_size for f in output_dir.rglob('*') if f.is_file())
+                    
+                    logger.info(f"py3dtiles conversion success: {tile_count} tiles, {total_size} bytes")
+                    
+                    if job_id:
+                        update_job(job_id, progress=90, message=f"Generated {tile_count} tiles")
+                    
+                    # Clean up original
+                    try:
+                        input_path.unlink()
+                    except Exception:
+                        pass
+                    
+                    return {
+                        "success": True,
+                        "tileset_url": f"/uploads/{output_dirname}/tileset.json",
+                        "tileset_name": output_dirname,
+                        "size": total_size,
+                        "tile_count": tile_count
+                    }
+                else:
+                    logger.warning(f"py3dtiles ran but tileset.json not found: {result.stderr}")
+            else:
+                logger.warning(f"py3dtiles failed (code {result.returncode}): {result.stderr}")
+        except FileNotFoundError:
+            logger.warning("py3dtiles not installed")
+        except Exception as e:
+            logger.warning(f"py3dtiles error: {e}")
         
-        return False
+        # All conversion methods failed
+        logger.error(f"No point cloud converter available for {file_ext}")
+        
+        # Clean up output dir
+        try:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+        except Exception:
+            pass
+        
+        return {
+            "success": False,
+            "error": f"py3dtiles not installed or failed. Install with: pip install py3dtiles[las]"
+        }
         
     except Exception as e:
-        print(f"Point cloud conversion failed: {e}")
-        return False
+        logger.error(f"Point cloud conversion error: {e}", exc_info=True)
+        
+        # Clean up
+        try:
+            if output_dir.exists():
+                shutil.rmtree(output_dir)
+        except Exception:
+            pass
+        
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 async def convert_splats_to_3dtiles(input_path: Path) -> bool:
     """Convert Gaussian splats to 3D Tiles"""
@@ -1123,13 +1894,8 @@ async def upload_to_cesium_ion(file_path: Path, filename: str) -> str:
         print(f"Cesium ion upload failed: {e}")
         raise e
 
-@app.get("/uploads/{filename}")
-async def serve_uploaded_file(filename: str):
-    """Serve uploaded files"""
-    file_path = UPLOADS_DIR / filename
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path)
+# NOTE: /uploads is now served by StaticFiles (see app.mount above) to support both files and directories.
+# If you need custom headers later (cache control, etc.), we can add a dedicated /api/asset/{path} endpoint.
 
 # --------------------
 # Server startup

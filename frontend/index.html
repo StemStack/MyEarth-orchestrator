@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- ======================================== -->
 <!-- MYEARTH.APP - 3D GLOBE VIEWER -->
+<!-- BUILD_STAMP: 2024-12-26_13:15:00 -->
 <!-- ======================================== -->
 <!-- 
     PANEL SYSTEM DOCUMENTATION
@@ -3269,25 +3270,47 @@
             </div>
         </div>
         
-        <!-- Gizmo Controls Section -->
-        <div class="sidebar-section">
-            <div class="section-header" onclick="toggleSection('gizmo')">
-                <span><svg width="12" height="12" viewBox="0 0 24 24" style="margin-right: 6px; vertical-align: middle;"><path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 22V12" stroke="currentColor" stroke-width="2"/><path d="M2 7L12 12L22 7" stroke="currentColor" stroke-width="2"/></svg>Gizmo Controls</span>
+        <!-- ArcGIS Debug Tools (only visible when ?debug=1) -->
+        <div class="sidebar-section" id="arcgisDebugSection" style="display: none;">
+            <div class="section-header" onclick="toggleSection('arcgisDebug')">
+                <span>
+                    🌐 ArcGIS Tools
+                </span>
                 <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></span>
             </div>
-            <div class="section-content" id="gizmo">
-                <div class="gizmo-controls">
-                    <h4>🎮 3D Manipulation</h4>
-                    <div class="gizmo-buttons">
-                        <button class="gizmo-btn active" onclick="setGizmoMode('translate')">↔️ T</button>
-                        <button class="gizmo-btn" onclick="setGizmoMode('rotate')">🔄 R</button>
-                        <button class="gizmo-btn" onclick="setGizmoMode('scale')">📏 S</button>
-                    </div>
-                    <div class="gizmo-buttons">
-                        <button class="gizmo-btn secondary" onclick="toggleGizmo()">🎯 Toggle</button>
-                        <button class="gizmo-btn secondary" onclick="selectNextModel()">⏭️ Next</button>
-                    </div>
-                    <div class="gizmo-status" id="gizmoStatus">Ready for 3D models</div>
+            <div class="section-content" id="arcgisDebug">
+                <!-- WebScene Viewer -->
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555;">WebScene Portal ID:</label>
+                    <input type="text" id="arcgisPortalItemId" placeholder="4561446e7f384a969cfbe368e9ca0002" 
+                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; margin-top: 4px;">
+                    <button class="control-button secondary" onclick="openArcGISViewer()" style="margin-top: 6px; width: 100%;">
+                        Open in ArcGIS Viewer
+                    </button>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 12px 0;">
+                
+                <!-- Item Inspector -->
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555;">Inspect WebScene:</label>
+                    <button class="control-button secondary" onclick="inspectWebScene()" style="margin-top: 6px; width: 100%;">
+                        Inspect Item
+                    </button>
+                    <div id="websceneInspectorResults" style="margin-top: 8px; font-size: 11px;"></div>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 12px 0;">
+                
+                <!-- SLPK Search -->
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 11px; font-weight: 600; color: #555;">Search Public SLPK:</label>
+                    <input type="text" id="arcgisSlpkQuery" placeholder="buildings city 3d" value="buildings city 3d"
+                           style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px; margin-top: 4px;">
+                    <button class="control-button secondary" onclick="searchPublicSLPK()" style="margin-top: 6px; width: 100%;">
+                        Search SLPK
+                    </button>
+                    <div id="slpkSearchResults" style="margin-top: 8px; max-height: 300px; overflow-y: auto;"></div>
                 </div>
             </div>
         </div>
@@ -3844,7 +3867,104 @@
 
 
     <!-- File input (hidden) -->
-    <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.dxf,.usdz" style="display: none;">
+    <input type="file" id="modelFileInput" accept=".gltf,.glb,.obj,.fbx,.dae,.stl,.ply,.las,.laz,.slpk,.dxf,.usdz" style="display: none;">
+    
+    <!-- Placement Modal (hidden by default) -->
+    <div id="placementModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100001; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; color: #333;">📍 Place 3D Model</h3>
+                <button onclick="cancelPlacement()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            
+            <!-- Model name -->
+            <div style="margin-bottom: 16px; padding: 12px; background: #f5f5f5; border-radius: 4px;">
+                <strong>Model:</strong> <span id="placementModelName">unknown.glb</span>
+            </div>
+            
+            <!-- Instructions -->
+            <div style="margin-bottom: 20px; color: #666; font-size: 14px;">
+                Choose how to place this model:
+            </div>
+            
+            <!-- Option 1: Click on map -->
+            <button id="placementClickMapBtn" onclick="startPlacementPickMode()" 
+                    style="width: 100%; padding: 12px; margin-bottom: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="font-size: 18px;">🎯</span>
+                <span>Click on map</span>
+            </button>
+            
+            <!-- Option 2: Enter coordinates -->
+            <button id="placementEnterCoordsBtn" onclick="showCoordinateInputs()" 
+                    style="width: 100%; padding: 12px; margin-bottom: 12px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <span style="font-size: 18px;">⌨️</span>
+                <span>Enter coordinates</span>
+            </button>
+            
+            <!-- Coordinate inputs (hidden by default) -->
+            <div id="placementCoordinateInputs" style="display: none; margin-top: 16px; padding: 16px; background: #f9f9f9; border-radius: 4px;">
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Longitude (°)</label>
+                    <input type="number" id="placementLon" step="0.000001" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Latitude (°)</label>
+                    <input type="number" id="placementLat" step="0.000001" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Height (m)</label>
+                    <input type="number" id="placementHeight" step="0.1" value="0.5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 16px; padding: 10px; background: #e8f5e9; border-radius: 4px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px;">
+                        <input type="checkbox" id="placementClampToGround" checked style="width: 18px; height: 18px;">
+                        <span><strong>✅ Clamp to ground</strong> (height = meters above terrain)</span>
+                    </label>
+                    <div style="font-size: 11px; color: #666; margin-top: 4px; margin-left: 26px;">
+                        When checked, height will be added to terrain elevation. Uncheck to use absolute height.
+                    </div>
+                </div>
+                <button onclick="applyManualPlacement()" 
+                        style="width: 100%; padding: 10px; background: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600;">
+                    Apply Position
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Progress Modal (hidden by default) -->
+    <div id="progressModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100002; justify-content: center; align-items: center;">
+        <div style="background: white; border-radius: 8px; padding: 24px; max-width: 500px; width: 90%; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+            <!-- Header -->
+            <div style="margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 18px; color: #333;">📦 Processing Model</h3>
+            </div>
+            
+            <!-- Filename -->
+            <div id="progressFilename" style="margin-bottom: 12px; padding: 10px; background: #f5f5f5; border-radius: 4px; font-size: 14px; word-break: break-all;">
+            </div>
+            
+            <!-- Status message -->
+            <div id="progressMessage" style="margin-bottom: 12px; font-size: 14px; color: #666;">
+                Uploading...
+            </div>
+            
+            <!-- Progress bar -->
+            <div style="width: 100%; background: #f0f0f0; border-radius: 10px; height: 24px; margin-bottom: 12px; overflow: hidden;">
+                <div id="progressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.3s ease; display: flex; align-items: center; justify-content: center;">
+                    <span id="progressPercent" style="font-size: 12px; font-weight: bold; color: white;">0%</span>
+                </div>
+            </div>
+            
+            <!-- Stats -->
+            <div id="progressStats" style="font-size: 12px; color: #999; display: flex; justify-content: space-between;">
+                <span id="progressBytes">0 MB / 0 MB</span>
+                <span id="progressSpeed"></span>
+            </div>
+        </div>
+    </div>
+    
     <!-- CesiumJS JavaScript -->
     <script src="https://cesium.com/downloads/cesiumjs/releases/1.111/Build/Cesium/Cesium.js"></script>
     
@@ -3997,6 +4117,83 @@
         
         console.log('✓ Ion services completely disabled - using only free, open-source data');
         
+        // ========================================
+        // BUILD VERIFICATION - Dynamic timestamp
+        // ========================================
+        console.log('='.repeat(80));
+        console.log('🏗️  BUILD VERIFICATION');
+        console.log('📍 File: frontend/index.html');
+        
+        // Create badge showing server start time + uptime
+        const buildBadge = document.createElement('div');
+        buildBadge.id = 'buildBadge';
+        buildBadge.textContent = `SERVER START: ${new Date().toLocaleTimeString()}`;
+        buildBadge.style.cssText = `
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ff6b6b;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 99999;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: help;
+        `;
+        document.body.appendChild(buildBadge);
+        console.log('✅ Build badge added:', new Date().toLocaleString());
+        
+        // Fetch server start time and calculate uptime
+        fetch(`/version.json?t=${Date.now()}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log('🏗️  VERSION INFO (server):', data);
+                console.log('  • Version:', data.version);
+                console.log('  • Server Start:', data.serverStartDate || 'N/A');
+                console.log('  • Server Start Timestamp:', data.serverStartTimestamp || 'N/A');
+                console.log('  • Build Date:', data.buildDate || 'N/A');
+                console.log('  • Build Timestamp:', data.buildTimestamp || 'N/A');
+                console.log('  • Environment:', data.environment || 'N/A');
+                
+                // Use serverStartTimestamp (when Python process started), fallback to buildTimestamp
+                const startTimestamp = data.serverStartTimestamp || data.buildTimestamp;
+                const serverStartTime = new Date(startTimestamp * 1000);
+                const serverStartLocal = serverStartTime.toLocaleTimeString();
+                
+                // Calculate uptime (time since Python server started)
+                const uptimeMs = Date.now() - (startTimestamp * 1000);
+                const uptimeMins = Math.floor(uptimeMs / 60000);
+                const uptimeHours = Math.floor(uptimeMins / 60);
+                const uptimeDays = Math.floor(uptimeHours / 24);
+                
+                let uptimeStr = '';
+                if (uptimeDays > 0) {
+                    uptimeStr = `${uptimeDays}d ${uptimeHours % 24}h`;
+                } else if (uptimeHours > 0) {
+                    uptimeStr = `${uptimeHours}h ${uptimeMins % 60}m`;
+                } else {
+                    uptimeStr = `${uptimeMins}m`;
+                }
+                
+                // Update badge with server start time + uptime
+                buildBadge.textContent = `SERVER START: ${serverStartLocal} • UP: ${uptimeStr}`;
+                
+                // Tooltip shows full details
+                const buildTime = data.buildTimestamp ? new Date(data.buildTimestamp * 1000).toLocaleString() : 'N/A';
+                buildBadge.title = `Server started: ${serverStartTime.toLocaleString()}\nBuild time: ${buildTime}\nVersion: ${data.version}\nEnvironment: ${data.environment || 'dev'}`;
+                
+                console.log(`✅ Server started at: ${serverStartLocal} (uptime: ${uptimeStr})`);
+            })
+            .catch(err => {
+                console.warn('⚠️  Could not fetch version.json:', err);
+                buildBadge.title = `Could not fetch server info`;
+            });
+        
+        console.log('='.repeat(80));
+        
         // Safely disable timeline and animation in viewer options only
         console.log('Preparing viewer with timeline disabled');
         
@@ -4030,6 +4227,11 @@
             requestRenderMode: false,
             maximumRenderTimeChange: Infinity
         });
+        
+        // Enable depth testing against terrain for better picking accuracy
+        // This helps pickPosition and visual correctness when tilted
+        viewer.scene.globe.depthTestAgainstTerrain = true;
+        console.log('✅ Enabled depthTestAgainstTerrain for precise ground picking');
 
         // Initialize Buildings 3D controller
         if (window.Buildings3DController && typeof window.Buildings3DController.init === 'function') {
@@ -4547,6 +4749,10 @@
         // Initialize Gizmo System
         console.log('🚀 Initializing Universal 3D Model Importer and Gizmo System...');
         
+        // Global model registry for imported 3D models
+        window.importedModelsRegistry = new Map();
+        let modelIdCounter = 0;
+        
         // Initialize Model Importer
         const modelImporter = new CesiumModelImporter(viewer, {
             autoSelect: true,
@@ -4578,51 +4784,1099 @@
         window.setGizmoMode = function(mode) {
             gizmo.setMode(mode);
             
-            // Update button states
-            document.querySelectorAll('.gizmo-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            // Update button states for all gizmo mode buttons
+            document.querySelectorAll('.gizmo-mode-btn').forEach(btn => {
+                if (btn.dataset.mode === mode) {
+                    btn.style.background = '#28a745';
+                } else {
+                    btn.style.background = '#6c757d';
+                }
+            });
             
-            updateGizmoStatus(`Mode: ${mode}`);
+            console.log(`🎮 Gizmo mode: ${mode}`);
         };
         
-        window.toggleGizmo = function() {
-            if (gizmo.isVisible()) {
-                gizmo.hide();
-                updateGizmoStatus('Gizmo hidden');
-            } else {
-                gizmo.show();
-                updateGizmoStatus('Gizmo visible');
+        // ========================================
+        // INITIAL PLACEMENT (Promise-based)
+        // ========================================
+        
+        // Global state for pending placement
+        window._pendingPlacement = { 
+            active: false, 
+            modelId: null, 
+            fileName: null, 
+            url: null,
+            resolve: null, 
+            reject: null 
+        };
+        
+        /**
+         * Require initial placement for a model (promise-based)
+         * @returns {Promise<{lon, lat, height}>}
+         */
+        function requireInitialPlacement(pending) {
+            return new Promise((resolve, reject) => {
+                window._pendingPlacement.active = true;
+                window._pendingPlacement.modelId = pending.modelId;
+                window._pendingPlacement.fileName = pending.fileName;
+                window._pendingPlacement.url = pending.url;
+                window._pendingPlacement.resolve = resolve;
+                window._pendingPlacement.reject = reject;
+                
+                // Show placement modal
+                const modal = document.getElementById('placementModal');
+                const modelName = document.getElementById('placementModelName');
+                
+                if (modal) {
+                    modal.style.display = 'flex';
+                }
+                if (modelName) {
+                    modelName.textContent = pending.fileName || 'unknown.glb';
+                }
+                
+                // Prefill with camera center
+                const cameraPos = viewer.camera.positionCartographic;
+                const lon = Cesium.Math.toDegrees(cameraPos.longitude);
+                const lat = Cesium.Math.toDegrees(cameraPos.latitude);
+                
+                const lonInput = document.getElementById('placementLon');
+                const latInput = document.getElementById('placementLat');
+                const heightInput = document.getElementById('placementHeight');
+                
+                if (lonInput) lonInput.value = lon.toFixed(6);
+                if (latInput) latInput.value = lat.toFixed(6);
+                if (heightInput) heightInput.value = '0';
+                
+                console.log(`📍 Waiting for initial placement of ${pending.fileName}...`);
+            });
+        }
+        
+        /**
+         * Close placement modal
+         */
+        function closePlacementModal() {
+            const modal = document.getElementById('placementModal');
+            const coordInputs = document.getElementById('placementCoordinateInputs');
+            
+            if (modal) modal.style.display = 'none';
+            if (coordInputs) coordInputs.style.display = 'none';
+        }
+        
+        /**
+         * Clear pending placement state
+         */
+        function clearPendingPlacement() {
+            window._pendingPlacement.active = false;
+            window._pendingPlacement.modelId = null;
+            window._pendingPlacement.fileName = null;
+            window._pendingPlacement.url = null;
+            window._pendingPlacement.resolve = null;
+            window._pendingPlacement.reject = null;
+        }
+        
+        /**
+         * Cancel placement (called by X button or Esc)
+         */
+        window.cancelPlacement = function() {
+            if (window._pendingPlacement.reject) {
+                window._pendingPlacement.reject(new Error('Placement cancelled by user'));
+            }
+            
+            closePlacementModal();
+            clearPendingPlacement();
+            
+            // Exit pick mode if active
+            if (window._pickPosition.active) {
+                window._pickPosition.active = false;
+                window._pickPosition.modelId = null;
+                document.body.style.cursor = "default";
+            }
+            
+            console.log('❌ Placement cancelled');
+            showToast('Model import cancelled', 2000);
+        };
+        
+        /**
+         * Show coordinate input fields
+         */
+        window.showCoordinateInputs = function() {
+            const coordInputs = document.getElementById('placementCoordinateInputs');
+            if (coordInputs) {
+                coordInputs.style.display = 'block';
             }
         };
         
-        window.selectNextModel = function() {
-            const models = Array.from(modelImporter.getImportedModels().values());
-            if (models.length === 0) {
-                updateGizmoStatus('No models to select');
+        /**
+         * Apply manual placement from coordinate inputs (async for terrain sampling)
+         */
+        window.applyManualPlacement = async function() {
+            const lonInput = document.getElementById('placementLon');
+            const latInput = document.getElementById('placementLat');
+            const heightInput = document.getElementById('placementHeight');
+            const clampCheckbox = document.getElementById('placementClampToGround');
+            
+            const lon = parseFloat(lonInput.value);
+            const lat = parseFloat(latInput.value);
+            let height = parseFloat(heightInput.value) || 0;
+            const clampToGround = clampCheckbox.checked;
+            
+            if (isNaN(lon) || isNaN(lat)) {
+                showToast('Invalid coordinates', 2000);
                 return;
             }
             
-            // For now, just select the first model
-            const model = models[0];
-            modelImporter.selectModel(model.entity);
-            updateGizmoStatus(`Selected: ${model.file.name}`);
+            // If clamp to ground is enabled, add height to terrain elevation
+            if (clampToGround) {
+                const cartographic = Cesium.Cartographic.fromDegrees(lon, lat);
+                let terrainHeight = 0;
+                
+                try {
+                    // Use async terrain sampling for accuracy
+                    const updated = await Cesium.sampleTerrainMostDetailed(
+                        viewer.terrainProvider,
+                        [cartographic]
+                    );
+                    terrainHeight = (updated?.[0]?.height ?? 0);
+                    console.log(`📏 Sampled terrain height: ${terrainHeight.toFixed(2)}m`);
+                } catch (e) {
+                    console.warn('⚠️ Terrain sampling failed, using fallback:', e);
+                    terrainHeight = viewer.scene.globe.getHeight(cartographic) || 0;
+                }
+                
+                // Add user's height offset to terrain elevation
+                height = terrainHeight + height;
+                console.log(`✅ Clamped to ground: terrain(${terrainHeight.toFixed(2)}m) + offset(${parseFloat(heightInput.value).toFixed(2)}m) = ${height.toFixed(2)}m`);
+            }
+            
+            // Resolve the pending placement promise
+            if (window._pendingPlacement.resolve) {
+                window._pendingPlacement.resolve({ lon, lat, height });
+            }
+            
+            closePlacementModal();
+            clearPendingPlacement();
+            
+            const mode = clampToGround ? 'terrain-clamped' : 'absolute';
+            console.log(`✅ Manual placement applied (${mode}): ${lon.toFixed(6)}, ${lat.toFixed(6)}, ${height.toFixed(2)}m`);
         };
         
-        function updateGizmoStatus(message) {
-            const statusElement = document.getElementById('gizmoStatus');
-            if (statusElement) {
-                statusElement.textContent = message;
+        /**
+         * Pick ground cartesian under cursor (works with camera tilt + terrain)
+         * Priority: pickPosition > globe.pick > pickEllipsoid
+         */
+        function pickGroundCartesian(movement) {
+            // Build ray from camera through cursor
+            const ray = viewer.camera.getPickRay(movement.position);
+            if (!ray) return null;
+            
+            // Try method 1: pickPosition (if supported, gives exact depth-buffer position)
+            if (viewer.scene.pickPositionSupported) {
+                const c1 = viewer.scene.pickPosition(movement.position);
+                if (c1) {
+                    console.log('📍 Using pickPosition (depth buffer)');
+                    return c1;
+                }
+            }
+            
+            // Try method 2: globe.pick (gives terrain surface along ray)
+            const c2 = viewer.scene.globe.pick(ray, viewer.scene);
+            if (c2) {
+                console.log('📍 Using globe.pick (terrain ray cast)');
+                return c2;
+            }
+            
+            // Try method 3: pickEllipsoid (fallback, ignores terrain)
+            const c3 = viewer.camera.pickEllipsoid(movement.position, viewer.scene.globe.ellipsoid);
+            if (c3) {
+                console.log('📍 Using pickEllipsoid (fallback)');
+                return c3;
+            }
+            
+            return null;
+        }
+        
+        /**
+         * Pick lon/lat from click and clamp height to ground (async + accurate)
+         * Uses pickGroundCartesian for precise cursor positioning even with camera tilt
+         */
+        async function pickLonLatAndClampToGround(movement) {
+            // 1) Get cartesian under cursor (accounts for terrain + camera tilt)
+            const cartesian = pickGroundCartesian(movement);
+            if (!cartesian) return null;
+            
+            const carto = Cesium.Cartographic.fromCartesian(cartesian);
+            const lon = Cesium.Math.toDegrees(carto.longitude);
+            const lat = Cesium.Math.toDegrees(carto.latitude);
+            
+            // 2) Get height
+            // If cartesian came from globe.pick, carto.height is already terrain surface
+            // If from pickPosition, carto.height is accurate clicked point
+            // If from pickEllipsoid, we need to sample terrain
+            let height = carto.height || 0;
+            
+            // Always sample terrain for accuracy (optional but recommended)
+            try {
+                const updated = await Cesium.sampleTerrainMostDetailed(
+                    viewer.terrainProvider,
+                    [Cesium.Cartographic.fromDegrees(lon, lat)]
+                );
+                const sampledHeight = updated?.[0]?.height;
+                if (sampledHeight !== undefined && sampledHeight !== null) {
+                    height = sampledHeight;
+                    console.log(`📏 Sampled terrain height: ${height.toFixed(2)}m`);
+                } else {
+                    console.log(`📏 Using picked height: ${height.toFixed(2)}m`);
+                }
+            } catch (e) {
+                console.warn('⚠️ Terrain sampling failed, using picked height:', e);
+                // Keep height from cartesian
+            }
+            
+            // 3) Small offset to avoid z-fighting
+            height = height + 0.5;
+            
+            return { lon, lat, height };
+        }
+        
+        /**
+         * Start placement pick mode (one-shot)
+         */
+        window.startPlacementPickMode = function() {
+            // Close modal but keep placement active
+            const modal = document.getElementById('placementModal');
+            if (modal) modal.style.display = 'none';
+            
+            // Enable pick mode
+            window._pickPosition.active = true;
+            window._pickPosition.modelId = window._pendingPlacement.modelId;
+            window._pickPosition.oneShotPlacement = true; // Flag for initial placement
+            document.body.style.cursor = "crosshair";
+            
+            console.log('🎯 Pick mode ON for initial placement - Click on map...');
+            showToast('Click on map to place model... (Esc to cancel)', 5000);
+        };
+        
+        // ========================================
+        // PICK POSITION MODE (Reposition existing models)
+        // ========================================
+        
+        // Global state for pick position mode
+        window._pickPosition = { active: false, modelId: null, oneShotPlacement: false };
+        
+        /**
+         * Start pick position mode for a model
+         */
+        window.startPickPosition = function(modelId) {
+            if (window._pickPosition.active) {
+                // Already active - cancel it (toggle behavior)
+                window._pickPosition.active = false;
+                window._pickPosition.modelId = null;
+                document.body.style.cursor = "default";
+                
+                // Reset button style
+                const btn = document.getElementById(`pick-pos-btn-${modelId}`);
+                if (btn) btn.style.background = "#3498db";
+                
+                console.log("🎯 Pick position mode CANCELLED");
+                return;
+            }
+            
+            window._pickPosition.active = true;
+            window._pickPosition.modelId = modelId;
+            document.body.style.cursor = "crosshair";
+            
+            // Highlight active button
+            const btn = document.getElementById(`pick-pos-btn-${modelId}`);
+            if (btn) btn.style.background = "#e74c3c";
+            
+            console.log(`🎯 Pick position mode ON for ${modelId} - Click on map to set position (Esc to cancel)`);
+            
+            // Show toast notification
+            showToast("Click on map to set position... (Esc to cancel)", 3000);
+        };
+        
+        /**
+         * Apply picked position to model
+         */
+        function applyPickedPosition(modelId, lon, lat, height) {
+            const modelData = window.importedModelsRegistry.get(modelId);
+            if (!modelData?.entity) return;
+            
+            const entity = modelData.entity;
+            const cart = Cesium.Cartesian3.fromDegrees(lon, lat, height);
+            entity.position = new Cesium.ConstantProperty(cart);
+            modelData.position = { longitude: lon, latitude: lat, height: height };
+            
+            // Update fields (use safeSetValue so it won't fight typing)
+            safeSetValue(`lon-${modelId}`, lon.toFixed(6));
+            safeSetValue(`lat-${modelId}`, lat.toFixed(6));
+            safeSetValue(`height-${modelId}`, height.toFixed(2));
+            
+            // Update header position summary
+            const entry = document.getElementById(`model-entry-${modelId}`);
+            if (entry) {
+                const posDisplay = entry.querySelector('div[style*="font-size: 10px"]');
+                if (posDisplay) {
+                    posDisplay.textContent = `${lon.toFixed(4)}°, ${lat.toFixed(4)}°, ${height.toFixed(0)}m`;
+                }
+            }
+            
+            // Reset button style
+            const btn = document.getElementById(`pick-pos-btn-${modelId}`);
+            if (btn) btn.style.background = "#3498db";
+            
+            console.log(`✅ Picked position: ${lon.toFixed(6)}, ${lat.toFixed(6)}, ${height.toFixed(2)}m`);
+            showToast(`Position updated: ${lon.toFixed(4)}°, ${lat.toFixed(4)}°`, 2000);
+        }
+        
+        /**
+         * Show temporary toast notification
+         */
+        function showToast(message, duration = 3000) {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 4px;
+                font-size: 14px;
+                z-index: 100000;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+        }
+        
+        // ========================================
+        // 3D SCENE CLICK DETECTION (Model Picking + Position Picking)
+        // ========================================
+        
+        // Setup click handler for selecting models in 3D scene
+        const clickHandler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+        
+        clickHandler.setInputAction(async function(movement) {
+            // ========================================
+            // 1) PICK POSITION MODE (PRIORITY)
+            // ========================================
+            if (window._pickPosition?.active) {
+                const modelId = window._pickPosition.modelId;
+                const isOneShotPlacement = window._pickPosition.oneShotPlacement;
+                
+                // Use async terrain sampling for accurate height
+                const picked = await pickLonLatAndClampToGround(movement);
+                
+                if (!picked) {
+                    console.warn('⚠️ Could not pick position');
+                    return;
+                }
+                
+                const { lon, lat, height } = picked;
+                
+                // Check if this is one-shot placement for initial import
+                if (isOneShotPlacement && window._pendingPlacement.active) {
+                    // Resolve the pending placement promise
+                    if (window._pendingPlacement.resolve) {
+                        window._pendingPlacement.resolve({ lon, lat, height });
+                    }
+                    
+                    closePlacementModal();
+                    clearPendingPlacement();
+                    
+                    console.log(`✅ Initial placement picked: ${lon.toFixed(6)}, ${lat.toFixed(6)}, ${height.toFixed(2)}m (terrain-clamped)`);
+                } else {
+                    // Normal reposition of existing model
+                    applyPickedPosition(modelId, lon, lat, height);
+                }
+                
+                // Exit pick mode
+                window._pickPosition.active = false;
+                window._pickPosition.modelId = null;
+                window._pickPosition.oneShotPlacement = false;
+                document.body.style.cursor = "default";
+                console.log("🎯 Pick position mode OFF");
+                
+                return; // Do NOT fall through to selection logic
+            }
+            
+            // ========================================
+            // 2) MODEL SELECTION (EXISTING LOGIC)
+            // ========================================
+            const pickedObject = viewer.scene.pick(movement.position);
+            
+            if (Cesium.defined(pickedObject)) {
+                // Check if clicked object is an entity
+                if (pickedObject.id && pickedObject.id instanceof Cesium.Entity) {
+                    const clickedEntity = pickedObject.id;
+                    
+                    // Search for this entity in our model registry
+                    let foundModelId = null;
+                    window.importedModelsRegistry.forEach((modelData, modelId) => {
+                        if (modelData.entity === clickedEntity) {
+                            foundModelId = modelId;
+                        }
+                    });
+                    
+                    if (foundModelId) {
+                        // Select this model
+                        selectModel(foundModelId);
+                        console.log(`🖱️ Clicked model in 3D scene: ${foundModelId}`);
+                    }
+                }
+            }
+        }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+        
+        // Esc key handler to cancel pick mode AND pending placement
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") {
+                // Check if pending placement is active
+                if (window._pendingPlacement?.active) {
+                    cancelPlacement();
+                    return;
+                }
+                
+                // Check if pick position mode is active
+                if (window._pickPosition?.active) {
+                    const modelId = window._pickPosition.modelId;
+                    window._pickPosition.active = false;
+                    window._pickPosition.modelId = null;
+                    window._pickPosition.oneShotPlacement = false;
+                    document.body.style.cursor = "default";
+                    
+                    // Reset button style
+                    if (modelId) {
+                        const btn = document.getElementById(`pick-pos-btn-${modelId}`);
+                        if (btn) btn.style.background = "#3498db";
+                    }
+                    
+                    console.log("🎯 Pick position mode CANCELLED (Esc)");
+                    showToast("Pick position cancelled", 1500);
+                }
+            }
+        });
+        
+        console.log('✅ 3D scene click detection initialized (click models to select, pick positions)');
+        
+        console.log('✅ Gizmo system initialized successfully!');
+        
+        // ========================================
+        // MODEL REGISTRY & UI FUNCTIONS
+        // ========================================
+        
+        /**
+         * Register an imported model in the global registry and UI
+         * @param {Cesium.Entity} entity - The Cesium entity
+         * @param {string} filename - Model filename
+         * @param {number} longitude - Longitude in degrees
+         * @param {number} latitude - Latitude in degrees
+         * @param {number} height - Height in meters
+         * @param {string} [existingModelId] - Optional existing model ID (if already generated)
+         */
+        window.registerImportedModel = function(entity, filename, longitude, latitude, height, existingModelId = null) {
+            const modelId = existingModelId || `model_${++modelIdCounter}`;
+            
+            try {
+                // Ensure height is above terrain
+                const cartographic = Cesium.Cartographic.fromDegrees(longitude, latitude);
+                if (viewer.scene.globe) {
+                    const terrainHeight = viewer.scene.globe.getHeight(cartographic) || 0;
+                    height = Math.max(height, terrainHeight + 2); // At least 2m above terrain
+                    console.log(`📍 Adjusted height to ${height.toFixed(2)}m (terrain: ${terrainHeight.toFixed(2)}m)`);
+                }
+                
+                // Ensure position is set as ConstantProperty
+                const cartesian = Cesium.Cartesian3.fromDegrees(longitude, latitude, height);
+                entity.position = new Cesium.ConstantProperty(cartesian);
+                
+                // Force visibility
+                entity.show = true;
+                
+                // Ensure scale is set as ConstantProperty with default value
+                const currentTime = viewer.clock.currentTime;
+                const sProp = entity?.model?.scale;
+                const currentScale = (sProp && typeof sProp.getValue === "function") 
+                    ? sProp.getValue(currentTime) 
+                    : (typeof sProp === 'number' ? sProp : 1.0);
+                const scaleNum = Number(currentScale) || 1.0;
+                
+                entity.model.scale = new Cesium.ConstantProperty(scaleNum);
+                entity._baseScale = scaleNum;
+                
+                // Optionally set height reference to clamp to ground
+                // entity.model.heightReference = Cesium.HeightReference.CLAMP_TO_GROUND;
+                
+                const modelData = {
+                    id: modelId,
+                    name: filename,
+                    entity: entity,
+                    cesiumModel: entity.model,
+                    position: { longitude, latitude, height },
+                    visible: true,
+                    selected: false,
+                    transform: {
+                        position: cartesian,
+                        rotation: { heading: 0, pitch: 0, roll: 0 },
+                        scale: scaleNum
+                    }
+                };
+                
+                // Store in registry
+                window.importedModelsRegistry.set(modelId, modelData);
+                
+                // Add to UI panel
+                addModelToUI(modelData);
+                
+                console.log(`✅ Registered model: ${filename} (ID: ${modelId}) at ${height.toFixed(2)}m, scale: ${scaleNum.toFixed(2)}`);
+                
+                return modelId;
+            } catch (error) {
+                console.error(`❌ Failed to register model ${filename}:`, error);
+                return null;
+            }
+        };
+        
+        /**
+         * Add model entry to the 3D Models panel UI
+         */
+        function addModelToUI(modelData) {
+            const modelsSection = document.getElementById('models3d');
+            
+            // Create models list container if it doesn't exist
+            let modelsList = document.getElementById('importedModelsList');
+            if (!modelsList) {
+                modelsList = document.createElement('div');
+                modelsList.id = 'importedModelsList';
+                modelsList.style.cssText = 'margin-top: 12px; max-height: 400px; overflow-y: auto;';
+                modelsSection.appendChild(modelsList);
+            }
+            
+            // Get initial position and scale (handle Properties correctly)
+            const pos = modelData.position;
+            const currentTime = viewer.clock.currentTime;
+            const sProp = modelData.entity?.model?.scale;
+            const scaleValue = (sProp && typeof sProp.getValue === "function") 
+                ? sProp.getValue(currentTime) 
+                : (typeof sProp === 'number' ? sProp : 1.0);
+            const scale = Number(scaleValue) || 1.0;
+            
+            // Get Cartesian coordinates for initial display
+            const posProp = modelData.entity.position;
+            const cartesianPos = (posProp && typeof posProp.getValue === "function") 
+                ? posProp.getValue(currentTime) 
+                : posProp;
+            const cartX = cartesianPos?.x?.toFixed(2) || '0';
+            const cartY = cartesianPos?.y?.toFixed(2) || '0';
+            const cartZ = cartesianPos?.z?.toFixed(2) || '0';
+            
+            // Create model entry
+            const modelEntry = document.createElement('div');
+            modelEntry.id = `model-entry-${modelData.id}`;
+            modelEntry.className = 'model-entry';
+            modelEntry.style.cssText = `
+                background: #f5f5f5;
+                border: 2px solid #ddd;
+                border-radius: 4px;
+                padding: 8px;
+                margin-bottom: 6px;
+                font-size: 12px;
+                transition: all 0.2s;
+            `;
+            
+            modelEntry.innerHTML = `
+                <!-- Header Row - Clickable to select -->
+                <div onclick="selectModel('${modelData.id}')" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            📦 ${modelData.name}
+                        </div>
+                        <div style="font-size: 10px; color: #666; margin-top: 2px;">
+                            ${pos.longitude.toFixed(4)}°, ${pos.latitude.toFixed(4)}°, ${pos.height.toFixed(0)}m
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 4px; margin-left: 8px;">
+                        <button onclick="event.stopPropagation(); toggleModelVisibility('${modelData.id}')" 
+                                id="vis-btn-${modelData.id}"
+                                title="Toggle visibility"
+                                style="padding: 4px 8px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                            👁️
+                        </button>
+                        <button onclick="event.stopPropagation(); zoomToModel('${modelData.id}')" 
+                                title="Zoom to model"
+                                style="padding: 4px 8px; background: #17a2b8; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                            🔍
+                        </button>
+                        <button onclick="event.stopPropagation(); toggleModelDetails('${modelData.id}')" 
+                                id="expand-btn-${modelData.id}"
+                                title="Show/hide details"
+                                style="padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                            ▼
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Expandable Details Section -->
+                <div id="model-details-${modelData.id}" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid #ccc;">
+                    <!-- Position Controls -->
+                    <div style="margin-bottom: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                            <div style="font-size: 10px; font-weight: 600; color: #2980b9;">📍 Position</div>
+                            <button class="pick-pos-btn" id="pick-pos-btn-${modelData.id}" onclick="startPickPosition('${modelData.id}')" 
+                                    title="Pick position on map" 
+                                    style="padding: 2px 6px; background: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px; transition: background 0.2s;">
+                                🎯
+                            </button>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Lon (°)</label>
+                                <input type="number" id="lon-${modelData.id}" step="0.000001" value="${pos.longitude.toFixed(6)}" 
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                                       onchange="updateModelProperty('${modelData.id}', 'position')">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Lat (°)</label>
+                                <input type="number" id="lat-${modelData.id}" step="0.000001" value="${pos.latitude.toFixed(6)}" 
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                                       onchange="updateModelProperty('${modelData.id}', 'position')">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Height (m)</label>
+                                <input type="number" id="height-${modelData.id}" step="0.1" value="${pos.height.toFixed(2)}" 
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                                       onchange="updateModelProperty('${modelData.id}', 'position')">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cartesian Coordinates (read-only display) -->
+                    <div style="margin-bottom: 8px; padding: 6px; background: rgba(155, 155, 155, 0.1); border-radius: 3px;">
+                        <div style="font-size: 10px; font-weight: 600; color: #666; margin-bottom: 4px;">🌍 Cartesian</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                            <div>
+                                <label style="font-size: 9px; color: #555;">X (m)</label>
+                                <input type="text" id="cartX-${modelData.id}" value="${cartX}" readonly
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 9px; background: #f9f9f9; color: #666;">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Y (m)</label>
+                                <input type="text" id="cartY-${modelData.id}" value="${cartY}" readonly
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 9px; background: #f9f9f9; color: #666;">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Z (m)</label>
+                                <input type="text" id="cartZ-${modelData.id}" value="${cartZ}" readonly
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 9px; background: #f9f9f9; color: #666;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scale Control -->
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 10px; font-weight: 600; color: #27ae60; margin-bottom: 4px;">📏 Scale</div>
+                        <input type="number" id="scale-${modelData.id}" step="0.1" min="0.1" max="10" value="${scale.toFixed(2)}" 
+                               style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                               onchange="updateModelProperty('${modelData.id}', 'scale')">
+                    </div>
+                    
+                    <!-- Orientation Controls -->
+                    <div style="margin-bottom: 8px;">
+                        <div style="font-size: 10px; font-weight: 600; color: #f39c12; margin-bottom: 4px;">🧭 Orientation</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;">
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Head (°)</label>
+                                <input type="number" id="heading-${modelData.id}" step="1" value="0" 
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                                       onchange="updateModelProperty('${modelData.id}', 'orientation')">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Pitch (°)</label>
+                                <input type="number" id="pitch-${modelData.id}" step="1" value="0" 
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                                       onchange="updateModelProperty('${modelData.id}', 'orientation')">
+                            </div>
+                            <div>
+                                <label style="font-size: 9px; color: #555;">Roll (°)</label>
+                                <input type="number" id="roll-${modelData.id}" step="1" value="0" 
+                                       style="width: 100%; padding: 3px; border: 1px solid #ddd; border-radius: 3px; font-size: 10px;" 
+                                       onchange="updateModelProperty('${modelData.id}', 'orientation')">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gizmo Controls (shown when selected) -->
+                    <div id="gizmo-controls-${modelData.id}" style="display: none; margin-top: 8px; padding: 6px; background: rgba(40, 167, 69, 0.1); border-radius: 3px;">
+                        <div style="font-size: 10px; font-weight: 600; color: #28a745; margin-bottom: 4px;">🎮 Gizmo Mode</div>
+                        <div style="display: flex; gap: 4px;">
+                            <button onclick="setGizmoMode('translate')" 
+                                    class="gizmo-mode-btn" data-mode="translate"
+                                    style="flex: 1; padding: 4px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                                ↔️ Move
+                            </button>
+                            <button onclick="setGizmoMode('rotate')" 
+                                    class="gizmo-mode-btn" data-mode="rotate"
+                                    style="flex: 1; padding: 4px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                                🔄 Rotate
+                            </button>
+                            <button onclick="setGizmoMode('scale')" 
+                                    class="gizmo-mode-btn" data-mode="scale"
+                                    style="flex: 1; padding: 4px; background: #6c757d; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">
+                                📏 Scale
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modelsList.appendChild(modelEntry);
+            
+            // Add Enter key handlers to all input fields
+            const fields = ['lon', 'lat', 'height', 'scale', 'heading', 'pitch', 'roll'];
+            fields.forEach(field => {
+                const input = document.getElementById(`${field}-${modelData.id}`);
+                if (input) {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            input.blur(); // Trigger onchange
+                        }
+                    });
+                }
+            });
+            
+            console.log(`✅ Added model to UI: ${modelData.name} with inline inspector`);
+        }
+        
+        /**
+         * Toggle model visibility
+         */
+        window.toggleModelVisibility = function(modelId) {
+            const modelData = window.importedModelsRegistry.get(modelId);
+            if (!modelData) return;
+            
+            modelData.visible = !modelData.visible;
+            modelData.entity.show = modelData.visible;
+            
+            // Update button
+            const btn = document.getElementById(`vis-btn-${modelId}`);
+            if (btn) {
+                btn.textContent = modelData.visible ? '👁️' : '🚫';
+                btn.style.background = modelData.visible ? '#007bff' : '#6c757d';
+            }
+            
+            console.log(`Model ${modelId} visibility: ${modelData.visible}`);
+        };
+        
+        /**
+         * Toggle model details expansion
+         */
+        window.toggleModelDetails = function(modelId) {
+            const details = document.getElementById(`model-details-${modelId}`);
+            const expandBtn = document.getElementById(`expand-btn-${modelId}`);
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                expandBtn.textContent = '▲';
+            } else {
+                details.style.display = 'none';
+                expandBtn.textContent = '▼';
+            }
+        };
+        
+        /**
+         * Update model property from inline inspector field
+         */
+        window.updateModelProperty = function(modelId, property) {
+            const modelData = window.importedModelsRegistry.get(modelId);
+            if (!modelData) return;
+            
+            const entity = modelData.entity;
+            if (!entity) return;
+            
+            try {
+                const currentTime = viewer.clock.currentTime;
+                
+                if (property === 'position') {
+                    const lon = parseFloat(document.getElementById(`lon-${modelId}`).value);
+                    const lat = parseFloat(document.getElementById(`lat-${modelId}`).value);
+                    let height = parseFloat(document.getElementById(`height-${modelId}`).value);
+                    
+                    if (!isNaN(lon) && !isNaN(lat) && !isNaN(height)) {
+                        // Guard current position
+                        const posProp = entity.position;
+                        const currentPos = (posProp && typeof posProp.getValue === "function") 
+                            ? posProp.getValue(currentTime) 
+                            : posProp;
+                        if (!currentPos) {
+                            console.warn(`⚠️ Cannot update position: current position is undefined`);
+                            return;
+                        }
+                        
+                        // Ensure height is above terrain
+                        const cartographic = Cesium.Cartographic.fromDegrees(lon, lat);
+                        if (viewer.scene.globe) {
+                            const terrainHeight = viewer.scene.globe.getHeight(cartographic) || 0;
+                            height = Math.max(height, terrainHeight + 1); // At least 1m above terrain
+                        }
+                        
+                        // Set position as ConstantProperty for consistency
+                        const cartesian = Cesium.Cartesian3.fromDegrees(lon, lat, height);
+                        entity.position = new Cesium.ConstantProperty(cartesian);
+                        entity.show = true; // Ensure visible
+                        
+                        modelData.position = { longitude: lon, latitude: lat, height: height };
+                        
+                        // Update header position display
+                        const entry = document.getElementById(`model-entry-${modelId}`);
+                        if (entry) {
+                            const posDisplay = entry.querySelector('div[style*="font-size: 10px"]');
+                            if (posDisplay) {
+                                posDisplay.textContent = `${lon.toFixed(4)}°, ${lat.toFixed(4)}°, ${height.toFixed(0)}m`;
+                            }
+                        }
+                    }
+                } else if (property === 'scale') {
+                    const inputValue = document.getElementById(`scale-${modelId}`).value;
+                    const scaleNum = Math.max(0.001, Number(inputValue) || 1);
+                    
+                    // Get previous scale to check if changed
+                    const sProp = entity?.model?.scale;
+                    const prevScale = (sProp && typeof sProp.getValue === "function") 
+                        ? sProp.getValue(currentTime) 
+                        : (typeof sProp === 'number' ? sProp : 1.0);
+                    const prevScaleNum = Number(prevScale) || 1.0;
+                    
+                    // Only log if actually changed
+                    if (Math.abs(scaleNum - prevScaleNum) > 0.001) {
+                        // Set scale as ConstantProperty for consistency
+                        entity.model.scale = new Cesium.ConstantProperty(scaleNum);
+                        entity._baseScale = scaleNum; // Update base scale for gizmo
+                        console.log(`📏 Set scale to: ${scaleNum.toFixed(2)} (was: ${prevScaleNum.toFixed(2)})`);
+                    }
+                } else if (property === 'orientation') {
+                    const heading = Cesium.Math.toRadians(parseFloat(document.getElementById(`heading-${modelId}`).value) || 0);
+                    const pitch = Cesium.Math.toRadians(parseFloat(document.getElementById(`pitch-${modelId}`).value) || 0);
+                    const roll = Cesium.Math.toRadians(parseFloat(document.getElementById(`roll-${modelId}`).value) || 0);
+                    
+                    const hpr = new Cesium.HeadingPitchRoll(heading, pitch, roll);
+                    
+                    // Get position safely
+                    const posProp = entity.position;
+                    const cartesianPos = (posProp && typeof posProp.getValue === "function") 
+                        ? posProp.getValue(currentTime) 
+                        : posProp;
+                    
+                    if (!cartesianPos || cartesianPos.x === undefined) {
+                        console.warn(`⚠️ Cannot update orientation: position is undefined`);
+                        return;
+                    }
+                    
+                    const quaternion = Cesium.Transforms.headingPitchRollQuaternion(cartesianPos, hpr);
+                    entity.orientation = new Cesium.ConstantProperty(quaternion);
+                }
+            } catch (error) {
+                console.error(`❌ Failed to update ${property}:`, error);
+            }
+        };
+        
+        /**
+         * Helper: Set input value only if user is not currently editing it
+         */
+        function safeSetValue(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (document.activeElement === el) return; // User is typing, don't overwrite
+            el.value = value;
+        }
+        
+        /**
+         * Sync inline inspector fields with model state (called by gizmo/scene updates)
+         */
+        function syncInlineInspector(modelId) {
+            const modelData = window.importedModelsRegistry.get(modelId);
+            if (!modelData) return;
+            
+            const entity = modelData.entity;
+            if (!entity) return;
+            
+            const currentTime = viewer.clock.currentTime;
+            
+            try {
+                // Update position fields (handle Property correctly)
+                const posProp = entity.position;
+                const cartesianPos = (posProp && typeof posProp.getValue === "function") 
+                    ? posProp.getValue(currentTime) 
+                    : posProp;
+                
+                if (cartesianPos && cartesianPos.x !== undefined) {
+                    const cartographic = Cesium.Cartographic.fromCartesian(cartesianPos);
+                    const lon = Cesium.Math.toDegrees(cartographic.longitude);
+                    const lat = Cesium.Math.toDegrees(cartographic.latitude);
+                    const height = cartographic.height;
+                    
+                    // Use safeSetValue to avoid overwriting user typing
+                    safeSetValue(`lon-${modelId}`, lon.toFixed(6));
+                    safeSetValue(`lat-${modelId}`, lat.toFixed(6));
+                    safeSetValue(`height-${modelId}`, height.toFixed(2));
+                    
+                    // Update Cartesian X/Y/Z fields (read-only, safe to always update)
+                    safeSetValue(`cartX-${modelId}`, cartesianPos.x.toFixed(2));
+                    safeSetValue(`cartY-${modelId}`, cartesianPos.y.toFixed(2));
+                    safeSetValue(`cartZ-${modelId}`, cartesianPos.z.toFixed(2));
+                    
+                    // Update header position display
+                    const entry = document.getElementById(`model-entry-${modelId}`);
+                    if (entry) {
+                        const posDisplay = entry.querySelector('div[style*="font-size: 10px"]');
+                        if (posDisplay) {
+                            posDisplay.textContent = `${lon.toFixed(4)}°, ${lat.toFixed(4)}°, ${height.toFixed(0)}m`;
+                        }
+                    }
+                }
+                
+                // Update scale field (handle Property correctly)
+                const sProp = entity?.model?.scale;
+                const scaleValue = (sProp && typeof sProp.getValue === "function") 
+                    ? sProp.getValue(currentTime) 
+                    : (typeof sProp === 'number' ? sProp : 1.0);
+                const scaleNum = Number(scaleValue) || 1.0;
+                
+                safeSetValue(`scale-${modelId}`, scaleNum.toFixed(2));
+                
+                // Update orientation fields (handle Property correctly)
+                if (entity.orientation) {
+                    const orientProp = entity.orientation;
+                    const orientation = (orientProp && typeof orientProp.getValue === "function") 
+                        ? orientProp.getValue(currentTime) 
+                        : orientProp;
+                    
+                    if (orientation) {
+                        const hpr = Cesium.HeadingPitchRoll.fromQuaternion(orientation);
+                        
+                        safeSetValue(`heading-${modelId}`, Cesium.Math.toDegrees(hpr.heading).toFixed(1));
+                        safeSetValue(`pitch-${modelId}`, Cesium.Math.toDegrees(hpr.pitch).toFixed(1));
+                        safeSetValue(`roll-${modelId}`, Cesium.Math.toDegrees(hpr.roll).toFixed(1));
+                    }
+                }
+            } catch (error) {
+                // Don't spam console - log once per model
+                if (!entity._syncErrorLogged) {
+                    console.warn(`⚠️ Failed to sync inline inspector for ${modelId}:`, error.message);
+                    entity._syncErrorLogged = true;
+                }
             }
         }
         
-        // Listen for model selection events
-        viewer.canvas.addEventListener('modelSelected', (e) => {
-            const model = e.detail.model;
-            updateGizmoStatus('Model selected for manipulation');
-            gizmo.setSelectedEntity(model);
-        });
+        /**
+         * Select model for gizmo manipulation
+         */
+        window.selectModel = function(modelId) {
+            const modelData = window.importedModelsRegistry.get(modelId);
+            if (!modelData) return;
+            
+            // Deselect all other models
+            window.importedModelsRegistry.forEach((data, id) => {
+                data.selected = false;
+                const entry = document.getElementById(`model-entry-${id}`);
+                if (entry) {
+                    entry.style.borderColor = '#ddd';
+                    entry.style.background = '#f5f5f5';
+                }
+                
+                // Hide gizmo controls for other models
+                const gizmoControls = document.getElementById(`gizmo-controls-${id}`);
+                if (gizmoControls) gizmoControls.style.display = 'none';
+            });
+            
+            // Select this model
+            modelData.selected = true;
+            const entry = document.getElementById(`model-entry-${modelId}`);
+            if (entry) {
+                entry.style.borderColor = '#28a745';
+                entry.style.background = '#d4edda';
+            }
+            
+            // Show details if hidden
+            const details = document.getElementById(`model-details-${modelId}`);
+            const expandBtn = document.getElementById(`expand-btn-${modelId}`);
+            if (details && details.style.display === 'none') {
+                details.style.display = 'block';
+                if (expandBtn) expandBtn.textContent = '▲';
+            }
+            
+            // Show gizmo controls for this model
+            const gizmoControls = document.getElementById(`gizmo-controls-${modelId}`);
+            if (gizmoControls) gizmoControls.style.display = 'block';
+            
+            // Attach gizmo
+            gizmo.setSelectedEntity(modelData.entity);
+            gizmo.show();
+            
+            // Store currently selected model ID for sync
+            window.currentlySelectedModelId = modelId;
+            
+            console.log(`✅ Selected model: ${modelData.name} for gizmo manipulation`);
+        };
         
-        console.log('✅ Gizmo system initialized successfully!');
+        /**
+         * Zoom to model
+         */
+        window.zoomToModel = function(modelId) {
+            const modelData = window.importedModelsRegistry.get(modelId);
+            if (!modelData) return;
+            
+            const pos = modelData.position;
+            viewer.camera.flyTo({
+                destination: Cesium.Cartesian3.fromDegrees(pos.longitude, pos.latitude, pos.height + 100),
+                orientation: {
+                    heading: 0,
+                    pitch: Cesium.Math.toRadians(-30),
+                    roll: 0
+                },
+                duration: 2
+            });
+            
+            console.log(`🔍 Zoomed to model: ${modelData.name}`);
+        };
+        
+        // ========================================
+        // INLINE INSPECTOR SYNC (Gizmo → Fields)
+        // ========================================
+        
+        // Track currently selected model for sync
+        window.currentlySelectedModelId = null;
+        
+        // Throttled sync function (update every 100ms max)
+        let lastInlineInspectorSync = 0;
+        function throttledInlineInspectorSync() {
+            try {
+                if (!window.currentlySelectedModelId) return;
+                
+                const now = Date.now();
+                if (now - lastInlineInspectorSync > 100) {
+                    lastInlineInspectorSync = now;
+                    syncInlineInspector(window.currentlySelectedModelId);
+                }
+            } catch (error) {
+                // Don't crash rendering loop - log once
+                if (!window._inspectorSyncErrorLogged) {
+                    console.error('❌ Inspector sync error in postRender:', error);
+                    window._inspectorSyncErrorLogged = true;
+                }
+            }
+        }
+        
+        // Listen to scene updates to sync inline inspector with Gizmo changes
+        viewer.scene.postRender.addEventListener(throttledInlineInspectorSync);
+        
+        console.log('✅ Inline model inspector system initialized');
+        
+        console.log('✅ Model registry system initialized');
         
         // Function to add all custom tools to the toolbar
         function addAllToolsToToolbar() {
@@ -5704,6 +6958,8 @@ Built with CesiumJS`;
             
             // Model upload button functionality
             modelUploadButton.addEventListener('click', function() {
+                console.log('🔵 TRACE: Model upload button clicked');
+                console.trace('Upload button click trace');
                 modelFileInput.click();
             });
             
@@ -5812,6 +7068,8 @@ Built with CesiumJS`;
                 '.splat',
                 // Geospatial formats
                 '.kml', '.kmz', '.citygml', '.gml',
+                // ArcGIS formats
+                '.slpk',
                 // Archive formats
                 '.zip', '.7z', '.rar',
                 // Image formats for photogrammetry
@@ -5833,23 +7091,46 @@ Built with CesiumJS`;
         }
 
         /**
-         * Validate file size (increased to 500MB for large models)
+         * Validate file size (increased to 5GB for large models)
          * @param {File} file - The file to validate
-         * @returns {object} - Validation result with isValid and message
+         * @returns {object} - Validation result with isValid, isWarning, and message
          */
         function validateFileSize(file) {
-            const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+            const maxSize = 5 * 1024 * 1024 * 1024; // 5GB in bytes
+            const warningThreshold = 1 * 1024 * 1024 * 1024; // 1GB warning threshold
             const fileSizeMB = (file.size / (1024 * 1024)).toFixed(1);
+            const fileSizeGB = (file.size / (1024 * 1024 * 1024)).toFixed(2);
             
+            // Hard limit: 5GB
             if (file.size > maxSize) {
                 return {
                     isValid: false,
-                    message: `This model (${fileSizeMB}MB) exceeds the 500MB limit. Please reduce the file size or simplify the model.`,
-                    size: fileSizeMB
+                    isWarning: false,
+                    message: `This model (${fileSizeGB}GB) exceeds the 5GB limit. Please reduce the file size or simplify the model.`,
+                    size: fileSizeMB,
+                    sizeGB: fileSizeGB
                 };
             }
             
-            return { isValid: true, message: null };
+            // Warning: 1GB+ but under 5GB
+            if (file.size > warningThreshold) {
+                return {
+                    isValid: true,
+                    isWarning: true,
+                    message: `This is a large model (${fileSizeGB}GB). Upload may take several minutes. Continue?`,
+                    size: fileSizeMB,
+                    sizeGB: fileSizeGB
+                };
+            }
+            
+            // OK: under 1GB
+            return { 
+                isValid: true, 
+                isWarning: false,
+                message: null, 
+                size: fileSizeMB,
+                sizeGB: fileSizeGB
+            };
         }
 
         /**
@@ -5912,6 +7193,12 @@ Built with CesiumJS`;
          * @param {Array} buttons - Array of button objects {text, action, style}
          */
         function showErrorModal(title, message, buttons = null) {
+            // VERIFICATION: Log every modal trigger with trace
+            console.log('🔴 TRACE: showErrorModal called');
+            console.log('🔴 Modal Title:', title);
+            console.log('🔴 Modal Message:', message);
+            console.trace('showErrorModal call stack');
+            
             // Remove any existing modals
             const existingModals = document.querySelectorAll('.error-modal');
             existingModals.forEach(modal => modal.remove());
@@ -6442,15 +7729,22 @@ TIP: These shortcuts work when not typing in input fields.
          * Show processing success message
          */
         function showProcessingSuccess(uploadResult) {
-            const { processing_type, message, original_format } = uploadResult;
+            // Defensive: ensure processing_type is a string
+            const processing_type = (uploadResult && typeof uploadResult.processing_type === 'string') 
+                ? uploadResult.processing_type 
+                : '';
+            const message = (uploadResult && typeof uploadResult.message === 'string') 
+                ? uploadResult.message 
+                : 'Processing complete';
+            const original_format = uploadResult?.original_format || '';
             
             let icon = '✅';
             let color = '#4CAF50';
             
-            if (processing_type.includes('fallback') || processing_type.includes('error')) {
+            if (processing_type && (processing_type.includes('fallback') || processing_type.includes('error'))) {
                 icon = '⚠️';
                 color = '#ff9800';
-            } else if (processing_type.includes('converted')) {
+            } else if (processing_type && processing_type.includes('converted')) {
                 icon = '🔄';
                 color = '#2196F3';
             }
@@ -6754,12 +8048,26 @@ TIP: These shortcuts work when not typing in input fields.
                     return;
                 }
                 
-                // Step 2: Validate file size (increased to 500MB)
+                // Step 2: Validate file size (increased to 5GB, warning at 1GB)
                 const sizeValidation = validateFileSize(file);
+                
+                // Hard limit exceeded (5GB+) - block upload
                 if (!sizeValidation.isValid) {
-                    showErrorModal('Large File Warning', sizeValidation.message, [
+                    showErrorModal('File Too Large', sizeValidation.message, [
                         {
-                            text: 'Continue Anyway',
+                            text: 'OK',
+                            action: () => document.querySelector('.error-modal').remove(),
+                            style: 'secondary'
+                        }
+                    ]);
+                    return;
+                }
+                
+                // Warning threshold (1GB+) - show warning but allow continuation
+                if (sizeValidation.isWarning) {
+                    showErrorModal('⚠️ Large File Warning', sizeValidation.message, [
+                        {
+                            text: 'Continue',
                             action: () => {
                                 document.querySelector('.error-modal').remove();
                                 proceedWithModelLoading(file);
@@ -6775,7 +8083,7 @@ TIP: These shortcuts work when not typing in input fields.
                     return;
                 }
                 
-                // All validations passed, proceed with loading
+                // All validations passed (under 1GB), proceed with loading
                 proceedWithModelLoading(file);
                 
             } catch (error) {
@@ -6783,76 +8091,250 @@ TIP: These shortcuts work when not typing in input fields.
                 showErrorModal('Validation Error', 'An error occurred while validating the file. Please try again.');
             }
         }
+        
+        /**
+         * Poll job status until complete
+         */
+        async function pollJobStatus(job_id, progressMessage, progressBar, progressPercent) {
+            const pollInterval = 500; // 500ms
+            const maxAttempts = 600; // 5 minutes max
+            let attempts = 0;
+            
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch(`/api/jobs/${job_id}`);
+                    if (!response.ok) {
+                        throw new Error('Job not found');
+                    }
+                    
+                    const job = await response.json();
+                    console.log('Job status:', job.status, job.stage, `${job.progress}%`, job.message);
+                    
+                    // Update UI
+                    progressMessage.textContent = job.message || job.stage;
+                    progressBar.style.width = `${job.progress}%`;
+                    progressPercent.textContent = `${job.progress}%`;
+                    
+                    if (job.status === 'done') {
+                        console.log('Job complete!', job.result);
+                        return job.result;
+                    } else if (job.status === 'error') {
+                        throw new Error(job.error || 'Processing failed');
+                    }
+                    
+                    // Wait before next poll
+                    await new Promise(resolve => setTimeout(resolve, pollInterval));
+                    attempts++;
+                    
+                } catch (error) {
+                    console.error('Polling error:', error);
+                    throw error;
+                }
+            }
+            
+            throw new Error('Processing timeout - job did not complete');
+        }
+        
         /**
          * Proceed with model loading after validation
          * @param {File} file - Validated file to load
          */
         async function proceedWithModelLoading(file) {
             try {
+                // Generate modelId FIRST (before placement)
+                const modelId = `model_${++modelIdCounter}`;
                 
-                // Get center of camera view coordinates
-                const canvas = viewer.canvas;
-                const centerX = canvas.clientWidth / 2;
-                const centerY = canvas.clientHeight / 2;
-                const centerPick = new Cesium.Cartesian2(centerX, centerY);
+                // ========================================
+                // REQUIRE INITIAL PLACEMENT (NO DEFAULT)
+                // ========================================
+                console.log(`📍 Model ${file.name} requires initial placement...`);
                 
-                // Cast ray to find intersection point
-                const ray = viewer.camera.getPickRay(centerPick);
-                let intersection = viewer.scene.globe.pick(ray, viewer.scene);
+                let longitude, latitude, height;
                 
-                // Fallback to ellipsoid intersection if no terrain
-                if (!intersection) {
-                    const ellipsoidIntersection = Cesium.IntersectionTests.rayEllipsoid(ray, viewer.scene.globe.ellipsoid);
-                    if (ellipsoidIntersection) {
-                        intersection = Cesium.Ray.getPoint(ray, ellipsoidIntersection.start);
-                    }
+                try {
+                    // Show placement modal and wait for user to choose position
+                    const placement = await requireInitialPlacement({
+                        modelId: modelId,
+                        fileName: file.name,
+                        url: null  // URL not yet known
+                    });
+                    
+                    longitude = placement.lon;
+                    latitude = placement.lat;
+                    height = placement.height;
+                    
+                    console.log(`✅ Placement chosen: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}, height: ${height.toFixed(2)}m`);
+                } catch (error) {
+                    // User cancelled placement
+                    console.log('❌ Placement cancelled:', error.message);
+                    return; // Abort import
                 }
                 
-                if (!intersection) {
-                    console.warn('Could not determine model placement position');
-                    alert('Could not determine placement position. Please try from a different view.');
-                    return;
-                }
+                // ========================================
+                // NOW PROCEED WITH UPLOAD AND LOADING
+                // ========================================
                 
-                // Convert to geographic coordinates
-                const cartographic = Cesium.Cartographic.fromCartesian(intersection);
-                const longitude = Cesium.Math.toDegrees(cartographic.longitude);
-                const latitude = Cesium.Math.toDegrees(cartographic.latitude);
-                const height = cartographic.height + 10; // Slightly above ground
+                // Show progress modal
+                const progressModal = document.getElementById('progressModal');
+                const progressFilename = document.getElementById('progressFilename');
+                const progressMessage = document.getElementById('progressMessage');
+                const progressBar = document.getElementById('progressBar');
+                const progressPercent = document.getElementById('progressPercent');
+                const progressBytes = document.getElementById('progressBytes');
+                const progressSpeed = document.getElementById('progressSpeed');
                 
-                console.log(`Placing model at: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}, height: ${height.toFixed(2)}m`);
+                progressFilename.textContent = file.name;
+                progressMessage.textContent = 'Uploading...';
+                progressModal.style.display = 'flex';
                 
-                // Upload file to server first
+                // Upload file to server with progress tracking
                 console.log('Uploading file to server...');
                 const formData = new FormData();
                 formData.append('file', file);
                 
-                const uploadResponse = await fetch('/api/upload-model', {
-                    method: 'POST',
-                    body: formData
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    
+                    // Track upload progress
+                    let uploadStartTime = Date.now();
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const percentComplete = Math.round((e.loaded / e.total) * 100);
+                            const loadedMB = (e.loaded / (1024 * 1024)).toFixed(1);
+                            const totalMB = (e.total / (1024 * 1024)).toFixed(1);
+                            const elapsed = (Date.now() - uploadStartTime) / 1000;
+                            const speedMBps = elapsed > 0 ? (e.loaded / (1024 * 1024) / elapsed).toFixed(1) : '0.0';
+                            
+                            progressBar.style.width = `${percentComplete}%`;
+                            progressPercent.textContent = `${percentComplete}%`;
+                            progressBytes.textContent = `${loadedMB} MB / ${totalMB} MB`;
+                            progressSpeed.textContent = `${speedMBps} MB/s`;
+                        }
+                    });
+                    
+                    xhr.addEventListener('load', () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            try {
+                                const result = JSON.parse(xhr.responseText);
+                                resolve(result);
+                            } catch (e) {
+                                reject(new Error('Invalid response from server'));
+                            }
+                        } else {
+                            try {
+                                const errorData = JSON.parse(xhr.responseText);
+                                reject(new Error(errorData.detail || 'Upload failed'));
+                            } catch (e) {
+                                reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+                            }
+                        }
+                    });
+                    
+                    xhr.addEventListener('error', () => {
+                        reject(new Error('Network error during upload'));
+                    });
+                    
+                    xhr.open('POST', '/api/upload-model');
+                    xhr.send(formData);
                 });
                 
-                if (!uploadResponse.ok) {
-                    const errorData = await uploadResponse.json();
-                    throw new Error(errorData.detail || 'Upload failed');
-                }
-                
-                const uploadResult = await uploadResponse.json();
                 console.log('Upload successful:', uploadResult);
                 
-                // Handle different processing types
-                const processingType = uploadResult.processing_type;
-                const modelUrl = uploadResult.url;
-                const cesiumIonAssetId = uploadResult.cesium_ion_asset_id;
+                // Check if we got a job_id (async processing) or direct result (sync processing)
+                let processingType, modelUrl, cesiumIonAssetId, fullResult;
+                
+                if (uploadResult.job_id) {
+                    // Async processing - poll for completion
+                    const job_id = uploadResult.job_id;
+                    progressMessage.textContent = 'Processing...';
+                    progressBar.style.width = '0%';
+                    progressPercent.textContent = '0%';
+                    progressSpeed.textContent = '';
+                    
+                    console.log(`Job created: ${job_id}, polling for completion...`);
+                    
+                    const finalResult = await pollJobStatus(job_id, progressMessage, progressBar, progressPercent);
+                    
+                    console.log('✅ Job complete, final result:', finalResult);
+                    
+                    // Defensive extraction with type checks
+                    processingType = (finalResult && typeof finalResult.processing_type === 'string') 
+                        ? finalResult.processing_type 
+                        : '';
+                    modelUrl = (finalResult && typeof finalResult.url === 'string') 
+                        ? finalResult.url 
+                        : '';
+                    cesiumIonAssetId = finalResult?.cesium_ion_asset_id;
+                    fullResult = finalResult;
+                } else {
+                    // Sync processing (direct result)
+                    processingType = (uploadResult && typeof uploadResult.processing_type === 'string') 
+                        ? uploadResult.processing_type 
+                        : '';
+                    modelUrl = (uploadResult && typeof uploadResult.url === 'string') 
+                        ? uploadResult.url 
+                        : '';
+                    cesiumIonAssetId = uploadResult?.cesium_ion_asset_id;
+                    fullResult = uploadResult;
+                }
+                
+                // Close progress modal
+                progressModal.style.display = 'none';
                 
                 console.log('Processing type:', processingType);
                 console.log('Using URL:', modelUrl);
+                console.log('Full result:', fullResult);
+                
+                // Validate required fields
+                if (!processingType || !modelUrl) {
+                    console.error('❌ Invalid result: missing processing_type or url', fullResult);
+                    showErrorModal(
+                        'Processing Error',
+                        `Processing completed but result is incomplete. ${fullResult?.message || 'Please try again.'}`
+                    );
+                    return;
+                }
                 
                 // Show success message based on processing type
-                showProcessingSuccess(uploadResult);
+                showProcessingSuccess(fullResult);
                 
-                // Load model based on processing type
-                await loadModelByType(processingType, modelUrl, cesiumIonAssetId, file.name, longitude, latitude, height);
+                // SKIP old loading path - we handle loading below with proper state management
+                console.log('⚠️ SKIPPING loadModelByType() - using new layer-based loading');
+                // await loadModelByType(processingType, modelUrl, cesiumIonAssetId, file.name, longitude, latitude, height);
+                
+                // Register layer in LOADING state immediately
+                const layerId = `3dmodel_${++layerCounter}`;
+                const layerName = file.name;
+                
+                console.log('═'.repeat(80));
+                console.log('🔵 REGISTERING 3D MODEL AS LAYER');
+                console.log('  • layerId:', layerId);
+                console.log('  • layerName:', layerName);
+                console.log('  • layerCounter:', layerCounter);
+                console.log('  • activeDataLayers.size BEFORE:', activeDataLayers.size);
+                
+                activeDataLayers.set(layerId, {
+                    id: layerId,
+                    name: layerName,
+                    type: '3D Model',
+                    entity: null,  // Will be set when loaded
+                    cesiumModel: null,
+                    position: { longitude, latitude, height },
+                    visible: true,
+                    state: 'LOADING',  // Initial state
+                    url: modelUrl
+                });
+                
+                console.log('  • activeDataLayers.size AFTER:', activeDataLayers.size);
+                console.log('  • Layer in Map:', activeDataLayers.has(layerId));
+                console.log('  • Layer data:', activeDataLayers.get(layerId));
+                console.log('📝 Created layer ${layerId} in LOADING state');
+                console.log('🔄 Calling updateActiveLayersList()...');
+                
+                updateActiveLayersList();  // Show loading state in UI
+                
+                console.log('✅ updateActiveLayersList() completed');
+                console.log('═'.repeat(80));
                 
                 // Show loading indicator
                 const loadingMessage = document.createElement('div');
@@ -7034,6 +8516,189 @@ TIP: These shortcuts work when not typing in input fields.
                 // Try to load the 3D model with simplified approach
                 try {
                     console.log('Attempting to load 3D model...');
+                    console.log('Processing type:', processingType);
+                    
+                    // ========================================
+                    // BRANCH: Handle different data types correctly
+                    // ========================================
+                    
+                    // CRITICAL: Point clouds CANNOT be loaded as entities with model.uri
+                    // They must be loaded as Cesium3DTileset (tileset.json format)
+                    if (processingType === 'point_cloud_3dtiles') {
+                        console.log('🔵 Loading point cloud as Cesium3DTileset (NOT entity)');
+                        
+                        // Create 3D Tileset (NOT an entity)
+                        const tileset = await Cesium.Cesium3DTileset.fromUrl(modelUrl, {
+                            show: true,
+                            maximumScreenSpaceError: 16
+                        });
+                        
+                        viewer.scene.primitives.add(tileset);
+                        
+                        // Store reference in layer (note: no entity, just tileset)
+                        const layer = activeDataLayers.get(layerId);
+                        if (layer) {
+                            layer.tileset = tileset;
+                            layer.cesiumPrimitive = tileset;
+                            layer.state = 'READY';
+                        }
+                        
+                        // Zoom to tileset
+                        viewer.zoomTo(tileset);
+                        
+                        // Clean up loading indicator
+                        if (document.body.contains(loadingMessage)) {
+                            document.body.removeChild(loadingMessage);
+                        }
+                        
+                        // Remove fallback marker
+                        try {
+                            viewer.entities.remove(fallbackEntity);
+                        } catch (e) {
+                            console.warn('Fallback marker already removed:', e);
+                        }
+                        
+                        console.log('✅ Point cloud 3D Tiles loaded successfully');
+                        
+                        // Skip entity creation - point clouds don't use entities
+                        return;
+                    }
+                    
+                    // Handle SLPK extraction failure gracefully
+                    if (processingType === 'slpk_extracted_unrecognized') {
+                        console.warn('⚠️ SLPK extracted but I3S entrypoint not found');
+                        
+                        // Clean up loading indicator
+                        if (document.body.contains(loadingMessage)) {
+                            document.body.removeChild(loadingMessage);
+                        }
+                        
+                        // Remove fallback marker
+                        try {
+                            viewer.entities.remove(fallbackEntity);
+                        } catch (e) {
+                            console.warn('Fallback marker already removed:', e);
+                        }
+                        
+                        // Show clear error modal
+                        const errorMsg = fullResult?.message || 'SLPK extracted but could not locate I3S layer.json or 3dSceneLayer.json entry point';
+                        const debugInfo = modelUrl ? `<br><br><small>Extracted to: ${modelUrl}</small>` : '';
+                        
+                        showErrorModal(
+                            'SLPK Import Issue',
+                            `<strong>SLPK extracted but I3S entrypoint not found</strong><br><br>${errorMsg}${debugInfo}<br><br>This SLPK may not contain a valid I3S SceneServer structure.`
+                        );
+                        
+                        // Mark layer as error
+                        const layer = activeDataLayers.get(layerId);
+                        if (layer) {
+                            layer.state = 'ERROR';
+                            layer.error = errorMsg;
+                        }
+                        
+                        return; // Exit gracefully
+                    }
+                    
+                    // CRITICAL: I3S layers CANNOT be loaded as entities
+                    // They must be loaded as I3SDataProvider
+                    if (processingType === 'i3s') {
+                        console.log('🔵 Loading I3S layer (SLPK extracted) as I3SDataProvider');
+                        console.log('🔵 I3S URL:', modelUrl);
+                        
+                        // Determine URL type for logging
+                        let urlType = 'unknown';
+                        if (modelUrl.endsWith('/SceneServer')) {
+                            urlType = 'SceneServer root (preferred)';
+                        } else if (modelUrl.match(/\/layers\/\d+$/)) {
+                            urlType = 'layers/<N> folder';
+                        } else if (modelUrl.endsWith('.json')) {
+                            urlType = 'direct JSON file (fallback)';
+                        } else {
+                            urlType = 'folder URL';
+                        }
+                        console.log(`🔵 I3S URL type: ${urlType}`);
+                        
+                        try {
+                            // Create I3S data provider
+                            // Note: Cesium.I3SDataProvider.fromUrl() accepts:
+                            // - Service root (e.g., /uploads/slpk_123/SceneServer)
+                            // - Layer folder (e.g., /uploads/slpk_123/SceneServer/layers/0)
+                            // - Direct JSON file (e.g., /uploads/slpk_123/.../3dSceneLayer.json)
+                            const i3sProvider = await Cesium.I3SDataProvider.fromUrl(modelUrl, {
+                                name: file.name,
+                                show: true
+                            });
+                            
+                            viewer.scene.primitives.add(i3sProvider);
+                            
+                            console.log('✅ I3S provider created and added to scene');
+                            
+                            // Store reference in layer
+                            const layer = activeDataLayers.get(layerId);
+                            if (layer) {
+                                layer.i3sProvider = i3sProvider;
+                                layer.cesiumPrimitive = i3sProvider;
+                                layer.state = 'READY';
+                            }
+                            
+                            // Zoom to I3S layer
+                            viewer.zoomTo(i3sProvider);
+                            
+                            // Clean up loading indicator
+                            if (document.body.contains(loadingMessage)) {
+                                document.body.removeChild(loadingMessage);
+                            }
+                            
+                            // Remove fallback marker
+                            try {
+                                viewer.entities.remove(fallbackEntity);
+                            } catch (e) {
+                                console.warn('Fallback marker already removed:', e);
+                            }
+                            
+                            console.log('✅ I3S layer loaded successfully');
+                            
+                            // Skip entity creation - I3S doesn't use entities
+                            return;
+                        } catch (i3sError) {
+                            console.error('❌ I3S loading failed:', i3sError);
+                            console.error('   • URL:', modelUrl);
+                            console.error('   • URL type:', urlType);
+                            console.error('   • Error message:', i3sError.message);
+                            console.error('   • Error stack:', i3sError.stack);
+                            
+                            // Show detailed error modal with Cesium error message
+                            showErrorModal(
+                                'I3S Loading Failed',
+                                `<strong>Failed to load I3S layer from SLPK</strong><br><br>` +
+                                `<b>URL:</b> ${modelUrl}<br>` +
+                                `<b>URL Type:</b> ${urlType}<br><br>` +
+                                `<b>Cesium Error:</b><br><code>${i3sError.message}</code><br><br>` +
+                                `This could mean:<br>` +
+                                `• The SLPK structure is not standard I3S<br>` +
+                                `• Missing required I3S metadata files<br>` +
+                                `• Incorrect service root URL<br>` +
+                                `• Check backend logs for detailed structure`
+                            );
+                            
+                            // Mark layer as error
+                            const layer = activeDataLayers.get(layerId);
+                            if (layer) {
+                                layer.state = 'ERROR';
+                                layer.error = `I3S load failed: ${i3sError.message}`;
+                            }
+                            
+                            // Clean up loading indicator
+                            if (document.body.contains(loadingMessage)) {
+                                document.body.removeChild(loadingMessage);
+                            }
+                            
+                            return; // Exit gracefully
+                        }
+                    }
+                    
+                    // DEFAULT: glTF/GLB mesh models (loaded as entity with model.uri)
+                    console.log('🔵 Loading as standard glTF/GLB entity');
                     
                     // Create model with minimal settings for maximum compatibility
                     modelEntity = viewer.entities.add({
@@ -7046,7 +8711,8 @@ TIP: These shortcuts work when not typing in input fields.
                             maximumScale: 1000,
                             runAnimations: false,
                             clampAnimations: true,
-                            heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
+                            // Note: height is already terrain-clamped during placement
+                            // so we use absolute positioning here
                             // Minimal settings for compatibility
                             silhouetteColor: Cesium.Color.TRANSPARENT,
                             silhouetteSize: 0,
@@ -7059,250 +8725,233 @@ TIP: These shortcuts work when not typing in input fields.
                         }
                     });
                     
-                    // Handle model loading with readyPromise
-                    if (modelEntity.model.readyPromise) {
-                        modelEntity.model.readyPromise
-                            .then(() => {
-                                if (!modelLoadFailed) {
-                                    console.log('Model loaded successfully via readyPromise');
-                                    
-                                    // Clean up loading indicator
-                                    if (document.body.contains(loadingMessage)) {
-                                        document.body.removeChild(loadingMessage);
-                                    }
-                                    
-                                    // Remove fallback marker
-                                    viewer.entities.remove(fallbackEntity);
-                                    
-                                    // Restore console.error
-                                    console.error = originalConsoleError;
-                                    
-                                    // Fly to model
-                                    viewer.camera.setView({
-                                        destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
-                                        orientation: {
-                                            heading: 0,
-                                            pitch: Cesium.Math.toRadians(-30),
-                                            roll: 0
-                                        }
-                                    });
-                                }
-                            })
-                            .catch((error) => {
-                                if (!modelLoadFailed) {
-                                    console.warn('Model readyPromise failed, trying simplified approach:', error);
-                                    
-                                    // Try a second time with even more basic settings
-                                    try {
-                                        // Remove the failed model
-                                        if (modelEntity) {
-                                            viewer.entities.remove(modelEntity);
-                                        }
-                                        
-                                        // Try with absolute minimal settings
-                                        modelEntity = viewer.entities.add({
-                                            name: `3D Model (Simple) - ${file.name}`,
-                                            position: Cesium.Cartesian3.fromDegrees(longitude, latitude, height),
-                                            model: {
-                                                uri: modelUrl,
-                                                scale: 1.0,
-                                                minimumPixelSize: 32,
-                                                maximumScale: 1000,
-                                                runAnimations: false,
-                                                clampAnimations: true,
-                                                heightReference: Cesium.HeightReference.RELATIVE_TO_GROUND,
-                                                // Absolute minimal settings
-                                                silhouetteColor: Cesium.Color.TRANSPARENT,
-                                                silhouetteSize: 0,
-                                                incrementallyLoadTextures: false,
-                                                backFaceCulling: false,
-                                                shadows: Cesium.ShadowMode.DISABLED,
-                                                debugShowBoundingVolume: false,
-                                                debugWireframe: false,
-                                                // Disable all advanced features
-                                                enableCollision: false,
-                                                distanceDisplayCondition: undefined
-                                            }
-                                        });
-                                        
-                                        // Try the readyPromise again
-                                        if (modelEntity.model.readyPromise) {
-                                            modelEntity.model.readyPromise
-                                                .then(() => {
-                                                    if (!modelLoadFailed) {
-                                                        console.log('Model loaded successfully with simplified settings');
-                                                        
-                                                        // Clean up loading indicator
-                                                        if (document.body.contains(loadingMessage)) {
-                                                            document.body.removeChild(loadingMessage);
-                                                        }
-                                                        
-                                                        // Remove fallback marker
-                                                        viewer.entities.remove(fallbackEntity);
-                                                        
-                                                        // Restore console.error
-                                                        console.error = originalConsoleError;
-                                                        
-                                                        // Fly to model
-                                                        viewer.camera.setView({
-                                                            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
-                                                            orientation: {
-                                                                heading: 0,
-                                                                pitch: Cesium.Math.toRadians(-30),
-                                                                roll: 0
-                                                            }
-                                                        });
-                                                    }
-                                                })
-                                                .catch((secondError) => {
-                                                    console.warn('Second attempt also failed:', secondError);
-                                    modelLoadFailed = true;
-                                    
-                                    // Clean up
-                                    if (document.body.contains(loadingMessage)) {
-                                        document.body.removeChild(loadingMessage);
-                                    }
-                                    
-                                    if (modelEntity) {
-                                        try {
-                                            viewer.entities.remove(modelEntity);
-                                        } catch (e) {
-                                            console.warn('Error removing failed model:', e);
-                                        }
-                                    }
-                                    
-                                    restoreCameraControls();
-                                    console.error = originalConsoleError;
-                                    
-                                    // Show compatibility error
-                                    showCompatibilityError(file.name);
-                                                });
-                                        }
-                                    } catch (secondAttemptError) {
-                                        console.warn('Second attempt failed:', secondAttemptError);
-                                        modelLoadFailed = true;
-                                        
-                                        // Clean up
-                                        if (document.body.contains(loadingMessage)) {
-                                            document.body.removeChild(loadingMessage);
-                                        }
-                                        
-                                        if (modelEntity) {
-                                            try {
-                                                viewer.entities.remove(modelEntity);
-                                            } catch (e) {
-                                                console.warn('Error removing failed model:', e);
-                                            }
-                                        }
-                                        
-                                        restoreCameraControls();
-                                        console.error = originalConsoleError;
-                                        
-                                        // Show compatibility error
-                                        showCompatibilityError(file.name);
-                                    }
-                                }
-                            });
-                    }
+                    // Set up single authoritative loading mechanism using entity.model.ready
+                    console.log('🔄 Starting model load watch for:', file.name);
+                    let loadingTimeout = null;
+                    let pollingInterval = null;
+                    let loadingComplete = false;
                     
-                    // Set up monitoring for successful model loading
-                    let loadingTimeout;
-                    let checkModelLoaded = false;
-                    
-                    const checkIfModelLoaded = () => {
-                        if (modelLoadFailed) return;
+                    // Success handler - called when model is confirmed loaded
+                    const onModelLoadSuccess = () => {
+                        if (loadingComplete) return; // Prevent double execution
+                        loadingComplete = true;
                         
-                        try {
-                            // Check if model has loaded successfully
-                            if (modelEntity.model && modelEntity.model.readyPromise) {
-                                modelEntity.model.readyPromise.then(() => {
-                                    if (!modelLoadFailed) {
-                                        // Model loaded successfully
-                                        console.log('Model loaded successfully');
-                                        checkModelLoaded = true;
-                                        
-                                        // Remove loading indicator
-                                        if (document.body.contains(loadingMessage)) {
-                                            document.body.removeChild(loadingMessage);
-                                        }
-                                        
-                                        // Remove fallback marker since model loaded
-                                        viewer.entities.remove(fallbackEntity);
-                                        
-                                        // Restore console.error
-                                        console.error = originalConsoleError;
-                                        
-                                        // Clear monitoring timeout
-                                        if (loadingTimeout) {
-                                            clearTimeout(loadingTimeout);
-                                        }
-                                        
-                                        // Fly to model
-                                        viewer.camera.setView({
-                                            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
-                                            orientation: {
-                                                heading: 0,
-                                                pitch: Cesium.Math.toRadians(-30),
-                                                roll: 0
-                                            }
-                                        });
-                                    }
-                                }).catch((error) => {
-                                    if (!modelLoadFailed) {
-                                        console.warn('Model ready promise failed:', error);
-                                        errorHandler(['Model loading failed during ready promise']);
-                                    }
-                                });
-                            }
-                        } catch (checkError) {
-                            console.warn('Error checking model load status:', checkError);
+                        console.log('✅ Model loaded successfully, entity.model.ready = true');
+                        console.log('🛑 Clearing timeout and stopping polling');
+                        
+                        // CRITICAL: Stop all async watchers immediately
+                        if (loadingTimeout) {
+                            clearTimeout(loadingTimeout);
+                            loadingTimeout = null;
                         }
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                        
+                        // Clean up loading indicator
+                        if (document.body.contains(loadingMessage)) {
+                            document.body.removeChild(loadingMessage);
+                        }
+                        
+                        // Remove fallback marker
+                        try {
+                            viewer.entities.remove(fallbackEntity);
+                        } catch (e) {
+                            console.warn('Fallback marker already removed:', e);
+                        }
+                        
+                        // Restore console.error
+                        console.error = originalConsoleError;
+                        
+                        // Update layer state from LOADING → READY
+                        console.log('═'.repeat(80));
+                        console.log('🟢 TRANSITIONING LAYER TO READY');
+                        console.log('  • layerId:', layerId);
+                        
+                        const layer = activeDataLayers.get(layerId);
+                        console.log('  • Layer found:', !!layer);
+                        
+                        if (layer) {
+                            console.log('  • Layer state BEFORE:', layer.state);
+                            layer.entity = modelEntity;
+                            layer.cesiumModel = modelEntity.model;
+                            layer.state = 'READY';
+                            console.log('  • Layer state AFTER:', layer.state);
+                            console.log(`✅ Layer ${layerId} transitioned: LOADING → READY`);
+                        } else {
+                            console.error('❌ Layer not found in activeDataLayers!');
+                        }
+                        
+                        console.log('🔄 Calling updateActiveLayersList()...');
+                        // Update Data Services UI to show ready state
+                        updateActiveLayersList();
+                        console.log('✅ updateActiveLayersList() completed');
+                        console.log('═'.repeat(80));
+                        
+                        // Also register in model-specific registry for gizmo (use existing modelId)
+                        registerImportedModel(modelEntity, file.name, longitude, latitude, height, modelId);
+                        
+                        // Fly to model
+                        viewer.camera.setView({
+                            destination: Cesium.Cartesian3.fromDegrees(longitude, latitude, height + 50),
+                            orientation: {
+                                heading: 0,
+                                pitch: Cesium.Math.toRadians(-30),
+                                roll: 0
+                            }
+                        });
+                        
+                        console.log('✅ Model load complete - registered as first-class layer');
                     };
                     
-                    // Start monitoring
-                    setTimeout(checkIfModelLoaded, 500);
-                    
-                    // Fallback timeout for problematic models
-                    loadingTimeout = setTimeout(() => {
-                        if (!checkModelLoaded && !modelLoadFailed) {
-                            console.log('Model loading failed, showing fallback marker');
-                            modelLoadFailed = true;
-                            
-                            // Clean up loading indicator
-                            if (document.body.contains(loadingMessage)) {
-                                document.body.removeChild(loadingMessage);
-                            }
-                            
-                            // Remove model entity
-                            if (modelEntity) {
-                                try {
-                                    viewer.entities.remove(modelEntity);
-                                } catch (e) {
-                                    console.warn('Error removing timeout model entity:', e);
-                                }
-                            }
-                            
-                            // Restore camera controls
-                            restoreCameraControls();
-                            
-                            // Restore console.error
-                            console.error = originalConsoleError;
-                            
-                            // Show timeout modal
-                            showErrorModal(
-                                'Model Loading Timeout',
-                                `The model is taking too long to load. This could indicate compatibility issues.
-                                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                                    <strong style="color: #007bff;">💡 Try This:</strong>
-                                    <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #555;">
-                                        <li>Use a smaller file (under 5MB)</li>
-                                        <li>Export with basic materials only</li>
-                                        <li>Disable animations before export</li>
-                                    </ul>
-                                </div>`
-                            );
+                    // Failure handler - called on timeout
+                    const onModelLoadTimeout = () => {
+                        // ========================================
+                        // DIAGNOSTIC: TIMEOUT TRIGGERED
+                        // ========================================
+                        console.log('🔥🔥🔥 TIMEOUT_MODAL_TRIGGERED 🔥🔥🔥');
+                        console.trace('TIMEOUT CALL STACK');
+                        console.log('═'.repeat(80));
+                        console.log('📊 STATE DUMP AT TIMEOUT:');
+                        console.log('  • loadingComplete:', loadingComplete);
+                        console.log('  • modelLoadFailed:', modelLoadFailed);
+                        console.log('  • layerId:', layerId);
+                        console.log('  • fileName:', file.name);
+                        console.log('  • loadingTimeout id:', loadingTimeout);
+                        console.log('  • pollingInterval id:', pollingInterval);
+                        
+                        // Check layer state
+                        let layerForDiag = activeDataLayers.get(layerId);
+                        console.log('  • Layer exists in activeDataLayers:', !!layerForDiag);
+                        if (layerForDiag) {
+                            console.log('    - layer.state:', layerForDiag.state);
+                            console.log('    - layer.name:', layerForDiag.name);
+                            console.log('    - layer.entity exists:', !!layerForDiag.entity);
                         }
-                    }, 8000); // 8 second timeout
+                        
+                        // Check entity state
+                        console.log('  • modelEntity exists:', !!modelEntity);
+                        if (modelEntity) {
+                            console.log('    - modelEntity.show:', modelEntity.show);
+                            console.log('    - modelEntity.model exists:', !!modelEntity.model);
+                            if (modelEntity.model) {
+                                console.log('    - modelEntity.model.ready:', modelEntity.model.ready);
+                                console.log('    - modelEntity.model.readyPromise:', !!modelEntity.model.readyPromise);
+                            }
+                        }
+                        
+                        console.log('═'.repeat(80));
+                        
+                        if (loadingComplete || modelLoadFailed) {
+                            console.log('⚠️ ALREADY HANDLED - SHOULD NOT SHOW MODAL');
+                            return; // Already handled
+                        }
+                        
+                        console.log('❌ Model loading timeout - 30 seconds elapsed');
+                        modelLoadFailed = true;
+                        
+                        // Stop polling
+                        if (pollingInterval) {
+                            clearInterval(pollingInterval);
+                            pollingInterval = null;
+                        }
+                        
+                        // Update layer state to ERROR
+                        const layer = activeDataLayers.get(layerId);
+                        if (layer) {
+                            layer.state = 'ERROR';
+                            layer.error = 'Loading timeout';
+                            console.log(`❌ Layer ${layerId} transitioned: LOADING → ERROR`);
+                        }
+                        updateActiveLayersList();
+                        
+                        // Clean up loading indicator
+                        if (document.body.contains(loadingMessage)) {
+                            document.body.removeChild(loadingMessage);
+                        }
+                        
+                        // Remove model entity
+                        if (modelEntity) {
+                            try {
+                                viewer.entities.remove(modelEntity);
+                            } catch (e) {
+                                console.warn('Error removing timeout model entity:', e);
+                            }
+                        }
+                        
+                        // Restore camera controls
+                        restoreCameraControls();
+                        
+                        // Restore console.error
+                        console.error = originalConsoleError;
+                        
+                        // Show timeout modal
+                        showErrorModal(
+                            'Model Loading Timeout',
+                            `The model is taking too long to load. This could indicate compatibility issues.
+                            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                                <strong style="color: #007bff;">💡 Try This:</strong>
+                                <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #555;">
+                                    <li>Use a smaller file (under 5MB)</li>
+                                    <li>Export with basic materials only</li>
+                                    <li>Disable animations before export</li>
+                                </ul>
+                            </div>`
+                        );
+                    };
+                    
+                    // Set up timeout (30 seconds)
+                    loadingTimeout = setTimeout(onModelLoadTimeout, 30000);
+                    console.log('⏱️ Timeout set for 30 seconds');
+                    
+                    // Poll entity.model.ready (the authoritative signal)
+                    const checkModelReady = () => {
+                        if (modelLoadFailed || loadingComplete) {
+                            // Stop polling if already handled
+                            if (pollingInterval) {
+                                clearInterval(pollingInterval);
+                                pollingInterval = null;
+                            }
+                            return;
+                        }
+                        
+                        // Primary check: entity.model.ready
+                        if (modelEntity.model && modelEntity.model.ready) {
+                            console.log('🎯 Detected entity.model.ready = true');
+                            onModelLoadSuccess();
+                            return;
+                        }
+                        
+                        // Fallback check: if entity exists and is visible/rendered
+                        if (modelEntity && modelEntity.show !== false) {
+                            // Check if model is actually being rendered
+                            try {
+                                const primitives = viewer.scene.primitives;
+                                const entities = viewer.entities;
+                                const isInScene = entities.contains(modelEntity);
+                                
+                                if (isInScene && modelEntity.model) {
+                                    console.log('⚠️ FALLBACK: Model exists in scene, assuming ready');
+                                    onModelLoadSuccess();
+                                    return;
+                                }
+                            } catch (e) {
+                                console.warn('Error in fallback check:', e);
+                            }
+                        }
+                        
+                        console.log('⏳ Polling: entity.model.ready =', modelEntity.model ? modelEntity.model.ready : 'undefined');
+                    };
+                    
+                    // Start polling every 100ms
+                    pollingInterval = setInterval(checkModelReady, 100);
+                    console.log('🔄 Started polling entity.model.ready every 100ms');
+                    
+                    // Initial check
+                    checkModelReady();
+                    
+                    // Single loading mechanism complete - polling entity.model.ready
                     
                 } catch (modelError) {
                     console.error('Error creating model entity:', modelError);
@@ -7328,6 +8977,11 @@ TIP: These shortcuts work when not typing in input fields.
                 
             } catch (error) {
                 console.error('Error in model loading process:', error);
+                
+                // Close progress modal if open
+                const progressModal = document.getElementById('progressModal');
+                if (progressModal) progressModal.style.display = 'none';
+                
                 showErrorModal('Processing Error', 'Error processing 3D model file: ' + error.message);
             }
         }
@@ -9260,8 +10914,11 @@ TIP: These shortcuts work when not typing in input fields.
             
             // Also handle file input for alternative upload method
             modelFileInput.addEventListener('change', function(e) {
+                console.log('🔵 TRACE: File input changed');
+                console.trace('File input change trace');
                 const file = e.target.files[0];
                 if (file) {
+                    console.log('🔵 Selected file:', file.name, 'Size:', file.size, 'Type:', file.type);
                     loadModelAtCameraCenter(file);
                     // Clear input for future uploads
                     e.target.value = '';
@@ -9607,6 +11264,9 @@ TIP: These shortcuts work when not typing in input fields.
             } else if (layer.imageryLayer) {
                 // WMS/TileJSON imagery layer
                 layer.imageryLayer.show = layer.visible;
+            } else if (layer.entity) {
+                // 3D Model entity
+                layer.entity.show = layer.visible;
             }
             
             // Update UI
@@ -9629,6 +11289,9 @@ TIP: These shortcuts work when not typing in input fields.
             } else if (layer.imageryLayer) {
                 // WMS/TileJSON imagery layer
                 viewer.imageryLayers.remove(layer.imageryLayer);
+            } else if (layer.entity) {
+                // 3D Model entity
+                viewer.entities.remove(layer.entity);
             }
             
             // Remove from active layers
@@ -10027,6 +11690,9 @@ TIP: These shortcuts work when not typing in input fields.
             } else if (layer.imageryLayer) {
                 // WMS/TileJSON imagery layer
                 layer.imageryLayer.show = layer.visible;
+            } else if (layer.entity) {
+                // 3D Model entity
+                layer.entity.show = layer.visible;
             }
             
             // Update UI
@@ -10049,6 +11715,9 @@ TIP: These shortcuts work when not typing in input fields.
             } else if (layer.imageryLayer) {
                 // WMS/TileJSON imagery layer
                 viewer.imageryLayers.remove(layer.imageryLayer);
+            } else if (layer.entity) {
+                // 3D Model entity
+                viewer.entities.remove(layer.entity);
             }
             
             // Remove from active layers
@@ -12683,6 +14352,203 @@ TIP: These shortcuts work when not typing in input fields.
         
         // Initialize points UI
         updatePointsUI();
+        
+        // ============================================================
+        // ArcGIS Integration Functions
+        // ============================================================
+        
+        // Check if debug mode is enabled
+        const urlParams = new URLSearchParams(window.location.search);
+        const debugMode = urlParams.get('debug') === '1';
+        
+        if (debugMode) {
+            const arcgisSection = document.getElementById('arcgisDebugSection');
+            if (arcgisSection) {
+                arcgisSection.style.display = 'block';
+                console.log('🌐 ArcGIS Debug Tools enabled (debug=1)');
+            }
+        }
+        
+        // Open ArcGIS Scene Viewer in new window
+        window.openArcGISViewer = function() {
+            const itemId = document.getElementById('arcgisPortalItemId').value.trim() 
+                          || '4561446e7f384a969cfbe368e9ca0002';
+            const url = `/arcgis?id=${itemId}`;
+            window.open(url, 'arcgis_viewer', 'width=1200,height=800');
+            console.log('🌐 Opening ArcGIS viewer for item:', itemId);
+        };
+        
+        // Inspect WebScene item
+        window.inspectWebScene = async function() {
+            const itemId = document.getElementById('arcgisPortalItemId').value.trim() 
+                          || '4561446e7f384a969cfbe368e9ca0002';
+            const resultsDiv = document.getElementById('websceneInspectorResults');
+            
+            resultsDiv.innerHTML = '<p style="color: #666;">Loading...</p>';
+            
+            try {
+                const response = await fetch(`/api/arcgis/item/${itemId}`);
+                const data = await response.json();
+                
+                console.log('📋 WebScene Item Data:', data);
+                
+                let html = `<div style="background: #f5f5f5; padding: 8px; border-radius: 4px; margin-top: 8px;">`;
+                html += `<strong>${data.metadata.title || 'Untitled'}</strong><br>`;
+                html += `<small>Owner: ${data.metadata.owner || 'Unknown'}</small><br>`;
+                
+                // Extract I3S/SceneServer URLs from WebScene data
+                if (data.data && data.data.operationalLayers) {
+                    html += `<hr style="border-top: 1px solid #ddd; margin: 8px 0;">`;
+                    html += `<strong>Layers:</strong><br>`;
+                    
+                    data.data.operationalLayers.forEach((layer, index) => {
+                        if (layer.url) {
+                            html += `<div style="margin: 6px 0; padding: 6px; background: white; border-radius: 3px;">`;
+                            html += `<strong>${layer.title || `Layer ${index + 1}`}</strong><br>`;
+                            html += `<code style="font-size: 10px; word-break: break-all;">${layer.url}</code><br>`;
+                            
+                            if (layer.url.includes('SceneServer') || layer.layerType === 'ArcGISSceneServiceLayer') {
+                                html += `<button onclick="loadI3SInCesium('${layer.url.replace(/'/g, "\\'")}', '${(layer.title || 'Layer').replace(/'/g, "\\'")}' )" style="margin-top: 4px; padding: 4px 8px; background: #0079c1; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">Load in Cesium</button>`;
+                            }
+                            
+                            html += `</div>`;
+                        }
+                    });
+                }
+                
+                html += `</div>`;
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Failed to inspect WebScene:', error);
+                resultsDiv.innerHTML = `<p style="color: #d32f2f;">Error: ${error.message}</p>`;
+            }
+        };
+        
+        // Load I3S layer in Cesium
+        window.loadI3SInCesium = async function(url, title) {
+            console.log('🌍 Loading I3S in Cesium:', url);
+            
+            try {
+                const i3sProvider = await Cesium.I3SDataProvider.fromUrl(url, {
+                    name: title,
+                    show: true
+                });
+                
+                viewer.scene.primitives.add(i3sProvider);
+                viewer.zoomTo(i3sProvider);
+                
+                console.log('✅ I3S layer loaded successfully:', title);
+                alert(`✅ Loaded "${title}" in Cesium viewer`);
+                
+            } catch (error) {
+                console.error('❌ Failed to load I3S:', error);
+                alert(`❌ Failed to load I3S layer:\n${error.message}`);
+            }
+        };
+        
+        // Search for public SLPK datasets
+        window.searchPublicSLPK = async function() {
+            const query = document.getElementById('arcgisSlpkQuery').value.trim() || 'buildings city 3d';
+            const resultsDiv = document.getElementById('slpkSearchResults');
+            
+            resultsDiv.innerHTML = '<p style="color: #666;">Searching...</p>';
+            
+            try {
+                const response = await fetch(`/api/arcgis/search-slpk?q=${encodeURIComponent(query)}&num=10`);
+                const data = await response.json();
+                
+                console.log(`🔍 Found ${data.items.length} SLPK datasets`);
+                
+                if (data.items.length === 0) {
+                    resultsDiv.innerHTML = '<p style="color: #666;">No results found</p>';
+                    return;
+                }
+                
+                let html = `<div style="font-size: 11px; color: #666; margin-bottom: 8px;">Found ${data.total} items (showing ${data.items.length})</div>`;
+                
+                data.items.forEach(item => {
+                    const sizeMB = item.size ? (item.size / (1024 * 1024)).toFixed(1) : '?';
+                    const date = item.modified ? new Date(item.modified).toLocaleDateString() : '?';
+                    
+                    html += `<div style="background: #f5f5f5; padding: 8px; margin: 6px 0; border-radius: 4px; border-left: 3px solid #0079c1;">`;
+                    html += `<strong style="font-size: 11px;">${item.title}</strong><br>`;
+                    html += `<small style="color: #666;">Owner: ${item.owner} | Size: ${sizeMB} MB | ${date}</small><br>`;
+                    
+                    if (item.snippet) {
+                        html += `<p style="font-size: 10px; color: #666; margin: 4px 0;">${item.snippet}</p>`;
+                    }
+                    
+                    html += `<div style="margin-top: 6px; display: flex; gap: 4px;">`;
+                    html += `<button onclick="window.open('${item.url}', '_blank')" style="padding: 4px 8px; background: #666; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">Open Item</button>`;
+                    html += `<button onclick="downloadSLPK('${item.id}', '${item.title.replace(/'/g, "\\'")}' )" style="padding: 4px 8px; background: #0079c1; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px;">Download SLPK</button>`;
+                    html += `</div>`;
+                    html += `</div>`;
+                });
+                
+                resultsDiv.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ SLPK search failed:', error);
+                resultsDiv.innerHTML = `<p style="color: #d32f2f;">Error: ${error.message}</p>`;
+            }
+        };
+        
+        // Download SLPK from ArcGIS Online
+        window.downloadSLPK = async function(itemId, title) {
+            console.log('⬇️ Downloading SLPK:', itemId, title);
+            
+            if (!confirm(`Download "${title}"?\n\nThis will download and process the SLPK file.`)) {
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('slpkSearchResults');
+            const statusDiv = document.createElement('div');
+            statusDiv.style.cssText = 'background: #fffbcc; padding: 8px; margin: 6px 0; border-radius: 4px; font-size: 11px;';
+            statusDiv.textContent = `⬇️ Downloading "${title}"...`;
+            resultsDiv.insertBefore(statusDiv, resultsDiv.firstChild);
+            
+            try {
+                const response = await fetch(`/api/arcgis/download/${itemId}`);
+                const data = await response.json();
+                
+                console.log('✅ SLPK download started:', data);
+                
+                statusDiv.style.background = '#e8f5e9';
+                statusDiv.textContent = `✅ Download complete! Processing... (Job ID: ${data.job_id})`;
+                
+                // Poll job status
+                if (data.job_id) {
+                    const finalResult = await pollJobStatus(
+                        data.job_id,
+                        document.getElementById('progressMessage'),
+                        document.getElementById('progressBar'),
+                        document.getElementById('progressPercent')
+                    );
+                    
+                    if (finalResult.success) {
+                        statusDiv.textContent = `✅ "${title}" loaded successfully!`;
+                        setTimeout(() => statusDiv.remove(), 5000);
+                    } else {
+                        statusDiv.style.background = '#ffebee';
+                        statusDiv.textContent = `❌ Processing failed: ${finalResult.error || 'Unknown error'}`;
+                    }
+                }
+                
+            } catch (error) {
+                console.error('❌ SLPK download failed:', error);
+                statusDiv.style.background = '#ffebee';
+                statusDiv.textContent = `❌ Download failed: ${error.message}`;
+            }
+        };
+        
+        // Listen for messages from ArcGIS viewer window
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'LOAD_I3S') {
+                console.log('📨 Received I3S load request from ArcGIS viewer:', event.data);
+                loadI3SInCesium(event.data.url, event.data.title);
+            }
+        });
         
     </script>
 </body>

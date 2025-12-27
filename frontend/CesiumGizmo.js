@@ -203,7 +203,21 @@ class CesiumGizmo {
         if (!this.selectedEntity) return null;
         
         if (this.selectedEntity instanceof Cesium.Entity) {
-            return this.selectedEntity.position.getValue(Cesium.JulianDate.now());
+            // Ensure entity has a valid position
+            if (!this.selectedEntity.position) {
+                console.warn('Entity has no position property');
+                return null;
+            }
+            
+            const currentTime = this.viewer.clock.currentTime;
+            const position = this.selectedEntity.position.getValue(currentTime);
+            
+            if (!position) {
+                console.warn('Entity position.getValue() returned undefined at current time');
+                return null;
+            }
+            
+            return position;
         } else if (this.selectedEntity instanceof Cesium.Cesium3DTileset) {
             // For tilesets, use the model matrix translation
             const matrix = this.selectedEntity.modelMatrix;
@@ -546,29 +560,55 @@ class CesiumGizmo {
      * @param {number} scale - Scale factor
      */
     applyScale(scale) {
-        if (!this.selectedEntity || !this.startMatrix) return;
+        if (!this.selectedEntity) return;
         
-        let scaleVector;
-        switch (this.dragAxis) {
-            case 'x':
-                scaleVector = new Cesium.Cartesian3(scale, 1, 1);
-                break;
-            case 'y':
-                scaleVector = new Cesium.Cartesian3(1, scale, 1);
-                break;
-            case 'z':
-                scaleVector = new Cesium.Cartesian3(1, 1, scale);
-                break;
-            default:
-                return;
-        }
-        
-        const scaleMatrix = Cesium.Matrix4.fromScale(scaleVector);
-        const newMatrix = Cesium.Matrix4.multiply(this.startMatrix, scaleMatrix, new Cesium.Matrix4());
+        // Clamp scale to reasonable values
+        const clampedScale = Math.max(0.1, Math.min(10.0, scale));
         
         if (this.selectedEntity instanceof Cesium.Entity) {
-            this.selectedEntity.modelMatrix = newMatrix;
+            // For Entity models, use entity.model.scale (scalar property)
+            if (this.selectedEntity.model) {
+                // Read current scale properly (it's a Property, not a number)
+                const currentTime = this.viewer.clock.currentTime;
+                const sProp = this.selectedEntity.model.scale;
+                const currentScaleValue = (sProp && typeof sProp.getValue === "function") 
+                    ? sProp.getValue(currentTime) 
+                    : (typeof sProp === 'number' ? sProp : 1.0);
+                
+                // Store base scale if not already stored
+                if (!this.selectedEntity._baseScale) {
+                    this.selectedEntity._baseScale = currentScaleValue;
+                }
+                
+                // Calculate new scale
+                const newScale = this.selectedEntity._baseScale * clampedScale;
+                
+                // Apply uniform scaling (set as ConstantProperty for consistency)
+                this.selectedEntity.model.scale = new Cesium.ConstantProperty(newScale);
+                
+                console.log(`🔧 Gizmo scale: ${newScale.toFixed(2)} (base: ${this.selectedEntity._baseScale.toFixed(2)}, factor: ${clampedScale.toFixed(2)})`);
+            }
         } else if (this.selectedEntity instanceof Cesium.Cesium3DTileset) {
+            // For tilesets, use matrix scaling
+            if (!this.startMatrix) return;
+            
+            let scaleVector;
+            switch (this.dragAxis) {
+                case 'x':
+                    scaleVector = new Cesium.Cartesian3(clampedScale, 1, 1);
+                    break;
+                case 'y':
+                    scaleVector = new Cesium.Cartesian3(1, clampedScale, 1);
+                    break;
+                case 'z':
+                    scaleVector = new Cesium.Cartesian3(1, 1, clampedScale);
+                    break;
+                default:
+                    return;
+            }
+            
+            const scaleMatrix = Cesium.Matrix4.fromScale(scaleVector);
+            const newMatrix = Cesium.Matrix4.multiply(this.startMatrix, scaleMatrix, new Cesium.Matrix4());
             this.selectedEntity.modelMatrix = newMatrix;
         }
     }

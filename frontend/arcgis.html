@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArcGIS Scene Viewer - MyEarth</title>
+    
+    <!-- ArcGIS JS API CSS -->
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #viewDiv {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        #infoPanel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 99;
+        }
+        #infoPanel h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            color: #333;
+        }
+        #infoPanel button {
+            margin: 5px 5px 5px 0;
+            padding: 6px 12px;
+            background: #0079c1;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        #infoPanel button:hover {
+            background: #005a87;
+        }
+        #layersList {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .layer-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            border-left: 3px solid #0079c1;
+        }
+        .layer-item strong {
+            color: #333;
+        }
+        .layer-item code {
+            background: #e0e0e0;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 11px;
+            word-break: break-all;
+        }
+        .error {
+            color: #d32f2f;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        #togglePanel {
+            position: absolute;
+            top: 10px;
+            right: 420px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 99;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="viewDiv"></div>
+    
+    <div id="togglePanel" onclick="toggleInfoPanel()">
+        ℹ️ Toggle Info
+    </div>
+    
+    <div id="infoPanel">
+        <h3>🗺️ ArcGIS Scene Viewer</h3>
+        <div id="sceneInfo">
+            <p style="font-size: 12px; color: #666;">Loading scene...</p>
+        </div>
+        <div>
+            <button onclick="window.close()">Close</button>
+            <button onclick="location.href='/'">Back to MyEarth</button>
+        </div>
+        <div id="layersList"></div>
+    </div>
+
+    <!-- ArcGIS JS API -->
+    <script src="https://js.arcgis.com/4.28/"></script>
+    
+    <script>
+        require([
+            "esri/WebScene",
+            "esri/views/SceneView",
+            "esri/layers/SceneLayer"
+        ], function(WebScene, SceneView, SceneLayer) {
+            
+            // Get portal item ID from query string
+            const urlParams = new URLSearchParams(window.location.search);
+            const itemId = urlParams.get('id') || '4561446e7f384a969cfbe368e9ca0002';
+            
+            console.log('🗺️ Loading ArcGIS WebScene:', itemId);
+            
+            // Create WebScene from portal item
+            const webScene = new WebScene({
+                portalItem: {
+                    id: itemId
+                }
+            });
+            
+            // Create SceneView
+            const view = new SceneView({
+                container: "viewDiv",
+                map: webScene
+            });
+            
+            // Update info panel with scene title
+            document.getElementById('sceneInfo').innerHTML = `
+                <p style="font-size: 12px;"><strong>Portal Item ID:</strong><br><code>${itemId}</code></p>
+                <p style="font-size: 12px;"><a href="https://www.arcgis.com/home/item.html?id=${itemId}" target="_blank">View on ArcGIS Online</a></p>
+            `;
+            
+            // When WebScene loads, inspect layers
+            webScene.when(function() {
+                console.log('✅ WebScene loaded successfully');
+                console.log('   • Title:', webScene.portalItem.title);
+                console.log('   • Description:', webScene.portalItem.description);
+                
+                // Update scene info
+                document.getElementById('sceneInfo').innerHTML = `
+                    <p style="font-size: 14px; margin-bottom: 8px;"><strong>${webScene.portalItem.title}</strong></p>
+                    <p style="font-size: 11px; color: #666; margin-bottom: 8px;">${webScene.portalItem.description || 'No description'}</p>
+                    <p style="font-size: 11px;"><strong>Portal Item ID:</strong><br><code style="font-size: 10px;">${itemId}</code></p>
+                    <p style="font-size: 11px;"><a href="https://www.arcgis.com/home/item.html?id=${itemId}" target="_blank">View on ArcGIS Online</a></p>
+                `;
+                
+                // Inspect operational layers
+                console.log('📋 Operational Layers:', webScene.layers.length);
+                const layersListDiv = document.getElementById('layersList');
+                layersListDiv.innerHTML = '<h3>Layers</h3>';
+                
+                webScene.layers.forEach(function(layer, index) {
+                    console.log(`   Layer ${index + 1}:`, {
+                        title: layer.title,
+                        type: layer.type,
+                        id: layer.id,
+                        url: layer.url,
+                        visible: layer.visible
+                    });
+                    
+                    // Create layer item in UI
+                    const layerDiv = document.createElement('div');
+                    layerDiv.className = 'layer-item';
+                    
+                    let layerInfo = `
+                        <strong>${layer.title || 'Untitled Layer'}</strong><br>
+                        <small>Type: <code>${layer.type}</code></small><br>
+                    `;
+                    
+                    if (layer.url) {
+                        layerInfo += `<small>URL: <code>${layer.url}</code></small><br>`;
+                        
+                        // Check if this is an I3S SceneServer
+                        if (layer.url.includes('SceneServer') || layer.type === 'scene') {
+                            layerInfo += `<button onclick="loadInCesium('${layer.url.replace(/'/g, "\\'")}', '${layer.title.replace(/'/g, "\\'")}')">Load in Cesium</button>`;
+                        }
+                    }
+                    
+                    layerDiv.innerHTML = layerInfo;
+                    layersListDiv.appendChild(layerDiv);
+                });
+                
+                // Check for ground layers (terrain, elevation)
+                if (webScene.ground && webScene.ground.layers) {
+                    console.log('🏔️ Ground Layers:', webScene.ground.layers.length);
+                    webScene.ground.layers.forEach(function(layer, index) {
+                        console.log(`   Ground Layer ${index + 1}:`, {
+                            title: layer.title,
+                            type: layer.type,
+                            url: layer.url
+                        });
+                    });
+                }
+                
+            }).catch(function(error) {
+                console.error('❌ Failed to load WebScene:', error);
+                document.getElementById('sceneInfo').innerHTML = `
+                    <div class="error">
+                        <strong>Failed to load WebScene</strong><br>
+                        ${error.message || error}
+                    </div>
+                    <p style="font-size: 11px;"><a href="https://www.arcgis.com/home/item.html?id=${itemId}" target="_blank">View item on ArcGIS Online</a></p>
+                `;
+            });
+            
+            // Handle view errors
+            view.when(function() {
+                console.log('✅ SceneView ready');
+            }).catch(function(error) {
+                console.error('❌ SceneView error:', error);
+            });
+        });
+        
+        function toggleInfoPanel() {
+            const panel = document.getElementById('infoPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function loadInCesium(url, title) {
+            console.log('🌍 Opening in Cesium:', url);
+            // Open main MyEarth page with I3S load command
+            const params = new URLSearchParams({
+                loadI3S: url,
+                title: title
+            });
+            window.opener?.postMessage({
+                type: 'LOAD_I3S',
+                url: url,
+                title: title
+            }, '*');
+            alert(`Sent "${title}" to Cesium viewer.\n\nURL: ${url}\n\nIf MyEarth is open, it should load automatically.`);
+        }
+    </script>
+</body>
+</html>
+
+

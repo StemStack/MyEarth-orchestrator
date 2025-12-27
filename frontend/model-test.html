@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Model Test - MyEarth</title>
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Cesium.js"></script>
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.121/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+        
+        #cesiumContainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            max-width: 400px;
+        }
+        
+        #controls h1 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            color: #333;
+        }
+        
+        #controls p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .model-option {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .model-option:hover {
+            background: #e8e8e8;
+        }
+        
+        .model-option.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .model-option h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .model-option .url {
+            font-size: 11px;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        .model-option.active .url {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: none;
+        }
+        
+        #status.loading {
+            display: block;
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        #status.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        #status.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="cesiumContainer"></div>
+    <div id="controls">
+        <h1>🌍 3D Model Test</h1>
+        <p>Click on a model below to test loading:</p>
+        
+        <div class="model-option" data-url="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/DamagedHelmet/glTF-Binary/DamagedHelmet.glb">
+            <h3>Known-Good Model (Public)</h3>
+            <div class="url">Damaged Helmet (glTF Sample)</div>
+        </div>
+        
+        <div class="model-option" data-url="/uploads/simple_cube.gltf">
+            <h3>Local Upload Test</h3>
+            <div class="url">Simple Cube (if uploaded)</div>
+        </div>
+        
+        <div class="model-option" data-url="/uploads/31_07_2025.glb">
+            <h3>Recent Upload #1</h3>
+            <div class="url">31_07_2025.glb</div>
+        </div>
+        
+        <button id="uploadBtn">Upload New Model</button>
+        <input type="file" id="fileInput" accept=".glb,.gltf" style="display: none;">
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // Initialize Cesium Viewer
+        Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI5N2UyMjcwOS00MDY1LTQxYjEtYjZjMy00YTU0ZTg5MmViYWQiLCJpZCI6ODAzMDYsImlhdCI6MTY0Mjc5MDY2MH0.dkwAL1CcljUV7NA7fDbhXXnmyZQU_c-G5zRx8PtEcxE';
+
+        const viewer = new Cesium.Viewer('cesiumContainer', {
+            terrainProvider: Cesium.createWorldTerrain(),
+            baseLayerPicker: false,
+            geocoder: false,
+            homeButton: false,
+            sceneModePicker: false,
+            timeline: false,
+            navigationHelpButton: false,
+            animation: false,
+        });
+
+        let currentEntity = null;
+        const statusDiv = document.getElementById('status');
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = type;
+        }
+
+        function hideStatus() {
+            statusDiv.style.display = 'none';
+        }
+
+        async function loadModel(url) {
+            console.log('Loading model from:', url);
+            showStatus('Loading model...', 'loading');
+
+            // Remove previous model
+            if (currentEntity) {
+                viewer.entities.remove(currentEntity);
+                currentEntity = null;
+            }
+
+            try {
+                // Get camera position
+                const cameraPosition = viewer.camera.positionCartographic;
+                const modelPosition = Cesium.Cartesian3.fromDegrees(
+                    Cesium.Math.toDegrees(cameraPosition.longitude),
+                    Cesium.Math.toDegrees(cameraPosition.latitude),
+                    100
+                );
+
+                // Create entity with model
+                currentEntity = viewer.entities.add({
+                    position: modelPosition,
+                    model: {
+                        uri: url,
+                        minimumPixelSize: 128,
+                        maximumScale: 20000,
+                        scale: 1.0,
+                    }
+                });
+
+                // Wait for model to load
+                await waitForModelLoad(currentEntity);
+
+                // Fly to model
+                await viewer.flyTo(currentEntity, {
+                    duration: 2,
+                    offset: new Cesium.HeadingPitchRange(
+                        0,
+                        Cesium.Math.toRadians(-20),
+                        100
+                    )
+                });
+
+                showStatus('✓ Model loaded successfully!', 'success');
+                console.log('Model loaded successfully');
+                
+            } catch (error) {
+                console.error('Model load error:', error);
+                showStatus(`✗ Failed to load model: ${error.message}`, 'error');
+            }
+        }
+
+        function waitForModelLoad(entity) {
+            return new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Model loading timeout (30s)'));
+                }, 30000);
+
+                const checkReady = () => {
+                    if (entity.model && entity.model.ready) {
+                        clearTimeout(timeout);
+                        resolve();
+                    } else {
+                        setTimeout(checkReady, 100);
+                    }
+                };
+                checkReady();
+            });
+        }
+
+        // Handle model selection
+        document.querySelectorAll('.model-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.model-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                const url = this.getAttribute('data-url');
+                loadModel(url);
+            });
+        });
+
+        // Handle file upload
+        document.getElementById('uploadBtn').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            showStatus('Uploading file...', 'loading');
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/api/upload-model', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('Upload result:', result);
+
+                showStatus('Upload successful! Loading model...', 'success');
+
+                // Load the uploaded model
+                setTimeout(() => {
+                    loadModel(result.url);
+                }, 1000);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showStatus(`✗ Upload failed: ${error.message}`, 'error');
+            }
+        });
+
+        // Load default model on startup
+        setTimeout(() => {
+            document.querySelector('.model-option').click();
+        }, 1000);
+    </script>
+</body>
+</html>
+
+

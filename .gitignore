@@ -21,3 +21,6 @@ venv/
 # Notes / private files
 *.rtf
 *.pdf
+
+# Runtime / generated
+uploads/
